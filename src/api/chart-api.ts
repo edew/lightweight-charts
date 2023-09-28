@@ -10,6 +10,7 @@ import { DataUpdatesConsumer, isFulfilledData, SeriesDataItemTypeMap, Whitespace
 import { DataLayer, DataUpdateResponse, SeriesChanges } from '../model/data-layer';
 import { CustomData, ICustomSeriesPaneView } from '../model/icustom-series';
 import { IHorzScaleBehavior } from '../model/ihorz-scale-behavior';
+import { Point } from '../model/point';
 import { Series } from '../model/series';
 import { SeriesPlotRow } from '../model/series-data';
 import {
@@ -318,6 +319,18 @@ export class ChartApi<HorzScaleItem> implements IChartApiBase<HorzScaleItem>, Da
 			height: size.height,
 			width: size.width,
 		};
+	}
+
+	public startTrackingMode(point: Point): void {
+		ensureDefined(this._chartWidget.paneWidgets()[0]).startTrackingMode(point);
+	}
+
+	public stopTrackingMode(): void {
+		ensureDefined(this._chartWidget.paneWidgets()[0]).stopTrackingMode();
+	}
+
+	public trackingActive(): boolean {
+		return ensureDefined(this._chartWidget.paneWidgets()[0]).trackingActive();
 	}
 
 	private _addSeriesImpl<

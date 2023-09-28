@@ -353,4 +353,10 @@ export interface IChartApiBase<HorzScaleItem = Time> {
 	 * @returns Dimensions of the chart pane
 	 */
 	paneSize(): PaneSize;
+
+	startTrackingMode(point: Point): void;
+
+	stopTrackingMode(): void;
+
+	trackingActive(): boolean;
 }

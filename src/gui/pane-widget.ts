@@ -508,6 +508,19 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		this._drawSources(target, paneViewsGetter);
 	}
 
+	public startTrackingMode(point: Point): void {
+		this._startTrackingMode(point, point, null);
+	}
+
+	public stopTrackingMode(): void {
+		this._exitTrackingModeOnNextTry = true;
+		this._tryExitTrackingMode();
+	}
+
+	public trackingActive(): boolean {
+		return this._startTrackPoint !== null;
+	}
+
 	private _onStateDestroyed(): void {
 		if (this._state !== null) {
 			this._state.onDestroyed().unsubscribeAll(this);
@@ -631,7 +644,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		return Math.max(0, Math.min(y, this._size.height - 1)) as Coordinate;
 	}
 
-	private _setCrosshairPosition(x: Coordinate, y: Coordinate, event: MouseEventHandlerEventBase): void {
+	private _setCrosshairPosition(x: Coordinate, y: Coordinate, event: MouseEventHandlerEventBase | null): void {
 		this._model().setAndSaveCurrentPosition(this._correctXCoord(x), this._correctYCoord(y), event, ensureNotNull(this._state));
 	}
 
@@ -646,7 +659,7 @@ export class PaneWidget implements IDestroyable, MouseEventHandlers {
 		}
 	}
 
-	private _startTrackingMode(startTrackPoint: Point, crossHairPosition: Point, event: MouseEventHandlerEventBase): void {
+	private _startTrackingMode(startTrackPoint: Point, crossHairPosition: Point, event: MouseEventHandlerEventBase | null): void {
 		this._startTrackPoint = startTrackPoint;
 		this._exitTrackingModeOnNextTry = false;
 		this._setCrosshairPosition(crossHairPosition.x, crossHairPosition.y, event);
