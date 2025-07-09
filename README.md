@@ -1,5 +1,3 @@
-<!-- markdownlint-disable no-inline-html first-line-h1 -->
-
 <div align="center">
   <a href="https://www.tradingview.com/lightweight-charts/" target="_blank">
     <img width="200" src="https://github.com/tradingview/lightweight-charts/raw/master/.github/logo.svg?sanitize=true">
@@ -13,8 +11,6 @@
   [![Dependencies count][deps-count-img]][bundle-size-link]
   [![Downloads][npm-downloads-img]][npm-link]
 </div>
-
-<!-- markdownlint-enable no-inline-html -->
 
 [Demos][demo-url] | [Documentation](./docs/README.md) | [Discord community](https://discord.gg/E6UthXZ)
 

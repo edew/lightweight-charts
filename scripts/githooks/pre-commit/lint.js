@@ -68,10 +68,6 @@ function runESLintForFiles(jsFiles) {
 	return runForFiles('node ./node_modules/eslint/bin/eslint --quiet --format=unix', jsFiles);
 }
 
-function runMarkdownLintForFiles(mdFiles) {
-	return runForFiles('node ./node_modules/markdownlint-cli/markdownlint.js', mdFiles);
-}
-
 function filterByExt(files, ext) {
 	return files.filter((file) => path.extname(file) === ext);
 }
@@ -91,7 +87,6 @@ function lintFiles(files) {
 	// markdown
 	const mdFiles = filterByExt(files, '.md');
 	if (mdFiles.length !== 0) {
-		hasErrors = runMarkdownLintForFiles(mdFiles) || hasErrors;
 		hasErrors = run('node scripts/check-markdown-links.js') || hasErrors;
 	}
 
