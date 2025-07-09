@@ -3,11 +3,10 @@ function checkTouchEvents(): boolean {
 		return true;
 	}
 
-	// tslint:disable-next-line:no-any
 	return Boolean((window as any).DocumentTouch && document instanceof (window as any).DocumentTouch);
 }
 
-const touch = !!navigator.maxTouchPoints || !!navigator.msMaxTouchPoints || checkTouchEvents();
+const touch = !!navigator.maxTouchPoints || checkTouchEvents();
 export const mobileTouch = 'onorientationchange' in window && touch;
 
 // actually we shouldn't check that values

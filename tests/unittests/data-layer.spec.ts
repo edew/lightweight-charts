@@ -14,7 +14,6 @@ import { BusinessDay, TimePointIndex, UTCTimestamp } from '../../src/model/time-
 
 function createSeriesMock<T extends SeriesType = 'Line'>(seriesType?: T): Series<T> {
 	const data = new SeriesData();
-	// tslint:disable-next-line:no-object-literal-type-assertion
 	return {
 		data: () => data,
 		palette: () => new Palette(),

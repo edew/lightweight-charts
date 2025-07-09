@@ -40,9 +40,7 @@ export class TimePoints {
 				return;
 			}
 
-			// tslint:disable-next-line:prefer-array-literal
 			this._items = new Array<TimePoint>(n).concat(this._items);
-			// tslint:disable-next-line:no-shadowed-variable
 			for (let i = 0; i < values.length; ++i) {
 				this._items[index + i] = values[i];
 			}

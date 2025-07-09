@@ -29,7 +29,6 @@ export class SeriesPriceAxisView extends PriceAxisView {
 		return this._data;
 	}
 
-	// tslint:disable-next-line:cyclomatic-complexity
 	protected _updateRendererData(
 		axisRendererData: PriceAxisViewRendererData,
 		paneRendererData: PriceAxisViewRendererData,

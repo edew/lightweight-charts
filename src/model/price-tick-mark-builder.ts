@@ -58,7 +58,6 @@ export class PriceTickMarkBuilder {
 		return min(spans);
 	}
 
-	// tslint:disable-next-line:cyclomatic-complexity
 	public rebuildTickMarks(): void {
 		const priceScale = this._priceScale;
 

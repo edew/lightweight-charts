@@ -534,7 +534,6 @@ export function mergeMinMax(first: MinMax | null, second: MinMax | null): MinMax
 export function mergePlotRows<TimeType, PlotValueTuple extends PlotValue[] = PlotValue[]>(originalPlotRows: ReadonlyArray<PlotRow<TimeType, PlotValueTuple>>, newPlotRows: ReadonlyArray<PlotRow<TimeType, PlotValueTuple>>): PlotRow<TimeType, PlotValueTuple>[] {
 	const newArraySize = calcMergedArraySize(originalPlotRows, newPlotRows);
 
-	// tslint:disable-next-line:prefer-array-literal
 	const result = new Array<PlotRow<TimeType, PlotValueTuple>>(newArraySize);
 
 	let originalRowsIndex = 0;

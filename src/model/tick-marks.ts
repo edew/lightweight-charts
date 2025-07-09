@@ -28,7 +28,6 @@ export class TickMarks {
 		this._changed.fire();
 	}
 
-	// tslint:disable-next-line:cyclomatic-complexity
 	public merge(tickMarks: TickMark[]): void {
 		const marksBySpan = this._marksBySpan;
 		const unsortedSpans: Record<number, boolean> = {};

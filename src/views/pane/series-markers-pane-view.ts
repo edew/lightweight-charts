@@ -29,7 +29,6 @@ interface Offsets {
 }
 
 function fillSizeAndY(
-	// tslint:disable-next-line:max-params
 	rendererItem: SeriesMarkerRendererDataItem,
 	marker: SeriesMarker<TimePointIndex>,
 	seriesData: BarPrices | BarPrice,

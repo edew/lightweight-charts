@@ -1,14 +1,11 @@
 export type DeepPartial<T> = {
-	// tslint:disable-next-line:array-type
 	[P in keyof T]?: T[P] extends Array<infer U>
-		// tslint:disable-next-line:array-type
 		? Array<DeepPartial<U>>
 		: T[P] extends ReadonlyArray<infer X>
 		? ReadonlyArray<DeepPartial<X>>
 		: DeepPartial<T[P]>
 };
 
-// tslint:disable-next-line:no-any
 export function merge(dst: Record<string, any>, ...sources: Record<string, any>[]): Record<string, any> {
 	for (const src of sources) {
 		for (const i in src) {
@@ -48,13 +45,13 @@ export function isBoolean(value: unknown): value is boolean {
 }
 
 export function clone<T>(object: T): T {
-	// tslint:disable-next-line:no-any
+	
 	const o = object as any;
 	if (!o || 'object' !== typeof o) {
 		return o;
 	}
 
-	// tslint:disable-next-line:no-any
+	
 	let c: any;
 
 	if (Array.isArray(o)) {

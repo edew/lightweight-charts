@@ -111,12 +111,6 @@ jobs:
       - checkout-with-deps
       - run: npm run lint:eslint
 
-  tslint:
-    executor: node-latest-executor
-    steps:
-      - checkout-with-deps
-      - run: npm run lint:tslint
-
   markdown:
     executor: node-latest-executor
     steps:
@@ -200,10 +194,6 @@ workflows:
           requires:
             - install-deps
       - eslint:
-          filters: *default-filters
-          requires:
-            - install-deps
-      - tslint:
           filters: *default-filters
           requires:
             - install-deps
