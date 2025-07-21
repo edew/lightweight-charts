@@ -1,4 +1,4 @@
-import { WatermarkOptions } from '../../model/watermark';
+import type { WatermarkOptions } from '../../model/watermark';
 
 export const watermarkOptionsDefaults: WatermarkOptions = {
 	color: 'rgba(0, 0, 0, 0)',

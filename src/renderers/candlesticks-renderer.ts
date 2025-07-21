@@ -1,9 +1,9 @@
 import { strokeRectInnerWithFill } from '../helpers/canvas-helpers';
 
-import { SeriesItemsIndexesRange } from '../model/time-data';
+import type { SeriesItemsIndexesRange } from '../model/time-data';
 
-import { BarCandlestickItemBase } from './bars-renderer';
-import { IPaneRenderer } from './ipane-renderer';
+import type { BarCandlestickItemBase } from './bars-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 import { optimalCandlestickWidth } from './optimal-bar-width';
 
 export interface CandlestickItem extends BarCandlestickItemBase {

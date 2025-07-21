@@ -1,4 +1,4 @@
-import { IPaneRenderer } from './ipane-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 
 export abstract class ScaledRenderer implements IPaneRenderer {
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void {

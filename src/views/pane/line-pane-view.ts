@@ -1,9 +1,9 @@
-import { BarPrice } from '../../model/bar';
+import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
 import { Series } from '../../model/series';
-import { TimePointIndex } from '../../model/time-data';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { LineItem, PaneRendererLine, PaneRendererLineData } from '../../renderers/line-renderer';
+import type { TimePointIndex } from '../../model/time-data';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { type LineItem, PaneRendererLine, type PaneRendererLineData } from '../../renderers/line-renderer';
 
 import { LinePaneViewBase } from './line-pane-view-base';
 

@@ -1,7 +1,7 @@
 import { min } from '../helpers/mathex';
 
-import { Coordinate } from './coordinate';
-import { PriceMark, PriceScale } from './price-scale';
+import type { Coordinate } from './coordinate';
+import type { PriceMark, PriceScale } from './price-scale';
 import { PriceTickSpanCalculator } from './price-tick-span-calculator';
 
 export type CoordinateToLogicalConverter = (x: number, firstValue: number) => number;

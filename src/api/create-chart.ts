@@ -1,28 +1,30 @@
 import { ensureNotNull } from '../helpers/assertions';
-import { DeepPartial, isString } from '../helpers/strict-type-checks';
+import { type DeepPartial, isString } from '../helpers/strict-type-checks';
 
-import { ChartOptions } from '../model/chart-model';
+import type { ChartOptions } from '../model/chart-model';
 
 import { ChartApi } from './chart-api';
-import { IChartApi } from './ichart-api';
+import type { IChartApi } from './ichart-api';
 
-export { LineStyle, LineType, LineWidth } from '../renderers/draw-line';
+export { LineStyle, LineType } from '../renderers/draw-line';
+export type { LineWidth } from '../renderers/draw-line';
 
-export { BarPrice } from '../model/bar';
+export type { BarPrice } from '../model/bar';
 export { CrosshairMode } from '../model/crosshair';
 export { PriceScaleMode } from '../model/price-scale';
 export { PriceLineSource } from '../model/series-options';
-export { UTCTimestamp } from '../model/time-data';
+export type { UTCTimestamp } from '../model/time-data';
 
-export { IChartApi, MouseEventParams } from './ichart-api';
-export { ISeriesApi } from './iseries-api';
+export type { IChartApi, MouseEventParams } from './ichart-api';
+export type { ISeriesApi } from './iseries-api';
 
 export {
-	BarData,
-	HistogramData,
 	isBusinessDay,
-	isUTCTimestamp,
-	LineData,
+	isUTCTimestamp
+} from './data-consumer';
+export type {
+	BarData,
+	HistogramData, LineData
 } from './data-consumer';
 
 /**

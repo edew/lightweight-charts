@@ -1,16 +1,16 @@
 import { ensureNotNull } from '../../helpers/assertions';
 
-import { BarPrice } from '../../model/bar';
-import { ChartModel, ChartOptionsInternal } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { BarPrice } from '../../model/bar';
+import { ChartModel, type ChartOptionsInternal } from '../../model/chart-model';
+import type { Coordinate } from '../../model/coordinate';
 import { Crosshair } from '../../model/crosshair';
 import { Series } from '../../model/series';
-import { SeriesItemsIndexesRange, TimePointIndex } from '../../model/time-data';
+import type { SeriesItemsIndexesRange, TimePointIndex } from '../../model/time-data';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { MarksRendererData, PaneRendererMarks } from '../../renderers/marks-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { type MarksRendererData, PaneRendererMarks } from '../../renderers/marks-renderer';
 
-import { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
+import type { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
 
 function createEmptyMarkerData(chartOptions: ChartOptionsInternal): MarksRendererData {
 	return {

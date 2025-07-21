@@ -1,6 +1,6 @@
 import { defaultFontFamily } from '../../helpers/make-font';
 
-import { LayoutOptions } from '../../model/layout-options';
+import type { LayoutOptions } from '../../model/layout-options';
 
 export const layoutOptionsDefaults: LayoutOptions = {
 	backgroundColor: '#FFFFFF',

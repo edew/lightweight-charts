@@ -1,23 +1,23 @@
-import { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
+import type { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
 
 import { clearRect, drawScaled } from '../helpers/canvas-helpers';
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { makeFont } from '../helpers/make-font';
 
-import { Coordinate } from '../model/coordinate';
-import { IDataSource } from '../model/idata-source';
+import type { Coordinate } from '../model/coordinate';
+import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
-import { LayoutOptions } from '../model/layout-options';
-import { PriceAxisPosition } from '../model/price-scale';
+import type { LayoutOptions } from '../model/layout-options';
+import type { PriceAxisPosition } from '../model/price-scale';
 import { TextWidthCache } from '../model/text-width-cache';
-import { MarkSpanBorder, TimeMark } from '../model/time-scale';
-import { TimeAxisViewRendererOptions } from '../renderers/itime-axis-view-renderer';
+import { MarkSpanBorder, type TimeMark } from '../model/time-scale';
+import type { TimeAxisViewRendererOptions } from '../renderers/itime-axis-view-renderer';
 import { TimeAxisView } from '../views/time-axis/time-axis-view';
 
 import { createBoundCanvas, getContext2D, Size } from './canvas-utils';
 import { ChartWidget } from './chart-widget';
-import { MouseEventHandler, MouseEventHandlers, TouchMouseEvent } from './mouse-event-handler';
-import { PriceAxisStub, PriceAxisStubParams } from './price-axis-stub';
+import { MouseEventHandler, type MouseEventHandlers, type TouchMouseEvent } from './mouse-event-handler';
+import { PriceAxisStub, type PriceAxisStubParams } from './price-axis-stub';
 
 const enum Constants {
 	BorderSize = 1,

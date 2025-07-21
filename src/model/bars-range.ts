@@ -1,6 +1,6 @@
 import { assert } from '../helpers/assertions';
 
-import { TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-data';
 
 export class BarsRange {
 	private readonly _firstBar: TimePointIndex;

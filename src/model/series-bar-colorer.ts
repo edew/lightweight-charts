@@ -2,15 +2,15 @@ import { ensure, ensureNotNull } from '../helpers/assertions';
 
 import { PlotList } from './plot-list';
 import { Series } from './series';
-import { Bar, SeriesPlotIndex } from './series-data';
-import {
+import { type Bar, SeriesPlotIndex } from './series-data';
+import type {
 	AreaStyleOptions,
 	BarStyleOptions,
 	CandlestickStyleOptions,
 	HistogramStyleOptions,
 	LineStyleOptions,
 } from './series-options';
-import { TimePoint, TimePointIndex } from './time-data';
+import type { TimePoint, TimePointIndex } from './time-data';
 
 export interface PrecomputedBars {
 	value: Bar;

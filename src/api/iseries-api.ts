@@ -1,15 +1,15 @@
-import { BarPrice } from '../model/bar';
-import { Coordinate } from '../model/coordinate';
-import { PriceLineOptions } from '../model/price-line-options';
-import { SeriesMarker } from '../model/series-markers';
-import {
+import type { BarPrice } from '../model/bar';
+import type { Coordinate } from '../model/coordinate';
+import type { PriceLineOptions } from '../model/price-line-options';
+import type { SeriesMarker } from '../model/series-markers';
+import type {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from '../model/series-options';
 
-import { SeriesDataItemTypeMap, Time } from './data-consumer';
-import { IPriceLine } from './iprice-line';
+import type { SeriesDataItemTypeMap, Time } from './data-consumer';
+import type { IPriceLine } from './iprice-line';
 
 /** Interface to be implemented by the object in order to be used as a price formatter */
 export interface IPriceFormatter {

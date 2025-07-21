@@ -1,7 +1,7 @@
 import { ensureDefined } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
 
-import { TickMark, TimePoint } from './time-data';
+import type { TickMark, TimePoint } from './time-data';
 
 function sortByIndexAsc(a: TickMark, b: TickMark): number {
 	return a.index - b.index;

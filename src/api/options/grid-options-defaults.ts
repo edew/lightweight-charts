@@ -1,4 +1,4 @@
-import { GridOptions } from '../../model/grid';
+import type { GridOptions } from '../../model/grid';
 import { LineStyle } from '../../renderers/draw-line';
 
 export const gridOptionsDefaults: GridOptions = {

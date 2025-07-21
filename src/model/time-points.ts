@@ -1,4 +1,4 @@
-import { TimePoint, TimePointIndex, UTCTimestamp } from './time-data';
+import type { TimePoint, TimePointIndex, UTCTimestamp } from './time-data';
 
 /**
  * This is the collection of time points, that allows to store and find the every time point using it's index.

@@ -1,4 +1,4 @@
-import { TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-data';
 
 export type PlotValue = number | null | undefined;
 export interface PlotRow<TimeType, PlotValueTuple extends PlotValue[]> {

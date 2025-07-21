@@ -1,7 +1,7 @@
-import { PricedValue } from '../model/price-scale';
-import { SeriesItemsIndexesRange, TimedValue, TimePointIndex } from '../model/time-data';
+import type { PricedValue } from '../model/price-scale';
+import type { SeriesItemsIndexesRange, TimedValue, TimePointIndex } from '../model/time-data';
 
-import { IPaneRenderer } from './ipane-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 
 const showSpacingMinimalBarWidth = 3;
 const alignToMinimalWidthLimit = 4;

@@ -1,4 +1,4 @@
-import { Nominal } from './nominal';
+import type { Nominal } from './nominal';
 import { isNaN } from './strict-type-checks';
 
 /**

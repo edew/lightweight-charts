@@ -2,7 +2,7 @@ import { makeFont } from '../helpers/make-font';
 
 import { ChartModel } from '../model/chart-model';
 
-import { PriceAxisViewRendererOptions } from './iprice-axis-view-renderer';
+import type { PriceAxisViewRendererOptions } from './iprice-axis-view-renderer';
 
 const enum RendererConstants {
 	BorderSize = 1,

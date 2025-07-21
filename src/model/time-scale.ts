@@ -3,17 +3,17 @@ import { DateTimeFormatter } from '../formatters/date-time-formatter';
 
 import { ensureNotNull } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
-import { ISubscription } from '../helpers/isubscription';
+import type { ISubscription } from '../helpers/isubscription';
 import { clamp } from '../helpers/mathex';
-import { DeepPartial, isInteger, merge } from '../helpers/strict-type-checks';
+import { type DeepPartial, isInteger, merge } from '../helpers/strict-type-checks';
 
 import { BarsRange } from './bars-range';
 import { ChartModel } from './chart-model';
-import { Coordinate } from './coordinate';
+import type { Coordinate } from './coordinate';
 import { FormattedLabelsCache } from './formatted-labels-cache';
-import { LocalizationOptions } from './localization-options';
+import type { LocalizationOptions } from './localization-options';
 import { TickMarks } from './tick-marks';
-import { SeriesItemsIndexesRange, TickMark, TimedValue, TimePoint, TimePointIndex, TimePointsRange, UTCTimestamp } from './time-data';
+import type { SeriesItemsIndexesRange, TickMark, TimedValue, TimePoint, TimePointIndex, TimePointsRange, UTCTimestamp } from './time-data';
 import { TimePoints } from './time-points';
 
 const enum Constants {

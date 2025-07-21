@@ -1,14 +1,14 @@
 import { ensureNotNull } from '../helpers/assertions';
-import { IDestroyable } from '../helpers/idestroyable';
-import { clone, DeepPartial } from '../helpers/strict-type-checks';
+import type { IDestroyable } from '../helpers/idestroyable';
+import { clone, type DeepPartial } from '../helpers/strict-type-checks';
 
 import { ChartModel } from '../model/chart-model';
-import { TimePoint, TimePointIndex, TimePointsRange } from '../model/time-data';
-import { TimeScale, TimeScaleOptions } from '../model/time-scale';
+import type { TimePoint, TimePointIndex, TimePointsRange } from '../model/time-data';
+import { TimeScale, type TimeScaleOptions } from '../model/time-scale';
 
-import { Time } from './data-consumer';
+import type { Time } from './data-consumer';
 import { convertTime } from './data-layer';
-import { ITimeScaleApi, TimeRange } from './itime-scale-api';
+import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 
 const enum Constants {
 	AnimationDurationMs = 1000,
@@ -22,7 +22,7 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 	}
 
 	public destroy(): void {
-		delete this._model;
+		(this._model as unknown as null) = null;
 	}
 
 	public scrollPosition(): number {

@@ -1,4 +1,4 @@
-import { IPaneRenderer } from './ipane-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 
 export class CompositeRenderer implements IPaneRenderer {
 	private _renderers: ReadonlyArray<IPaneRenderer> = [];

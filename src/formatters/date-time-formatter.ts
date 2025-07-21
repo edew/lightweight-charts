@@ -1,6 +1,6 @@
-import { DateFormat } from './date-format';
+import type { DateFormat } from './date-format';
 import { DateFormatter } from './date-formatter';
-import { IFormatter } from './iformatter';
+import type { IFormatter } from './iformatter';
 import { TimeFormatter } from './time-formatter';
 
 export interface DateTimeFormatterParams {

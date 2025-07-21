@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
+import { describe, it, beforeEach } from 'vitest';
 
 import { ensure, ensureNotNull } from '../../src/helpers/assertions';
 import { PlotRow, PlotValue } from '../../src/model/plot-data';
@@ -668,7 +668,7 @@ describe('mergePlotRows', () => {
 		});
 	});
 
-	xdescribe('(perf)', () => {
+	describe('(perf)', () => {
 		function isSorted(array: ReadonlyArray<PlotRow<UTCTimestamp, [PlotValue]>>): boolean {
 			for (let i = 1; i < array.length; ++i) {
 				if (array[i - 1].index > array[i].index) {
@@ -709,7 +709,7 @@ describe('mergePlotRows', () => {
 			// and if it is so - we have get linear complexity (approx.)
 			expect(total2MTime).to.be.greaterThan((total6MTime / 3) - total2MTime * 0.3);
 
-			expect(isSorted(merged6MArray)).to.be.true('Merged array must be sorted');
+			expect(isSorted(merged6MArray)).to.equal(true, 'Merged array must be sorted');
 		});
 	});
 });

@@ -1,4 +1,4 @@
-import { ChartOptionsInternal } from '../../model/chart-model';
+import type { ChartOptionsInternal } from '../../model/chart-model';
 
 import { crosshairOptionsDefaults } from './crosshair-options-defaults';
 import { gridOptionsDefaults } from './grid-options-defaults';

@@ -1,5 +1,5 @@
-import { HorzAlign, VertAlign } from '../renderers/watermark-renderer';
-import { IPaneView } from '../views/pane/ipane-view';
+import type { HorzAlign, VertAlign } from '../renderers/watermark-renderer';
+import type { IPaneView } from '../views/pane/ipane-view';
 import { WatermarkPaneView } from '../views/pane/watermark-pane-view';
 
 import { ChartModel } from './chart-model';

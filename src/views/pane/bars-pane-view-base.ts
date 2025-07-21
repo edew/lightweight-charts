@@ -1,15 +1,15 @@
 import { undefinedIfNull } from '../../helpers/strict-type-checks';
 
-import { BarPrice } from '../../model/bar';
+import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import { Bar, SeriesPlotIndex } from '../../model/series-data';
-import { TimePointIndex } from '../../model/time-data';
+import { type Bar, SeriesPlotIndex } from '../../model/series-data';
+import type { TimePointIndex } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
-import { BarCandlestickItemBase } from '../../renderers/bars-renderer';
+import type { BarCandlestickItemBase } from '../../renderers/bars-renderer';
 
 import { SeriesPaneViewBase } from './series-pane-view-base';
 

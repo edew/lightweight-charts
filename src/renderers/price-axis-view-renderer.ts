@@ -3,7 +3,7 @@ import { resetTransparency } from '../helpers/color';
 
 import { TextWidthCache } from '../model/text-width-cache';
 
-import {
+import type {
 	IPriceAxisViewRenderer,
 	PriceAxisViewRendererCommonData,
 	PriceAxisViewRendererData,

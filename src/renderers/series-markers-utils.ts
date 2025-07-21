@@ -1,7 +1,7 @@
 import { ensureNever } from '../helpers/assertions';
 import { ceiledEven, ceiledOdd } from '../helpers/mathex';
 
-import { SeriesMarkerShape } from '../model/series-markers';
+import type { SeriesMarkerShape } from '../model/series-markers';
 
 const enum Constants {
 	MinShapeSize = 12,

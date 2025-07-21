@@ -1,10 +1,10 @@
-import { IDestroyable } from '../helpers/idestroyable';
-import { DeepPartial } from '../helpers/strict-type-checks';
+import type { IDestroyable } from '../helpers/idestroyable';
+import type { DeepPartial } from '../helpers/strict-type-checks';
 
 import { ChartModel } from '../model/chart-model';
-import { PriceScale, PriceScaleOptions } from '../model/price-scale';
+import { PriceScale, type PriceScaleOptions } from '../model/price-scale';
 
-import { IPriceScaleApi } from './iprice-scale-api';
+import type { IPriceScaleApi } from './iprice-scale-api';
 
 export class PriceScaleApi implements IPriceScaleApi, IDestroyable {
 	private _chartModel: ChartModel;
@@ -14,7 +14,7 @@ export class PriceScaleApi implements IPriceScaleApi, IDestroyable {
 	}
 
 	public destroy(): void {
-		delete this._chartModel;
+		(this._chartModel as unknown as null) = null;
 	}
 
 	public applyOptions(options: DeepPartial<PriceScaleOptions>): void {

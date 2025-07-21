@@ -1,9 +1,9 @@
 import { ensureNotNull } from '../helpers/assertions';
 
-import { PriceMark } from '../model/price-scale';
+import type { PriceMark } from '../model/price-scale';
 
 import { LineStyle, setLineStyle, strokeInPixel } from './draw-line';
-import { IPaneRenderer } from './ipane-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 
 export interface GridMarks {
 	coord: number;

@@ -1,38 +1,38 @@
-import { ChartWidget, MouseEventParamsImpl, MouseEventParamsImplSupplier } from '../gui/chart-widget';
+import { ChartWidget, type MouseEventParamsImpl, type MouseEventParamsImplSupplier } from '../gui/chart-widget';
 
 import { ensureDefined } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
-import { clone, DeepPartial, isBoolean, merge } from '../helpers/strict-type-checks';
+import { clone, type DeepPartial, isBoolean, merge } from '../helpers/strict-type-checks';
 
-import { BarPrice, BarPrices } from '../model/bar';
-import { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
+import type { BarPrice, BarPrices } from '../model/bar';
+import type { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
 import { Series } from '../model/series';
 import {
-	AreaSeriesOptions,
-	AreaSeriesPartialOptions,
-	BarSeriesOptions,
-	BarSeriesPartialOptions,
-	CandlestickSeriesOptions,
-	CandlestickSeriesPartialOptions,
+	type AreaSeriesOptions,
+	type AreaSeriesPartialOptions,
+	type BarSeriesOptions,
+	type BarSeriesPartialOptions,
+	type CandlestickSeriesOptions,
+	type CandlestickSeriesPartialOptions,
 	fillUpDownCandlesticksColors,
-	HistogramSeriesOptions,
-	HistogramSeriesPartialOptions,
-	LineSeriesOptions,
-	LineSeriesPartialOptions,
+	type HistogramSeriesOptions,
+	type HistogramSeriesPartialOptions,
+	type LineSeriesOptions,
+	type LineSeriesPartialOptions,
 	precisionByMinMove,
-	PriceFormat,
-	PriceFormatBuiltIn,
-	SeriesType,
+	type PriceFormat,
+	type PriceFormatBuiltIn,
+	type SeriesType,
 } from '../model/series-options';
-import { TimePointIndex } from '../model/time-data';
+import type { TimePointIndex } from '../model/time-data';
 
 import { CandlestickSeriesApi } from './candlestick-series-api';
-import { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
-import { DataLayer, SeriesUpdatePacket } from './data-layer';
-import { IChartApi, MouseEventHandler, MouseEventParams, TimeRangeChangeEventHandler } from './ichart-api';
-import { IPriceScaleApi } from './iprice-scale-api';
-import { ISeriesApi } from './iseries-api';
-import { ITimeScaleApi, TimeRange } from './itime-scale-api';
+import type { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
+import { DataLayer, type SeriesUpdatePacket } from './data-layer';
+import type { IChartApi, MouseEventHandler, MouseEventParams, TimeRangeChangeEventHandler } from './ichart-api';
+import type { IPriceScaleApi } from './iprice-scale-api';
+import type { ISeriesApi } from './iseries-api';
+import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import {
 	areaStyleDefaults,
@@ -130,7 +130,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._priceScaleApi.destroy();
 		this._timeScaleApi.destroy();
 		this._chartWidget.destroy();
-		delete this._chartWidget;
+		(this._chartWidget as unknown as null) = null;
 		this._seriesMap.forEach((series: Series, api: SeriesApi<SeriesType>) => {
 			api.destroy();
 		});
@@ -140,7 +140,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this._clickedDelegate.destroy();
 		this._crosshairMovedDelegate.destroy();
 		this._dataLayer.destroy();
-		delete this._dataLayer;
+		(this._dataLayer as unknown as null)
 	}
 
 	public resize(width: number, height: number, forceRepaint?: boolean): void {

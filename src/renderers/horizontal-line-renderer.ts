@@ -1,7 +1,7 @@
-import { Coordinate } from '../model/coordinate';
+import type { Coordinate } from '../model/coordinate';
 
-import { drawHorizontalLine, LineStyle, LineWidth, setLineStyle } from './draw-line';
-import { IPaneRenderer } from './ipane-renderer';
+import { drawHorizontalLine, LineStyle, type LineWidth, setLineStyle } from './draw-line';
+import type { IPaneRenderer } from './ipane-renderer';
 
 export interface HorizontalLineRendererData {
 	color: string;

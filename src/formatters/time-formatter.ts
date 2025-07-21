@@ -1,4 +1,4 @@
-import { IFormatter } from './iformatter';
+import type { IFormatter } from './iformatter';
 import { numberToStringWithLeadingZero } from './price-formatter';
 
 export class TimeFormatter implements IFormatter {

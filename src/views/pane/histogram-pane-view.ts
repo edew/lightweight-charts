@@ -1,16 +1,16 @@
 import { ensureNotNull } from '../../helpers/assertions';
 
-import { BarPrice } from '../../model/bar';
+import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
-import { Bar, SeriesPlotIndex } from '../../model/series-data';
-import { TimedValue, TimePointIndex, visibleTimedValues } from '../../model/time-data';
+import { type Bar, SeriesPlotIndex } from '../../model/series-data';
+import { type TimedValue, type TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { HistogramItem, PaneRendererHistogram, PaneRendererHistogramData } from '../../renderers/histogram-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { type HistogramItem, PaneRendererHistogram, type PaneRendererHistogramData } from '../../renderers/histogram-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
 import { SeriesPaneViewBase } from './series-pane-view-base';
 

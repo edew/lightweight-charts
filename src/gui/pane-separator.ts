@@ -1,9 +1,9 @@
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { clamp } from '../helpers/mathex';
 
 import { createPreconfiguredCanvas, getContext2D, Size } from './canvas-utils';
 import { ChartWidget } from './chart-widget';
-import { MouseEventHandler, MouseEventHandlers, TouchMouseEvent } from './mouse-event-handler';
+import { MouseEventHandler, type MouseEventHandlers, type TouchMouseEvent } from './mouse-event-handler';
 import { PaneWidget } from './pane-widget';
 
 export const SEPARATOR_HEIGHT = 1;

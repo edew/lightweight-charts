@@ -1,7 +1,7 @@
-import { BarCoordinates, BarPrices } from '../model/bar';
-import { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
+import type { BarCoordinates, BarPrices } from '../model/bar';
+import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
 
-import { IPaneRenderer } from './ipane-renderer';
+import type { IPaneRenderer } from './ipane-renderer';
 import { optimalBarWidth } from './optimal-bar-width';
 
 export type BarCandlestickItemBase = TimedValue & BarPrices & BarCoordinates;

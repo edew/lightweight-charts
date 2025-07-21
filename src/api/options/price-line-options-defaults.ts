@@ -1,5 +1,5 @@
-import { BarPrice } from '../../model/bar';
-import { PriceLineOptions } from '../../model/price-line-options';
+import type { BarPrice } from '../../model/bar';
+import type { PriceLineOptions } from '../../model/price-line-options';
 import { LineStyle } from '../../renderers/draw-line';
 
 export const priceLineOptionsDefaults: PriceLineOptions = {

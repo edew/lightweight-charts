@@ -1,5 +1,5 @@
-import { drawHorizontalLine, drawVerticalLine, LineStyle, LineWidth, setLineStyle } from './draw-line';
-import { IPaneRenderer } from './ipane-renderer';
+import { drawHorizontalLine, drawVerticalLine, LineStyle, type LineWidth, setLineStyle } from './draw-line';
+import type { IPaneRenderer } from './ipane-renderer';
 
 export interface CrosshairLineStyle {
 	lineStyle: LineStyle;

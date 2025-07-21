@@ -1,8 +1,8 @@
 import { isNumber, isString } from '../helpers/strict-type-checks';
 
 import { Series } from '../model/series';
-import { SeriesType } from '../model/series-options';
-import { BusinessDay, UTCTimestamp } from '../model/time-data';
+import type { SeriesType } from '../model/series-options';
+import type { BusinessDay, UTCTimestamp } from '../model/time-data';
 
 export type Time = UTCTimestamp | BusinessDay | string;
 

@@ -1,5 +1,5 @@
-import { HoveredObject } from '../model/chart-model';
-import { Coordinate } from '../model/coordinate';
+import type { HoveredObject } from '../model/chart-model';
+import type { Coordinate } from '../model/coordinate';
 
 export interface IPaneRenderer {
 	draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void;

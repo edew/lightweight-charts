@@ -2,8 +2,8 @@ import { ensureNotNull } from '../../helpers/assertions';
 import { generateTextColor } from '../../helpers/color';
 
 import { ChartModel } from '../../model/chart-model';
-import { Crosshair, TimeAndCoordinateProvider } from '../../model/crosshair';
-import { TimeAxisViewRenderer, TimeAxisViewRendererData } from '../../renderers/time-axis-view-renderer';
+import { Crosshair, type TimeAndCoordinateProvider } from '../../model/crosshair';
+import { TimeAxisViewRenderer, type TimeAxisViewRendererData } from '../../renderers/time-axis-view-renderer';
 
 import { TimeAxisView } from './time-axis-view';
 

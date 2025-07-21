@@ -1,4 +1,4 @@
-import {
+import type {
 	IPriceAxisViewRenderer,
 	PriceAxisViewRendererOptions,
 } from '../../renderers/iprice-axis-view-renderer';

@@ -1,7 +1,7 @@
-import { DateFormat } from '../formatters/date-format';
+import type { DateFormat } from '../formatters/date-format';
 
-import { PriceFormatterFn } from './price-formatter-fn';
-import { BusinessDay, UTCTimestamp } from './time-data';
+import type { PriceFormatterFn } from './price-formatter-fn';
+import type { BusinessDay, UTCTimestamp } from './time-data';
 
 export type TimeFormatterFn = (time: BusinessDay | UTCTimestamp) => string;
 

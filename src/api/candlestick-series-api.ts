@@ -1,5 +1,5 @@
 import {
-	CandlestickSeriesPartialOptions,
+	type CandlestickSeriesPartialOptions,
 	fillUpDownCandlesticksColors,
 } from '../model/series-options';
 

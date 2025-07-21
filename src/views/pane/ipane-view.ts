@@ -1,5 +1,5 @@
-import { Coordinate } from '../../model/coordinate';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import type { Coordinate } from '../../model/coordinate';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
 export interface IPaneView {
 	renderer(height: number, width: number, addAnchors?: boolean): IPaneRenderer | null;

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
+import { describe, it } from 'vitest';
 
 import { BarData, HistogramData, LineData } from '../../src/api/data-consumer';
 import { convertTime, DataLayer, SeriesUpdatePacket, stringToBusinessDay, TimedData } from '../../src/api/data-layer';

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { describe, it } from 'mocha';
+import { describe, it } from 'vitest';
 
 import { BarsRange } from '../../src/model/bars-range';
 import { Coordinate } from '../../src/model/coordinate';

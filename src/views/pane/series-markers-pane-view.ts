@@ -1,19 +1,19 @@
 import { ensureNever } from '../../helpers/assertions';
 import { isNumber } from '../../helpers/strict-type-checks';
 
-import { AutoScaleMargins } from '../../model/autoscale-info';
-import { BarPrice, BarPrices } from '../../model/bar';
+import type { AutoScaleMargins } from '../../model/autoscale-info';
+import type { BarPrice, BarPrices } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
-import { InternalSeriesMarker, SeriesMarker } from '../../model/series-markers';
-import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
+import type { InternalSeriesMarker, SeriesMarker } from '../../model/series-markers';
+import { type TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import {
-	SeriesMarkerRendererData,
-	SeriesMarkerRendererDataItem,
+	type SeriesMarkerRendererData,
+	type SeriesMarkerRendererDataItem,
 	SeriesMarkersRenderer,
 } from '../../renderers/series-markers-renderer';
 import {
@@ -21,7 +21,7 @@ import {
 	shapeMargin as calculateShapeMargin,
 } from '../../renderers/series-markers-utils';
 
-import { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
+import type { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';
 
 interface Offsets {
 	aboveBar: number;

@@ -1,6 +1,6 @@
-import { Nominal } from '../helpers/nominal';
+import type { Nominal } from '../helpers/nominal';
 
-import { Coordinate } from './coordinate';
+import type { Coordinate } from './coordinate';
 
 export type BarPrice = Nominal<number, 'BarPrice'>;
 

@@ -1,6 +1,7 @@
-import { SeriesItemsIndexesRange } from '../model/time-data';
+import type { SeriesItemsIndexesRange } from '../model/time-data';
 
-import { LinePoint, LineType } from './draw-line';
+import type { LinePoint } from './draw-line';
+import { LineType } from './draw-line';
 
 /**
  * BEWARE: The method must be called after beginPath and before stroke/fill/closePath/etc

@@ -1,8 +1,8 @@
-import { Coordinate } from '../model/coordinate';
-import { SeriesItemsIndexesRange } from '../model/time-data';
+import type { Coordinate } from '../model/coordinate';
+import type { SeriesItemsIndexesRange } from '../model/time-data';
 
-import { LineStyle, LineType, LineWidth, setLineStyle } from './draw-line';
-import { LineItem } from './line-renderer';
+import { LineStyle, LineType, type LineWidth, setLineStyle } from './draw-line';
+import type { LineItem } from './line-renderer';
 import { ScaledRenderer } from './scaled-renderer';
 import { walkLine } from './walk-line';
 

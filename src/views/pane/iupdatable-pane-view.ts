@@ -1,4 +1,4 @@
-import { IPaneView } from './ipane-view';
+import type { IPaneView } from './ipane-view';
 
 export type UpdateType = 'data' | 'other';
 

@@ -1,7 +1,8 @@
-import { PricedValue } from '../model/price-scale';
-import { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
+import type { PricedValue } from '../model/price-scale';
+import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
 
-import { LinePoint, LineStyle, LineType, LineWidth, setLineStyle } from './draw-line';
+import type { LinePoint, LineWidth } from './draw-line';
+import { LineStyle, LineType, setLineStyle } from './draw-line';
 import { ScaledRenderer } from './scaled-renderer';
 import { walkLine } from './walk-line';
 

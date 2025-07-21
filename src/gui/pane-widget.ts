@@ -1,24 +1,24 @@
-import { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
+import type { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
 
 import { ensureNotNull } from '../helpers/assertions';
 import { clearRect, drawScaled } from '../helpers/canvas-helpers';
 import { Delegate } from '../helpers/delegate';
-import { IDestroyable } from '../helpers/idestroyable';
-import { ISubscription } from '../helpers/isubscription';
+import type { IDestroyable } from '../helpers/idestroyable';
+import type { ISubscription } from '../helpers/isubscription';
 
-import { ChartModel, HoveredObject } from '../model/chart-model';
-import { Coordinate } from '../model/coordinate';
-import { IDataSource } from '../model/idata-source';
+import { ChartModel, type HoveredObject } from '../model/chart-model';
+import type { Coordinate } from '../model/coordinate';
+import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
 import { Pane } from '../model/pane';
-import { Point } from '../model/point';
-import { PriceAxisPosition } from '../model/price-scale';
-import { TimePointIndex } from '../model/time-data';
-import { IPaneView } from '../views/pane/ipane-view';
+import type { Point } from '../model/point';
+import type { PriceAxisPosition } from '../model/price-scale';
+import type { TimePointIndex } from '../model/time-data';
+import type { IPaneView } from '../views/pane/ipane-view';
 
 import { createBoundCanvas, getContext2D, Size } from './canvas-utils';
 import { ChartWidget } from './chart-widget';
-import { MouseEventHandler, Position, TouchMouseEvent } from './mouse-event-handler';
+import { MouseEventHandler, type Position, type TouchMouseEvent } from './mouse-event-handler';
 import { PriceAxisWidget } from './price-axis-widget';
 import { isMobile, mobileTouch } from './support-touch';
 

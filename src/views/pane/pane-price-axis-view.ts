@@ -1,11 +1,11 @@
 import { ChartModel } from '../../model/chart-model';
-import { IDataSource } from '../../model/idata-source';
+import type { IDataSource } from '../../model/idata-source';
 import { TextWidthCache } from '../../model/text-width-cache';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { IPriceAxisViewRenderer, PriceAxisViewRendererOptions } from '../../renderers/iprice-axis-view-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
+import type { IPriceAxisViewRenderer, PriceAxisViewRendererOptions } from '../../renderers/iprice-axis-view-renderer';
 
-import { IPriceAxisView } from '../price-axis/iprice-axis-view';
-import { IPaneView } from './ipane-view';
+import type { IPriceAxisView } from '../price-axis/iprice-axis-view';
+import type { IPaneView } from './ipane-view';
 
 class PanePriceAxisViewRenderer implements IPaneRenderer {
 	private _priceAxisViewRenderer: IPriceAxisViewRenderer | null = null;

@@ -1,10 +1,10 @@
-import { IFormatter } from '../formatters/iformatter';
+import type { IFormatter } from '../formatters/iformatter';
 
-import { AutoscaleInfo } from './autoscale-info';
-import { ChartModel } from './chart-model';
+import type { AutoscaleInfo } from './autoscale-info';
+import type { ChartModel } from './chart-model';
 import { DataSource } from './data-source';
-import { FirstValue, IPriceDataSource } from './iprice-data-source';
-import { TimePointIndex } from './time-data';
+import type { FirstValue, IPriceDataSource } from './iprice-data-source';
+import type { TimePointIndex } from './time-data';
 
 export abstract class PriceDataSource extends DataSource implements IPriceDataSource {
 	private readonly _model: ChartModel;

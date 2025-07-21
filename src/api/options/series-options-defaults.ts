@@ -1,11 +1,11 @@
 import {
-	AreaStyleOptions,
-	BarStyleOptions,
-	CandlestickStyleOptions,
-	HistogramStyleOptions,
-	LineStyleOptions,
+	type AreaStyleOptions,
+	type BarStyleOptions,
+	type CandlestickStyleOptions,
+	type HistogramStyleOptions,
+	type LineStyleOptions,
 	PriceLineSource,
-	SeriesOptionsCommon,
+	type SeriesOptionsCommon,
 } from '../../model/series-options';
 import { LineStyle, LineType } from '../../renderers/draw-line';
 

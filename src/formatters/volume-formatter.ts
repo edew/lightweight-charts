@@ -1,4 +1,4 @@
-import { IFormatter } from './iformatter';
+import type { IFormatter } from './iformatter';
 
 export class VolumeFormatter implements IFormatter {
 	private readonly _precision: number;

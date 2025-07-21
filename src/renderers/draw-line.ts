@@ -1,4 +1,4 @@
-import { Coordinate } from '../model/coordinate';
+import type { Coordinate } from '../model/coordinate';
 
 export type LineWidth = 1 | 2 | 3 | 4;
 

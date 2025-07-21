@@ -1,8 +1,8 @@
 import { lowerbound, upperbound } from '../helpers/algorithms';
-import { Nominal } from '../helpers/nominal';
+import type { Nominal } from '../helpers/nominal';
 
 import { BarsRange } from './bars-range';
-import { Coordinate } from './coordinate';
+import type { Coordinate } from './coordinate';
 
 export type UTCTimestamp = Nominal<number, 'UTCTimestamp'>;
 

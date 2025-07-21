@@ -1,9 +1,9 @@
 import { ensureNever } from '../helpers/assertions';
 
-import { HoveredObject } from '../model/chart-model';
-import { Coordinate } from '../model/coordinate';
-import { SeriesMarkerShape } from '../model/series-markers';
-import { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
+import type { HoveredObject } from '../model/chart-model';
+import type { Coordinate } from '../model/coordinate';
+import type { SeriesMarkerShape } from '../model/series-markers';
+import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
 
 import { ScaledRenderer } from './scaled-renderer';
 import { drawArrow, hitTestArrow } from './series-markers-arrow';

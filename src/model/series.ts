@@ -1,45 +1,45 @@
 
-import { IFormatter } from '../formatters/iformatter';
+import type { IFormatter } from '../formatters/iformatter';
 import { PercentageFormatter } from '../formatters/percentage-formatter';
 import { PriceFormatter } from '../formatters/price-formatter';
 import { VolumeFormatter } from '../formatters/volume-formatter';
 
 import { ensureNotNull } from '../helpers/assertions';
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { isInteger, merge } from '../helpers/strict-type-checks';
 
 import { SeriesAreaPaneView } from '../views/pane/area-pane-view';
 import { SeriesBarsPaneView } from '../views/pane/bars-pane-view';
 import { SeriesCandlesticksPaneView } from '../views/pane/candlesticks-pane-view';
 import { SeriesHistogramPaneView } from '../views/pane/histogram-pane-view';
-import { IPaneView } from '../views/pane/ipane-view';
-import { IUpdatablePaneView } from '../views/pane/iupdatable-pane-view';
+import type { IPaneView } from '../views/pane/ipane-view';
+import type { IUpdatablePaneView } from '../views/pane/iupdatable-pane-view';
 import { SeriesLinePaneView } from '../views/pane/line-pane-view';
 import { PanePriceAxisView } from '../views/pane/pane-price-axis-view';
 import { SeriesHorizontalBaseLinePaneView } from '../views/pane/series-horizontal-base-line-pane-view';
 import { SeriesMarkersPaneView } from '../views/pane/series-markers-pane-view';
 import { SeriesPriceLinePaneView } from '../views/pane/series-price-line-pane-view';
-import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
+import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { SeriesPriceAxisView } from '../views/price-axis/series-price-axis-view';
 
-import { AutoscaleInfo } from './autoscale-info';
-import { BarPrice, BarPrices } from './bar';
+import type { AutoscaleInfo } from './autoscale-info';
+import type { BarPrice, BarPrices } from './bar';
 import { ChartModel } from './chart-model';
-import { Coordinate } from './coordinate';
+import type { Coordinate } from './coordinate';
 import { CustomPriceLine } from './custom-price-line';
-import { FirstValue } from './iprice-data-source';
+import type { FirstValue } from './iprice-data-source';
 import { Palette } from './palette';
 import { Pane } from './pane';
-import { PlotRow } from './plot-data';
-import { MinMax, PlotList, PlotRowSearchMode } from './plot-list';
+import type { PlotRow } from './plot-data';
+import { type MinMax, PlotList, PlotRowSearchMode } from './plot-list';
 import { PriceDataSource } from './price-data-source';
-import { PriceLineOptions } from './price-line-options';
+import type { PriceLineOptions } from './price-line-options';
 import { PriceRange } from './price-range';
 import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
-import { Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
-import { InternalSeriesMarker, SeriesMarker } from './series-markers';
-import {
+import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
+import type { InternalSeriesMarker, SeriesMarker } from './series-markers';
+import type {
 	AreaStyleOptions,
 	HistogramStyleOptions,
 	LineStyleOptions,
@@ -47,7 +47,7 @@ import {
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from './series-options';
-import { TimePoint, TimePointIndex } from './time-data';
+import type { TimePoint, TimePointIndex } from './time-data';
 
 export interface LastValueDataResult {
 	noData: boolean;

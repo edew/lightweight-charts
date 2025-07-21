@@ -1,9 +1,9 @@
 import { lowerbound, upperbound } from '../helpers/algorithms';
 import { assert, ensureNotNull } from '../helpers/assertions';
-import { Nominal } from '../helpers/nominal';
+import type { Nominal } from '../helpers/nominal';
 
-import { PlotRow, PlotValue } from '../model/plot-data';
-import { TimePointIndex } from '../model/time-data';
+import type { PlotRow, PlotValue } from '../model/plot-data';
+import type { TimePointIndex } from '../model/time-data';
 
 export const enum PlotRowSearchMode {
 	NearestLeft = -1,

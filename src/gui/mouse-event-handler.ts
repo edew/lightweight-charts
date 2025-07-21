@@ -1,7 +1,20 @@
 import { ensure } from '../helpers/assertions';
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 
 import { mobileTouch } from './support-touch';
+
+/**
+ * The type declares compile-time constants for mouse buttons.
+ * e.button values for MouseEvents.
+ * It's NOT e.buttons (with s)!
+ */
+export const enum MouseEventButton {
+	Left = 0,
+	Middle = 1,
+	Right = 2,
+	Fourth = 3,
+	Fifth = 4,
+}
 
 export type HandlerEventCallback = (event: TouchMouseEvent) => void;
 export type EmptyCallback = () => void;

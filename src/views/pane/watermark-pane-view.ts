@@ -1,10 +1,10 @@
 import { makeFont } from '../../helpers/make-font';
 
 import { Watermark } from '../../model/watermark';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { WatermarkRenderer, WatermarkRendererData } from '../../renderers/watermark-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { WatermarkRenderer, type WatermarkRendererData } from '../../renderers/watermark-renderer';
 
-import { IUpdatablePaneView } from './iupdatable-pane-view';
+import type { IUpdatablePaneView } from './iupdatable-pane-view';
 
 export class WatermarkPaneView implements IUpdatablePaneView {
 	private _source: Watermark;

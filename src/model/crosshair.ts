@@ -1,24 +1,24 @@
 import { ensureNotNull } from '../helpers/assertions';
 import { notNull } from '../helpers/strict-type-checks';
 
-import { LineStyle, LineWidth } from '../renderers/draw-line';
+import { LineStyle, type LineWidth } from '../renderers/draw-line';
 import { CrosshairMarksPaneView } from '../views/pane/crosshair-marks-pane-view';
 import { CrosshairPaneView } from '../views/pane/crosshair-pane-view';
-import { IPaneView } from '../views/pane/ipane-view';
+import type { IPaneView } from '../views/pane/ipane-view';
 import { CrosshairPriceAxisView } from '../views/price-axis/crosshair-price-axis-view';
-import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
+import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { PriceAxisView } from '../views/price-axis/price-axis-view';
 import { CrosshairTimeAxisView } from '../views/time-axis/crosshair-time-axis-view';
 import { TimeAxisView } from '../views/time-axis/time-axis-view';
 
-import { BarPrice } from './bar';
+import type { BarPrice } from './bar';
 import { ChartModel } from './chart-model';
-import { Coordinate } from './coordinate';
+import type { Coordinate } from './coordinate';
 import { DataSource } from './data-source';
 import { Pane } from './pane';
 import { PriceScale } from './price-scale';
 import { Series } from './series';
-import { TimePoint, TimePointIndex } from './time-data';
+import type { TimePoint, TimePointIndex } from './time-data';
 
 export interface CrosshairPriceAndCoordinate {
 	price: number;

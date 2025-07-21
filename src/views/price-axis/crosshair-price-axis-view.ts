@@ -1,8 +1,8 @@
 import { generateTextColor } from '../../helpers/color';
 
-import { Crosshair, CrosshairPriceAndCoordinate } from '../../model/crosshair';
+import { Crosshair, type CrosshairPriceAndCoordinate } from '../../model/crosshair';
 import { PriceScale } from '../../model/price-scale';
-import { PriceAxisViewRendererCommonData, PriceAxisViewRendererData } from '../../renderers/iprice-axis-view-renderer';
+import type { PriceAxisViewRendererCommonData, PriceAxisViewRendererData } from '../../renderers/iprice-axis-view-renderer';
 
 import { PriceAxisView } from './price-axis-view';
 

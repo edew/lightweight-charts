@@ -1,17 +1,17 @@
 import { ensureDefined, ensureNotNull } from '../helpers/assertions';
 import { drawScaled } from '../helpers/canvas-helpers';
 import { Delegate } from '../helpers/delegate';
-import { IDestroyable } from '../helpers/idestroyable';
-import { ISubscription } from '../helpers/isubscription';
-import { DeepPartial } from '../helpers/strict-type-checks';
+import type { IDestroyable } from '../helpers/idestroyable';
+import type { ISubscription } from '../helpers/isubscription';
+import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { BarPrice, BarPrices } from '../model/bar';
-import { ChartModel, ChartOptionsInternal } from '../model/chart-model';
-import { Coordinate } from '../model/coordinate';
+import type { BarPrice, BarPrices } from '../model/bar';
+import { ChartModel, type ChartOptionsInternal } from '../model/chart-model';
+import type { Coordinate } from '../model/coordinate';
 import { InvalidateMask, InvalidationLevel } from '../model/invalidate-mask';
-import { Point } from '../model/point';
+import type { Point } from '../model/point';
 import { Series } from '../model/series';
-import { TimePoint, TimePointIndex } from '../model/time-data';
+import type { TimePoint, TimePointIndex } from '../model/time-data';
 
 import { createPreconfiguredCanvas, getCanvasDevicePixelRatio, getContext2D, Size } from './canvas-utils';
 import { PaneSeparator, SEPARATOR_HEIGHT } from './pane-separator';
@@ -154,7 +154,7 @@ export class ChartWidget implements IDestroyable {
 		this._crosshairMoved.destroy();
 		this._clicked.destroy();
 
-		delete this._element;
+		(this._element as unknown as null) = null;
 	}
 
 	public resize(width: number, height: number, forceRepaint: boolean = false): void {

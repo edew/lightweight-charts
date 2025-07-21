@@ -1,13 +1,13 @@
 import { undefinedIfNull } from '../../helpers/strict-type-checks';
 
-import { BarPrice } from '../../model/bar';
+import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
-import { PricedValue, PriceScale } from '../../model/price-scale';
+import type { Coordinate } from '../../model/coordinate';
+import { type PricedValue, PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import { Bar } from '../../model/series-data';
-import { TimedValue, TimePointIndex } from '../../model/time-data';
+import type { Bar } from '../../model/series-data';
+import type { TimedValue, TimePointIndex } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
 
 import { SeriesPaneViewBase } from './series-pane-view-base';

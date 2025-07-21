@@ -1,7 +1,7 @@
 import { CustomPriceLine } from '../model/custom-price-line';
-import { PriceLineOptions } from '../model/price-line-options';
+import type { PriceLineOptions } from '../model/price-line-options';
 
-import { IPriceLine } from './iprice-line';
+import type { IPriceLine } from './iprice-line';
 
 export class PriceLine implements IPriceLine {
 	private readonly _priceLine: CustomPriceLine;

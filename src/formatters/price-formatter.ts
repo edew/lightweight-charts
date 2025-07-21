@@ -1,6 +1,6 @@
 import { isInteger, isNumber } from '../helpers/strict-type-checks';
 
-import { IFormatter } from './iformatter';
+import type { IFormatter } from './iformatter';
 
 export const formatterOptions = {
 	decimalSign: '.',

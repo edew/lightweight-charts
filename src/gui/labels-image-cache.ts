@@ -2,7 +2,7 @@ import { createPreconfiguredCanvas, getCanvasDevicePixelRatio, getContext2D, Siz
 
 import { ensureDefined } from '../helpers/assertions';
 import { drawScaled } from '../helpers/canvas-helpers';
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { makeFont } from '../helpers/make-font';
 import { ceiledEven } from '../helpers/mathex';
 
@@ -33,7 +33,7 @@ export class LabelsImageCache implements IDestroyable {
 	}
 
 	public destroy(): void {
-		delete this._textWidthCache;
+		(this._textWidthCache as unknown as null) = null;
 		this._keys = [];
 		this._hash.clear();
 	}

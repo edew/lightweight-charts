@@ -1,24 +1,24 @@
-import { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
+import type { Binding as CanvasCoordinateSpaceBinding } from 'fancy-canvas/coordinate-space';
 
 import { ensureNotNull } from '../helpers/assertions';
 import { clearRect, drawScaled } from '../helpers/canvas-helpers';
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { makeFont } from '../helpers/make-font';
 
-import { Coordinate } from '../model/coordinate';
-import { IDataSource } from '../model/idata-source';
+import type { Coordinate } from '../model/coordinate';
+import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
-import { LayoutOptions } from '../model/layout-options';
-import { PriceScalePosition } from '../model/pane';
+import type { LayoutOptions } from '../model/layout-options';
+import type { PriceScalePosition } from '../model/pane';
 import { PriceScale } from '../model/price-scale';
 import { TextWidthCache } from '../model/text-width-cache';
-import { PriceAxisViewRendererOptions } from '../renderers/iprice-axis-view-renderer';
+import type { PriceAxisViewRendererOptions } from '../renderers/iprice-axis-view-renderer';
 import { PriceAxisRendererOptionsProvider } from '../renderers/price-axis-renderer-options-provider';
-import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
+import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 
 import { createBoundCanvas, getContext2D, Size } from './canvas-utils';
 import { LabelsImageCache } from './labels-image-cache';
-import { MouseEventHandler, MouseEventHandlers, TouchMouseEvent } from './mouse-event-handler';
+import { MouseEventHandler, type MouseEventHandlers, type TouchMouseEvent } from './mouse-event-handler';
 import { PaneWidget } from './pane-widget';
 
 export type PriceAxisWidgetSide = Exclude<PriceScalePosition, 'overlay'>;

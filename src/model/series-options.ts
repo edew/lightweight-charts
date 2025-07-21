@@ -1,9 +1,9 @@
-import { DeepPartial } from '../helpers/strict-type-checks';
+import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { LineStyle, LineType, LineWidth } from '../renderers/draw-line';
+import { LineStyle, LineType, type LineWidth } from '../renderers/draw-line';
 
-import { PriceFormatterFn } from './price-formatter-fn';
-import { PriceScaleMargins } from './price-scale';
+import type { PriceFormatterFn } from './price-formatter-fn';
+import type { PriceScaleMargins } from './price-scale';
 
 /** Structure describing a drawing style of the candlestick chart  */
 export interface CandlestickStyleOptions {

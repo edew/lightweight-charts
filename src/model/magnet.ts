@@ -1,12 +1,12 @@
 import { ensure } from '../helpers/assertions';
 
-import { Coordinate } from './coordinate';
-import { CrosshairMode, CrosshairOptions } from './crosshair';
-import { IDataSource } from './idata-source';
+import type { Coordinate } from './coordinate';
+import { CrosshairMode, type CrosshairOptions } from './crosshair';
+import type { IDataSource } from './idata-source';
 import { Pane } from './pane';
 import { Series } from './series';
 import { SeriesPlotIndex } from './series-data';
-import { TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-data';
 
 export class Magnet {
 	private readonly _options: CrosshairOptions;

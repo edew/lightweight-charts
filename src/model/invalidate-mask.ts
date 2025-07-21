@@ -1,4 +1,4 @@
-import { TimePointsRange } from '../model/time-data';
+import type { TimePointsRange } from '../model/time-data';
 
 export const enum InvalidationLevel {
 	None = 0,

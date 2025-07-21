@@ -1,4 +1,4 @@
-import { TimeScaleOptions } from '../../model/time-scale';
+import type { TimeScaleOptions } from '../../model/time-scale';
 
 export const timeScaleOptionsDefaults: TimeScaleOptions = {
 	rightOffset: 0,

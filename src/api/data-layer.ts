@@ -5,20 +5,20 @@ import { ensureDefined, ensureNotNull } from '../helpers/assertions';
 import { isString } from '../helpers/strict-type-checks';
 
 import { Palette } from '../model/palette';
-import { PlotRow, PlotValue } from '../model/plot-data';
+import type { PlotRow, PlotValue } from '../model/plot-data';
 import { Series } from '../model/series';
-import { Bar } from '../model/series-data';
-import { SeriesType } from '../model/series-options';
-import { BusinessDay, TimePoint, TimePointIndex, UTCTimestamp } from '../model/time-data';
+import type { Bar } from '../model/series-data';
+import type { SeriesType } from '../model/series-options';
+import type { BusinessDay, TimePoint, TimePointIndex, UTCTimestamp } from '../model/time-data';
 
 import {
-	BarData,
-	HistogramData,
+	type BarData,
+	type HistogramData,
 	isBusinessDay,
 	isUTCTimestamp,
-	LineData,
-	SeriesDataItemTypeMap,
-	Time,
+	type LineData,
+	type SeriesDataItemTypeMap,
+	type Time,
 } from './data-consumer';
 
 export interface TickMarkPacket {

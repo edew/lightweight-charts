@@ -1,10 +1,10 @@
 import { ensureNotNull } from '../../helpers/assertions';
 
 import { Crosshair } from '../../model/crosshair';
-import { CrosshairRenderer, CrosshairRendererData } from '../../renderers/crosshair-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { CrosshairRenderer, type CrosshairRendererData } from '../../renderers/crosshair-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
-import { IPaneView } from './ipane-view';
+import type { IPaneView } from './ipane-view';
 
 export class CrosshairPaneView implements IPaneView {
 	private _invalidated: boolean = true;

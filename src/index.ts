@@ -1,22 +1,24 @@
 /// <reference types="_build-time-constants" />
 
-export { LineStyle, LineType, LineWidth } from './renderers/draw-line';
+export type { LineStyle, LineType, LineWidth } from './renderers/draw-line';
 
-export { BarPrice } from './model/bar';
+export type { BarPrice } from './model/bar';
 export { CrosshairMode } from './model/crosshair';
 export { PriceScaleMode } from './model/price-scale';
 export { PriceLineSource } from './model/series-options';
-export { UTCTimestamp } from './model/time-data';
+export type { UTCTimestamp } from './model/time-data';
 
-export {
+export type {
 	BarData,
 	HistogramData,
-	isBusinessDay,
-	isUTCTimestamp,
 	LineData,
 } from './api/data-consumer';
-export { IChartApi, MouseEventParams } from './api/ichart-api';
-export { ISeriesApi } from './api/iseries-api';
+export {
+	isBusinessDay,
+	isUTCTimestamp,
+} from './api/data-consumer';
+export type { IChartApi, MouseEventParams } from './api/ichart-api';
+export type { ISeriesApi } from './api/iseries-api';
 
 export { createChart } from './api/create-chart';
 

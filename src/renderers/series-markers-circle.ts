@@ -1,4 +1,4 @@
-import { Coordinate } from '../model/coordinate';
+import type { Coordinate } from '../model/coordinate';
 
 import { shapeSize } from './series-markers-utils';
 

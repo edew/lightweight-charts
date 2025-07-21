@@ -1,19 +1,19 @@
-import { IFormatter } from '../formatters/iformatter';
+import type { IFormatter } from '../formatters/iformatter';
 import { PercentageFormatter } from '../formatters/percentage-formatter';
 import { PriceFormatter } from '../formatters/price-formatter';
 
 import { ensureDefined, ensureNotNull } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
-import { ISubscription } from '../helpers/isubscription';
-import { DeepPartial, merge } from '../helpers/strict-type-checks';
+import type { ISubscription } from '../helpers/isubscription';
+import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
-import { BarCoordinates, BarPrice, BarPrices } from './bar';
+import type { BarCoordinates, BarPrice, BarPrices } from './bar';
 import { BarsRange } from './bars-range';
-import { Coordinate } from './coordinate';
-import { IDataSource } from './idata-source';
-import { FirstValue, IPriceDataSource } from './iprice-data-source';
-import { LayoutOptions } from './layout-options';
-import { LocalizationOptions } from './localization-options';
+import type { Coordinate } from './coordinate';
+import type { IDataSource } from './idata-source';
+import type { FirstValue, IPriceDataSource } from './iprice-data-source';
+import type { LayoutOptions } from './layout-options';
+import type { LocalizationOptions } from './localization-options';
 import { PriceDataSource } from './price-data-source';
 import { PriceRange } from './price-range';
 import {
@@ -32,7 +32,7 @@ import {
 import { PriceTickMarkBuilder } from './price-tick-mark-builder';
 import { Series } from './series';
 import { sortSources } from './sort-sources';
-import { SeriesItemsIndexesRange } from './time-data';
+import type { SeriesItemsIndexesRange } from './time-data';
 
 /**
  * Enum of possible price scale modes

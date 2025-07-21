@@ -1,6 +1,6 @@
 import { LineStyle } from '../renderers/draw-line';
 import { GridPaneView } from '../views/pane/grid-pane-view';
-import { IPaneView } from '../views/pane/ipane-view';
+import type { IPaneView } from '../views/pane/ipane-view';
 
 import { Pane } from './pane';
 

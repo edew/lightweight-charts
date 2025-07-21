@@ -1,9 +1,9 @@
 import { generateTextColor } from '../../helpers/color';
 
 import { ChartModel } from '../../model/chart-model';
-import { LastValueDataResultWithData, Series } from '../../model/series';
+import { type LastValueDataResultWithData, Series } from '../../model/series';
 import { PriceAxisLastValueMode } from '../../model/series-options';
-import { PriceAxisViewRendererCommonData, PriceAxisViewRendererData } from '../../renderers/iprice-axis-view-renderer';
+import type { PriceAxisViewRendererCommonData, PriceAxisViewRendererData } from '../../renderers/iprice-axis-view-renderer';
 
 import { PriceAxisView } from './price-axis-view';
 

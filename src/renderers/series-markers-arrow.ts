@@ -1,6 +1,6 @@
 import { ceiledOdd } from '../helpers/mathex';
 
-import { Coordinate } from '../model/coordinate';
+import type { Coordinate } from '../model/coordinate';
 
 import { hitTestSquare } from './series-markers-square';
 import { shapeSize } from './series-markers-utils';

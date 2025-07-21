@@ -2,7 +2,7 @@ import { generateTextColor } from '../../helpers/color';
 
 import { CustomPriceLine } from '../../model/custom-price-line';
 import { Series } from '../../model/series';
-import {
+import type {
 	PriceAxisViewRendererCommonData,
 	PriceAxisViewRendererData,
 } from '../../renderers/iprice-axis-view-renderer';

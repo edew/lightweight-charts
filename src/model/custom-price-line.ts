@@ -1,12 +1,12 @@
 import { merge } from '../helpers/strict-type-checks';
 
 import { CustomPriceLinePaneView } from '../views/pane/custom-price-line-pane-view';
-import { IPaneView } from '../views/pane/ipane-view';
+import type { IPaneView } from '../views/pane/ipane-view';
 import { CustomPriceLinePriceAxisView } from '../views/price-axis/custom-price-line-price-axis-view';
-import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
+import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 
-import { Coordinate } from './coordinate';
-import { PriceLineOptions } from './price-line-options';
+import type { Coordinate } from './coordinate';
+import type { PriceLineOptions } from './price-line-options';
 import { Series } from './series';
 
 export class CustomPriceLine {

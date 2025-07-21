@@ -1,9 +1,9 @@
-import { IPaneView } from '../views/pane/ipane-view';
-import { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
+import type { IPaneView } from '../views/pane/ipane-view';
+import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { TimeAxisView } from '../views/time-axis/time-axis-view';
 
-import { Pane } from './pane';
-import { PriceScale } from './price-scale';
+import type { Pane } from './pane';
+import type { PriceScale } from './price-scale';
 
 export interface IDataSource {
 	zorder(): number | null;

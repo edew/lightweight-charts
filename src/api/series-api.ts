@@ -1,21 +1,21 @@
-import { IDestroyable } from '../helpers/idestroyable';
+import type { IDestroyable } from '../helpers/idestroyable';
 import { clone, merge } from '../helpers/strict-type-checks';
 
-import { BarPrice } from '../model/bar';
-import { Coordinate } from '../model/coordinate';
-import { PriceLineOptions } from '../model/price-line-options';
+import type { BarPrice } from '../model/bar';
+import type { Coordinate } from '../model/coordinate';
+import type { PriceLineOptions } from '../model/price-line-options';
 import { Series } from '../model/series';
-import { SeriesMarker } from '../model/series-markers';
-import {
+import type { SeriesMarker } from '../model/series-markers';
+import type {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from '../model/series-options';
 
-import { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
+import type { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
 import { convertTime } from './data-layer';
-import { IPriceLine } from './iprice-line';
-import { IPriceFormatter, ISeriesApi } from './iseries-api';
+import type { IPriceLine } from './iprice-line';
+import type { IPriceFormatter, ISeriesApi } from './iseries-api';
 import { priceLineOptionsDefaults } from './options/price-line-options-defaults';
 import { PriceLine } from './price-line-api';
 
@@ -29,8 +29,8 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 	}
 
 	public destroy(): void {
-		delete this._series;
-		delete this._dataUpdatesConsumer;
+		(this._series as unknown as null) = null;
+		(this._dataUpdatesConsumer as unknown as null) = null;
 	}
 
 	public priceFormatter(): IPriceFormatter {

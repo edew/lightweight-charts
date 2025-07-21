@@ -1,29 +1,29 @@
 import { assert, ensureNotNull } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
-import { IDestroyable } from '../helpers/idestroyable';
-import { ISubscription } from '../helpers/isubscription';
-import { DeepPartial, merge } from '../helpers/strict-type-checks';
+import type { IDestroyable } from '../helpers/idestroyable';
+import type { ISubscription } from '../helpers/isubscription';
+import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
-import { PriceAxisViewRendererOptions } from '../renderers/iprice-axis-view-renderer';
+import type { PriceAxisViewRendererOptions } from '../renderers/iprice-axis-view-renderer';
 import { PriceAxisRendererOptionsProvider } from '../renderers/price-axis-renderer-options-provider';
 
-import { Coordinate } from './coordinate';
-import { Crosshair, CrosshairOptions } from './crosshair';
-import { Grid, GridOptions } from './grid';
-import { IDataSource } from './idata-source';
+import type { Coordinate } from './coordinate';
+import { Crosshair, type CrosshairOptions } from './crosshair';
+import { Grid, type GridOptions } from './grid';
+import type { IDataSource } from './idata-source';
 import { InvalidateMask, InvalidationLevel } from './invalidate-mask';
-import { IPriceDataSource } from './iprice-data-source';
-import { LayoutOptions } from './layout-options';
-import { LocalizationOptions } from './localization-options';
+import type { IPriceDataSource } from './iprice-data-source';
+import type { LayoutOptions } from './layout-options';
+import type { LocalizationOptions } from './localization-options';
 import { Magnet } from './magnet';
 import { DEFAULT_STRETCH_FACTOR, Pane } from './pane';
-import { Point } from './point';
-import { PriceScale, PriceScaleOptions } from './price-scale';
+import type { Point } from './point';
+import { PriceScale, type PriceScaleOptions } from './price-scale';
 import { Series } from './series';
-import { SeriesOptionsMap, SeriesType } from './series-options';
-import { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-data';
-import { TimeScale, TimeScaleOptions } from './time-scale';
-import { Watermark, WatermarkOptions } from './watermark';
+import type { SeriesOptionsMap, SeriesType } from './series-options';
+import type { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-data';
+import { TimeScale, type TimeScaleOptions } from './time-scale';
+import { Watermark, type WatermarkOptions } from './watermark';
 
 export interface HandleScrollOptions {
 	mouseWheel: boolean;

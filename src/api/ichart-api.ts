@@ -1,10 +1,10 @@
-import { DeepPartial } from '../helpers/strict-type-checks';
+import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { BarPrice, BarPrices } from '../model/bar';
-import { ChartOptions } from '../model/chart-model';
-import { Point } from '../model/point';
-import { SeriesMarker } from '../model/series-markers';
-import {
+import type { BarPrice, BarPrices } from '../model/bar';
+import type { ChartOptions } from '../model/chart-model';
+import type { Point } from '../model/point';
+import type { SeriesMarker } from '../model/series-markers';
+import type {
 	AreaSeriesPartialOptions,
 	BarSeriesPartialOptions,
 	CandlestickSeriesPartialOptions,
@@ -12,12 +12,12 @@ import {
 	LineSeriesPartialOptions,
 	SeriesType,
 } from '../model/series-options';
-import { BusinessDay, UTCTimestamp } from '../model/time-data';
+import type { BusinessDay, UTCTimestamp } from '../model/time-data';
 
-import { Time } from './data-consumer';
-import { IPriceScaleApi } from './iprice-scale-api';
-import { ISeriesApi } from './iseries-api';
-import { ITimeScaleApi, TimeRange } from './itime-scale-api';
+import type { Time } from './data-consumer';
+import type { IPriceScaleApi } from './iprice-scale-api';
+import type { ISeriesApi } from './iseries-api';
+import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 
 export interface MouseEventParams {
 	time?: UTCTimestamp | BusinessDay;

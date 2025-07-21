@@ -1,11 +1,11 @@
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { Coordinate } from '../../model/coordinate';
 import { Series } from '../../model/series';
 import { LineStyle } from '../../renderers/draw-line';
-import { HorizontalLineRenderer, HorizontalLineRendererData } from '../../renderers/horizontal-line-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { HorizontalLineRenderer, type HorizontalLineRendererData } from '../../renderers/horizontal-line-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
-import { IPaneView } from './ipane-view';
+import type { IPaneView } from './ipane-view';
 
 export abstract class SeriesHorizontalLinePaneView implements IPaneView {
 	protected readonly _lineRendererData: HorizontalLineRendererData = {

@@ -1,7 +1,7 @@
-import { BarPrice } from './bar';
-import { PlotRow, PlotValue } from './plot-data';
-import { EnumeratingFunction, PlotFunctionMap, PlotList, PlotRowSearchMode } from './plot-list';
-import { TimePoint, TimePointIndex } from './time-data';
+import type { BarPrice } from './bar';
+import type { PlotRow, PlotValue } from './plot-data';
+import { type EnumeratingFunction, type PlotFunctionMap, PlotList, PlotRowSearchMode } from './plot-list';
+import type { TimePoint, TimePointIndex } from './time-data';
 
 export interface Bar {
 	time: TimePoint;

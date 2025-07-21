@@ -1,5 +1,5 @@
-import { DateFormat, DateFormatFn, dateFormatFunctions } from './date-format';
-import { IFormatter } from './iformatter';
+import { type DateFormat, type DateFormatFn, dateFormatFunctions } from './date-format';
+import type { IFormatter } from './iformatter';
 
 export class DateFormatter implements IFormatter {
 	private readonly _locale: string;

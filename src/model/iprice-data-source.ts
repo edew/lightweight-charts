@@ -1,11 +1,11 @@
 // NOTE: this type definition file is incomplete. Feel free to define other entities from companion JS
 
-import { IFormatter } from '../formatters/iformatter';
+import type { IFormatter } from '../formatters/iformatter';
 
-import { AutoscaleInfo } from './autoscale-info';
+import type { AutoscaleInfo } from './autoscale-info';
 import { ChartModel } from './chart-model';
-import { IDataSource } from './idata-source';
-import { TimePoint, TimePointIndex } from './time-data';
+import type { IDataSource } from './idata-source';
+import type { TimePoint, TimePointIndex } from './time-data';
 
 export interface FirstValue {
 	value: number;

@@ -1,14 +1,14 @@
 import { ChartModel } from '../../model/chart-model';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import { Bar } from '../../model/series-data';
-import { TimePointIndex } from '../../model/time-data';
+import type { Bar } from '../../model/series-data';
+import type { TimePointIndex } from '../../model/time-data';
 import {
-	CandlestickItem,
+	type CandlestickItem,
 	PaneRendererCandlesticks,
-	PaneRendererCandlesticksData,
+	type PaneRendererCandlesticksData,
 } from '../../renderers/candlesticks-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
 import { BarsPaneViewBase } from './bars-pane-view-base';
 

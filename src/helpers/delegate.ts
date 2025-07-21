@@ -1,4 +1,4 @@
-import { Callback, ISubscription } from './isubscription';
+import type { Callback, ISubscription } from './isubscription';
 
 interface Listener<T1, T2> {
 	callback: Callback<T1, T2>;

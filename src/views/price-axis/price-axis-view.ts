@@ -1,6 +1,6 @@
 import { generateTextColor } from '../../helpers/color';
 
-import {
+import type {
 	IPriceAxisViewRenderer,
 	IPriceAxisViewRendererConstructor,
 	PriceAxisViewRendererCommonData,
@@ -9,7 +9,7 @@ import {
 } from '../../renderers/iprice-axis-view-renderer';
 import { PriceAxisViewRenderer } from '../../renderers/price-axis-view-renderer';
 
-import { IPriceAxisView } from './iprice-axis-view';
+import type { IPriceAxisView } from './iprice-axis-view';
 
 export abstract class PriceAxisView implements IPriceAxisView {
 	private readonly _commonRendererData: PriceAxisViewRendererCommonData = {

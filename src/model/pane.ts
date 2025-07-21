@@ -1,14 +1,14 @@
 import { assert, ensureNotNull } from '../helpers/assertions';
 import { Delegate } from '../helpers/delegate';
-import { IDestroyable } from '../helpers/idestroyable';
-import { ISubscription } from '../helpers/isubscription';
+import type { IDestroyable } from '../helpers/idestroyable';
+import type { ISubscription } from '../helpers/isubscription';
 import { clone } from '../helpers/strict-type-checks';
 
 import { ChartModel } from './chart-model';
-import { IDataSource } from './idata-source';
-import { IPriceDataSource } from './iprice-data-source';
+import type { IDataSource } from './idata-source';
+import type { IPriceDataSource } from './iprice-data-source';
 import { PriceDataSource } from './price-data-source';
-import { PriceScale, PriceScaleMode, PriceScaleState } from './price-scale';
+import { PriceScale, PriceScaleMode, type PriceScaleState } from './price-scale';
 import { Series } from './series';
 import { sortSources } from './sort-sources';
 import { TimeScale } from './time-scale';

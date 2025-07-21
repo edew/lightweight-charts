@@ -1,12 +1,12 @@
-import { BarPrice } from '../../model/bar';
+import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
-import { Coordinate } from '../../model/coordinate';
+import type { Coordinate } from '../../model/coordinate';
 import { Series } from '../../model/series';
-import { TimePointIndex } from '../../model/time-data';
-import { PaneRendererArea, PaneRendererAreaData } from '../../renderers/area-renderer';
+import type { TimePointIndex } from '../../model/time-data';
+import { PaneRendererArea, type PaneRendererAreaData } from '../../renderers/area-renderer';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
-import { IPaneRenderer } from '../../renderers/ipane-renderer';
-import { LineItem, PaneRendererLine } from '../../renderers/line-renderer';
+import type { IPaneRenderer } from '../../renderers/ipane-renderer';
+import { type LineItem, PaneRendererLine } from '../../renderers/line-renderer';
 
 import { LinePaneViewBase } from './line-pane-view-base';
 
