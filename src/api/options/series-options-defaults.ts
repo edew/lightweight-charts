@@ -1,6 +1,5 @@
 import {
 	type AreaStyleOptions,
-	type BarStyleOptions,
 	type CandlestickStyleOptions,
 	type HistogramStyleOptions,
 	type LineStyleOptions,
@@ -20,13 +19,6 @@ export const candlestickStyleDefaults: CandlestickStyleOptions = {
 	wickColor: '#737375',
 	wickUpColor: '#26a69a',
 	wickDownColor: '#ef5350',
-};
-
-export const barStyleDefaults: BarStyleOptions = {
-	upColor: '#26a69a',
-	downColor: '#ef5350',
-	openVisible: true,
-	thinBars: true,
 };
 
 export const lineStyleDefaults: LineStyleOptions = {

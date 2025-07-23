@@ -5,7 +5,6 @@ import type { ChartOptions } from '../model/chart-model';
 import type { Point } from '../model/point';
 import type {
 	AreaSeriesPartialOptions,
-	BarSeriesPartialOptions,
 	CandlestickSeriesPartialOptions,
 	HistogramSeriesPartialOptions,
 	LineSeriesPartialOptions,
@@ -50,13 +49,6 @@ export interface IChartApi {
 	 * @returns an interface of the created series
 	 */
 	addAreaSeries(areaOptions?: AreaSeriesPartialOptions): ISeriesApi<'Area'>;
-
-	/**
-	 * Creates a bar series with specified parameters
-	 * @param barOptions - customization parameters of the series being created
-	 * @returns an interface of the created series
-	 */
-	addBarSeries(barOptions?: BarSeriesPartialOptions): ISeriesApi<'Bar'>;
 
 	/**
 	 * Creates a candlestick series with specified parameters

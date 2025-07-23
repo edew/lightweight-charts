@@ -1,12 +1,12 @@
 import { strokeRectInnerWithFill } from '../helpers/canvas-helpers';
 
-import type { SeriesItemsIndexesRange } from '../model/time-data';
+import type {SeriesItemsIndexesRange, TimedValue} from '../model/time-data';
+import type { BarCoordinates, BarPrices } from '../model/bar';
 
-import type { BarCandlestickItemBase } from './bars-renderer';
 import type { IPaneRenderer } from './ipane-renderer';
 import { optimalCandlestickWidth } from './optimal-bar-width';
 
-export interface CandlestickItem extends BarCandlestickItemBase {
+export interface CandlestickItem extends TimedValue, BarPrices, BarCoordinates {
 	color: string;
 	borderColor: string;
 	wickColor: string;

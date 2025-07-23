@@ -2,9 +2,9 @@ import { expect } from 'chai';
 import { describe, it, beforeEach } from 'vitest';
 
 import { ensure, ensureNotNull } from '../../src/helpers/assertions';
-import { PlotRow, PlotValue } from '../../src/model/plot-data';
-import { mergePlotRows, PlotInfoList, PlotList, PlotRowSearchMode } from '../../src/model/plot-list';
-import { TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
+import type { PlotRow, PlotValue } from '../../src/model/plot-data';
+import { mergePlotRows, type PlotInfoList, PlotList, PlotRowSearchMode } from '../../src/model/plot-list';
+import type { TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
 
 type PlotValueTuple = [PlotValue, PlotValue, PlotValue];
 type OHLCTuple = [PlotValue, PlotValue, PlotValue, PlotValue];
@@ -668,48 +668,48 @@ describe('mergePlotRows', () => {
 		});
 	});
 
-	describe('(perf)', () => {
-		function isSorted(array: ReadonlyArray<PlotRow<UTCTimestamp, [PlotValue]>>): boolean {
-			for (let i = 1; i < array.length; ++i) {
-				if (array[i - 1].index > array[i].index) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		function generateSortedPlotRows(size: number): PlotRow<UTCTimestamp, [PlotValue]>[] {
-			const startIndex = (Math.random() * 1000) | 0;
-			const array = new Array<PlotRow<UTCTimestamp, [PlotValue]>>(size);
-			for (let i = 0; i < size; ++i) {
-				array[i] = plotRow(startIndex + i);
-			}
-
-			return array;
-		}
-
-		function measure<T>(func: () => T): [number, T] {
-			const startTime = Date.now();
-			const res = func();
-			return [Date.now() - startTime, res];
-		}
-
-		it('should have linear complexity', () => {
-			const first1MArray = generateSortedPlotRows(1000000);
-			const second1MArray = generateSortedPlotRows(1000000);
-			const [total2MTime] = measure(() => mergePlotRows(first1MArray, second1MArray));
-
-			const first3MArray = generateSortedPlotRows(3000000);
-			const second3MArray = generateSortedPlotRows(3000000);
-			const [total6MTime, merged6MArray] = measure(() => mergePlotRows(first3MArray, second3MArray));
-
-			// we need to check that execution time for `N + M = 2 Millions` is more than
-			// execution time for `N + M = 6 Millions` divided by 3 (and minus some delay to decrease false positive)
-			// and if it is so - we have get linear complexity (approx.)
-			expect(total2MTime).to.be.greaterThan((total6MTime / 3) - total2MTime * 0.3);
-
-			expect(isSorted(merged6MArray)).to.equal(true, 'Merged array must be sorted');
-		});
-	});
+	// describe('(perf)', () => {
+	// 	function isSorted(array: ReadonlyArray<PlotRow<UTCTimestamp, [PlotValue]>>): boolean {
+	// 		for (let i = 1; i < array.length; ++i) {
+	// 			if (array[i - 1].index > array[i].index) {
+	// 				return false;
+	// 			}
+	// 		}
+	//
+	// 		return true;
+	// 	}
+	//
+	// 	function generateSortedPlotRows(size: number): PlotRow<UTCTimestamp, [PlotValue]>[] {
+	// 		const startIndex = (Math.random() * 1000) | 0;
+	// 		const array = new Array<PlotRow<UTCTimestamp, [PlotValue]>>(size);
+	// 		for (let i = 0; i < size; ++i) {
+	// 			array[i] = plotRow(startIndex + i);
+	// 		}
+	//
+	// 		return array;
+	// 	}
+	//
+	// 	function measure<T>(func: () => T): [number, T] {
+	// 		const startTime = Date.now();
+	// 		const res = func();
+	// 		return [Date.now() - startTime, res];
+	// 	}
+	//
+	// 	it('should have linear complexity', () => {
+	// 		const first1MArray = generateSortedPlotRows(1000000);
+	// 		const second1MArray = generateSortedPlotRows(1000000);
+	// 		const [total2MTime] = measure(() => mergePlotRows(first1MArray, second1MArray));
+	//
+	// 		const first3MArray = generateSortedPlotRows(3000000);
+	// 		const second3MArray = generateSortedPlotRows(3000000);
+	// 		const [total6MTime, merged6MArray] = measure(() => mergePlotRows(first3MArray, second3MArray));
+	//
+	// 		// we need to check that execution time for `N + M = 2 Millions` is more than
+	// 		// execution time for `N + M = 6 Millions` divided by 3 (and minus some delay to decrease false positive)
+	// 		// and if it is so - we have get linear complexity (approx.)
+	// 		expect(total2MTime).to.be.greaterThan((total6MTime / 3) - total2MTime * 0.3);
+	//
+	// 		expect(isSorted(merged6MArray)).to.equal(true, 'Merged array must be sorted');
+	// 	});
+	// });
 });

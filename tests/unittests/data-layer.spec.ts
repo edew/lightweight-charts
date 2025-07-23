@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
-import { BarData, HistogramData, LineData } from '../../src/api/data-consumer';
-import { convertTime, DataLayer, SeriesUpdatePacket, stringToBusinessDay, TimedData } from '../../src/api/data-layer';
+import type { BarData, HistogramData, LineData } from '../../src/api/data-consumer';
+import { convertTime, DataLayer, type SeriesUpdatePacket, stringToBusinessDay, type TimedData } from '../../src/api/data-layer';
 import { ensureDefined } from '../../src/helpers/assertions';
 import { Palette } from '../../src/model/palette';
 import { Series } from '../../src/model/series';
 import { SeriesData, SeriesPlotIndex } from '../../src/model/series-data';
-import { SeriesType } from '../../src/model/series-options';
-import { BusinessDay, TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
+import type { SeriesType } from '../../src/model/series-options';
+import type { BusinessDay, TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
 
 // TODO: add tests for marks spans
 
@@ -375,7 +375,7 @@ describe('DataLayer', () => {
 	});
 
 	it('should ignore "value" fields on OHLC-based series update', () => {
-		const ohlcBasedTypes: SeriesType[] = ['Bar', 'Candlestick'];
+		const ohlcBasedTypes: SeriesType[] = ['Candlestick'];
 
 		for (const seriesType of ohlcBasedTypes) {
 			const dataLayer = new DataLayer();

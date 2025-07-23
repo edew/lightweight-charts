@@ -37,6 +37,7 @@
     "fancy-canvas": "0.2.1"
   },
   "devDependencies": {
+    "@types/chai": "^5.2.2",
     "@types/node": "^24.5.2",
     "chai": "~5.2.1",
     "typescript": "~5.8.3",

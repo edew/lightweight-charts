@@ -9,7 +9,6 @@ import type { IDestroyable } from '../helpers/idestroyable';
 import { isInteger, merge } from '../helpers/strict-type-checks';
 
 import { SeriesAreaPaneView } from '../views/pane/area-pane-view';
-import { SeriesBarsPaneView } from '../views/pane/bars-pane-view';
 import { SeriesCandlesticksPaneView } from '../views/pane/candlesticks-pane-view';
 import { SeriesHistogramPaneView } from '../views/pane/histogram-pane-view';
 import type { IPaneView } from '../views/pane/ipane-view';
@@ -329,7 +328,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		if (prices === null) {
 			return null;
 		}
-		if (this._seriesType === 'Bar' || this._seriesType === 'Candlestick') {
+		if (this._seriesType === 'Candlestick') {
 			return {
 				open: prices.value[SeriesPlotIndex.Open] as BarPrice,
 				high: prices.value[SeriesPlotIndex.High] as BarPrice,
@@ -503,11 +502,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 	private _recreatePaneViews(): void {
 		switch (this._seriesType) {
-			case 'Bar': {
-				this._paneView = new SeriesBarsPaneView(this as Series<'Bar'>, this.model());
-				break;
-			}
-
 			case 'Candlestick': {
 				this._paneView = new SeriesCandlesticksPaneView(this as Series<'Candlestick'>, this.model());
 				break;

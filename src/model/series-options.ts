@@ -47,13 +47,6 @@ export function fillUpDownCandlesticksColors(options: Partial<CandlestickStyleOp
 	}
 }
 
-export interface BarStyleOptions {
-	upColor: string;
-	downColor: string;
-	openVisible: boolean;
-	thinBars: boolean;
-}
-
 export interface LineStyleOptions {
 	color: string;
 	lineStyle: LineStyle;
@@ -216,12 +209,6 @@ export type AreaSeriesOptions = SeriesOptions<AreaStyleOptions>;
 export type AreaSeriesPartialOptions = SeriesPartialOptions<AreaStyleOptions>;
 
 /**
- * Structure describing bar series options.
- */
-export type BarSeriesOptions = SeriesOptions<BarStyleOptions>;
-export type BarSeriesPartialOptions = SeriesPartialOptions<BarStyleOptions>;
-
-/**
  * Structure describing candlesticks series options.
  */
 export type CandlestickSeriesOptions = SeriesOptions<CandlestickStyleOptions>;
@@ -240,7 +227,6 @@ export type LineSeriesOptions = SeriesOptions<LineStyleOptions>;
 export type LineSeriesPartialOptions = SeriesPartialOptions<LineStyleOptions>;
 
 export interface SeriesOptionsMap {
-	Bar: BarSeriesOptions;
 	Candlestick: CandlestickSeriesOptions;
 	Area: AreaSeriesOptions;
 	Line: LineSeriesOptions;
@@ -248,7 +234,6 @@ export interface SeriesOptionsMap {
 }
 
 export interface SeriesPartialOptionsMap {
-	Bar: BarSeriesPartialOptions;
 	Candlestick: CandlestickSeriesPartialOptions;
 	Area: AreaSeriesPartialOptions;
 	Line: LineSeriesPartialOptions;

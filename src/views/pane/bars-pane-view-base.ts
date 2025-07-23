@@ -1,19 +1,17 @@
 import { undefinedIfNull } from '../../helpers/strict-type-checks';
 
-import type { BarPrice } from '../../model/bar';
+import type { BarCoordinates, BarPrice, BarPrices } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
 import type { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
 import { type Bar, SeriesPlotIndex } from '../../model/series-data';
-import type { TimePointIndex } from '../../model/time-data';
+import type { TimePointIndex, TimedValue } from '../../model/time-data';
 import { TimeScale } from '../../model/time-scale';
-import type { BarCandlestickItemBase } from '../../renderers/bars-renderer';
-
 import { SeriesPaneViewBase } from './series-pane-view-base';
 
-export abstract class BarsPaneViewBase<TSeriesType extends 'Bar' | 'Candlestick', ItemType extends BarCandlestickItemBase> extends SeriesPaneViewBase<TSeriesType, ItemType> {
+export abstract class BarsPaneViewBase<TSeriesType extends 'Candlestick', ItemType extends TimedValue & BarPrices & BarCoordinates> extends SeriesPaneViewBase<TSeriesType, ItemType> {
 	public constructor(series: Series<TSeriesType>, model: ChartModel) {
 		super(series, model, false);
 	}
@@ -25,7 +23,7 @@ export abstract class BarsPaneViewBase<TSeriesType extends 'Bar' | 'Candlestick'
 
 	protected abstract _createRawItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): ItemType;
 
-	protected _createDefaultItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): BarCandlestickItemBase {
+	protected _createDefaultItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): TimedValue & BarPrices & BarCoordinates {
 		return {
 			time: time,
 			open: bar.value[SeriesPlotIndex.Open] as BarPrice,

@@ -5,7 +5,6 @@ import { Series } from './series';
 import { type Bar, SeriesPlotIndex } from './series-data';
 import type {
 	AreaStyleOptions,
-	BarStyleOptions,
 	CandlestickStyleOptions,
 	HistogramStyleOptions,
 	LineStyleOptions,
@@ -49,9 +48,6 @@ export class SeriesBarColorer {
 			case 'Area':
 				return this._areaStyle(seriesOptions as AreaStyleOptions);
 
-			case 'Bar':
-				return this._barStyle(seriesOptions as BarStyleOptions, barIndex, precomputedBars);
-
 			case 'Candlestick':
 				return this._candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
 
@@ -60,23 +56,6 @@ export class SeriesBarColorer {
 		}
 
 		throw new Error('Unknown chart style');
-	}
-
-	private _barStyle(barStyle: BarStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
-		const result = { ...emptyResult };
-
-		const upColor = barStyle.upColor;
-		const downColor = barStyle.downColor;
-		const borderUpColor = upColor;
-		const borderDownColor = downColor;
-
-		const currentBar = ensureNotNull(this._findBar(barIndex, precomputedBars));
-		const isUp = ensure(currentBar.value[SeriesPlotIndex.Open]) <= ensure(currentBar.value[SeriesPlotIndex.Close]);
-
-		result.barColor = isUp ? upColor : downColor;
-		result.barBorderColor = isUp ? borderUpColor : borderDownColor;
-
-		return result;
 	}
 
 	private _candleStyle(candlestickStyle: CandlestickStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
