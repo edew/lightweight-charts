@@ -4,7 +4,6 @@ import { PlotList } from './plot-list';
 import { Series } from './series';
 import { type Bar, SeriesPlotIndex } from './series-data';
 import type {
-	AreaStyleOptions,
 	CandlestickStyleOptions,
 	HistogramStyleOptions,
 	LineStyleOptions,
@@ -45,9 +44,6 @@ export class SeriesBarColorer {
 			case 'Line':
 				return this._lineStyle(seriesOptions as LineStyleOptions);
 
-			case 'Area':
-				return this._areaStyle(seriesOptions as AreaStyleOptions);
-
 			case 'Candlestick':
 				return this._candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
 
@@ -77,13 +73,6 @@ export class SeriesBarColorer {
 		result.barWickColor = isUp ? wickUpColor : wickDownColor;
 
 		return result;
-	}
-
-	private _areaStyle(areaStyle: AreaStyleOptions): BarColorerStyle {
-		return {
-			...emptyResult,
-			barColor: areaStyle.lineColor,
-		};
 	}
 
 	private _lineStyle(lineStyle: LineStyleOptions): BarColorerStyle {

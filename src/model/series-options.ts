@@ -56,17 +56,6 @@ export interface LineStyleOptions {
 	crosshairMarkerRadius: number;
 }
 
-export interface AreaStyleOptions {
-	topColor: string;
-	bottomColor: string;
-	lineColor: string;
-	lineStyle: LineStyle;
-	lineWidth: LineWidth;
-	lineType: LineType;
-	crosshairMarkerVisible: boolean;
-	crosshairMarkerRadius: number;
-}
-
 export interface HistogramStyleOptions {
 	color: string;
 	base: number;
@@ -203,12 +192,6 @@ export type SeriesPartialOptions<T> =
 	| (DeepPartial<T & SeriesOptionsCommon> & NonOverlaySeriesSpecificOptions);
 
 /**
- * Structure describing area series options.
- */
-export type AreaSeriesOptions = SeriesOptions<AreaStyleOptions>;
-export type AreaSeriesPartialOptions = SeriesPartialOptions<AreaStyleOptions>;
-
-/**
  * Structure describing candlesticks series options.
  */
 export type CandlestickSeriesOptions = SeriesOptions<CandlestickStyleOptions>;
@@ -228,14 +211,12 @@ export type LineSeriesPartialOptions = SeriesPartialOptions<LineStyleOptions>;
 
 export interface SeriesOptionsMap {
 	Candlestick: CandlestickSeriesOptions;
-	Area: AreaSeriesOptions;
 	Line: LineSeriesOptions;
 	Histogram: HistogramSeriesOptions;
 }
 
 export interface SeriesPartialOptionsMap {
 	Candlestick: CandlestickSeriesPartialOptions;
-	Area: AreaSeriesPartialOptions;
 	Line: LineSeriesPartialOptions;
 	Histogram: HistogramSeriesPartialOptions;
 }

@@ -8,8 +8,6 @@ import type { BarPrice, BarPrices } from '../model/bar';
 import type { ChartOptions, ChartOptionsInternal } from '../model/chart-model';
 import { Series } from '../model/series';
 import {
-	type AreaSeriesOptions,
-	type AreaSeriesPartialOptions,
 	type CandlestickSeriesOptions,
 	type CandlestickSeriesPartialOptions,
 	fillUpDownCandlesticksColors,
@@ -33,7 +31,6 @@ import type { ISeriesApi } from './iseries-api';
 import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import {
-	areaStyleDefaults,
 	candlestickStyleDefaults,
 	histogramStyleDefaults,
 	lineStyleDefaults,
@@ -142,19 +139,6 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 
 	public resize(width: number, height: number, forceRepaint?: boolean): void {
 		this._chartWidget.resize(width, height, forceRepaint);
-	}
-
-	public addAreaSeries(options: AreaSeriesPartialOptions = {}): ISeriesApi<'Area'> {
-		patchPriceFormat(options.priceFormat);
-
-		const strictOptions = merge(clone(seriesOptionsDefaults), areaStyleDefaults, options) as AreaSeriesOptions;
-		const series = this._chartWidget.model().createSeries('Area', strictOptions);
-
-		const res = new SeriesApi<'Area'>(series, this);
-		this._seriesMap.set(res, series);
-		this._seriesMapReversed.set(series, res);
-
-		return res;
 	}
 
 	public addCandlestickSeries(options: CandlestickSeriesPartialOptions = {}): ISeriesApi<'Candlestick'> {

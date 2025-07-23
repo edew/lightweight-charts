@@ -4,7 +4,6 @@ import type { BarPrice, BarPrices } from '../model/bar';
 import type { ChartOptions } from '../model/chart-model';
 import type { Point } from '../model/point';
 import type {
-	AreaSeriesPartialOptions,
 	CandlestickSeriesPartialOptions,
 	HistogramSeriesPartialOptions,
 	LineSeriesPartialOptions,
@@ -42,13 +41,6 @@ export interface IChartApi {
 	 * @param forceRepaint - true to initiate resize immediately. One could need this to get screenshot immediately after resize
 	 */
 	resize(width: number, height: number, forceRepaint?: boolean): void;
-
-	/**
-	 * Creates an area series with specified parameters
-	 * @param areaOptions - customization parameters of the series being created
-	 * @returns an interface of the created series
-	 */
-	addAreaSeries(areaOptions?: AreaSeriesPartialOptions): ISeriesApi<'Area'>;
 
 	/**
 	 * Creates a candlestick series with specified parameters

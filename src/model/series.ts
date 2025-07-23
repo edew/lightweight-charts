@@ -8,7 +8,6 @@ import { ensureNotNull } from '../helpers/assertions';
 import type { IDestroyable } from '../helpers/idestroyable';
 import { isInteger, merge } from '../helpers/strict-type-checks';
 
-import { SeriesAreaPaneView } from '../views/pane/area-pane-view';
 import { SeriesCandlesticksPaneView } from '../views/pane/candlesticks-pane-view';
 import { SeriesHistogramPaneView } from '../views/pane/histogram-pane-view';
 import type { IPaneView } from '../views/pane/ipane-view';
@@ -37,7 +36,6 @@ import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
 import type {
-	AreaStyleOptions,
 	HistogramStyleOptions,
 	LineStyleOptions,
 	SeriesOptionsMap,
@@ -374,7 +372,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		// TODO: refactor this
 		// series data is strongly hardcoded to keep bars
-		const priceSource = (this._seriesType === 'Line' || this._seriesType === 'Area' || this._seriesType === 'Histogram') ? 'close' : null;
+		const priceSource = (this._seriesType === 'Line' || this._seriesType === 'Histogram') ? 'close' : null;
 		let barsMinMax: MinMax | null;
 		if (priceSource !== null) {
 			barsMinMax = this.data().bars().minMaxOnRangeCached(startTimePoint, endTimePoint, [{ name: priceSource, offset: 0 }]);
@@ -436,8 +434,8 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public markerDataAtIndex(index: TimePointIndex): MarkerData | null {
-		const getValue = (this._seriesType === 'Line' || this._seriesType === 'Area') &&
-			(this._options as (LineStyleOptions | AreaStyleOptions)).crosshairMarkerVisible;
+		const getValue = (this._seriesType === 'Line') &&
+			(this._options as LineStyleOptions).crosshairMarkerVisible;
 
 		if (!getValue) {
 			return null;
@@ -458,8 +456,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private _markerRadius(): number {
 		switch (this._seriesType) {
 			case 'Line':
-			case 'Area':
-				return (this._options as (LineStyleOptions | AreaStyleOptions)).crosshairMarkerRadius;
+				return (this._options as LineStyleOptions).crosshairMarkerRadius;
 		}
 
 		return 0;
@@ -509,11 +506,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 			case 'Line': {
 				this._paneView = new SeriesLinePaneView(this as Series<'Line'>, this.model());
-				break;
-			}
-
-			case 'Area': {
-				this._paneView = new SeriesAreaPaneView(this as Series<'Area'>, this.model());
 				break;
 			}
 
