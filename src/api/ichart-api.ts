@@ -5,7 +5,6 @@ import type { ChartOptions } from '../model/chart-model';
 import type { Point } from '../model/point';
 import type {
 	CandlestickSeriesPartialOptions,
-	HistogramSeriesPartialOptions,
 	LineSeriesPartialOptions,
 	SeriesType,
 } from '../model/series-options';
@@ -48,13 +47,6 @@ export interface IChartApi {
 	 * @returns an interface of the created series
 	 */
 	addCandlestickSeries(candlestickOptions?: CandlestickSeriesPartialOptions): ISeriesApi<'Candlestick'>;
-
-	/**
-	 * Creates a histogram series with specified parameters
-	 * @param histogramOptions - customization parameters of the series being created
-	 * @returns an interface of the created series
-	 */
-	addHistogramSeries(histogramOptions?: HistogramSeriesPartialOptions): ISeriesApi<'Histogram'>;
 
 	/**
 	 * Creates a line series with specified parameters

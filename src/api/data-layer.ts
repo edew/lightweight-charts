@@ -5,7 +5,7 @@ import { ensureDefined, ensureNotNull } from '../helpers/assertions';
 import { isString } from '../helpers/strict-type-checks';
 
 import { Palette } from '../model/palette';
-import type { PlotRow, PlotValue } from '../model/plot-data';
+import type { PlotRow } from '../model/plot-data';
 import { Series } from '../model/series';
 import type { Bar } from '../model/series-data';
 import type { SeriesType } from '../model/series-options';
@@ -13,7 +13,6 @@ import type { BusinessDay, TimePoint, TimePointIndex, UTCTimestamp } from '../mo
 
 import {
 	type BarData,
-	type HistogramData,
 	isBusinessDay,
 	isUTCTimestamp,
 	type LineData,
@@ -98,16 +97,10 @@ export function convertTime(time: Time): TimePoint {
 
 }
 
-function getLineBasedSeriesItemValue(item: LineData | HistogramData, palette: Palette): Bar['value'] {
+function getLineBasedSeriesItemValue(item: LineData, palette: Palette): Bar['value'] {
 	const val = item.value;
-	// default value
-	let color: PlotValue = null;
-	if ('color' in item) {
-		if (item.color !== undefined) {
-			color = palette.addColor(item.color);
-		}
-	}
-	return [val, val, val, val, color];
+
+	return [val, val, val, val, null];
 }
 
 function getOHLCBasedSeriesItemValue(bar: BarData, palette: Palette): Bar['value'] {
@@ -125,9 +118,6 @@ type TimedSeriesItemValueFn = (item: TimedData, palette: Palette) => Bar['value'
 
 const seriesItemValueFnMap: SeriesItemValueFnMap = {
 	Candlestick: getOHLCBasedSeriesItemValue,
-	Bar: getOHLCBasedSeriesItemValue,
-	Area: getLineBasedSeriesItemValue,
-	Histogram: getLineBasedSeriesItemValue,
 	Line: getLineBasedSeriesItemValue,
 };
 

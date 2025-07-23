@@ -10,7 +10,6 @@ export type { UTCTimestamp } from './model/time-data';
 
 export type {
 	BarData,
-	HistogramData,
 	LineData,
 } from './api/data-consumer';
 export {

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
-import type { BarData, HistogramData, LineData } from '../../src/api/data-consumer';
+import type { BarData, LineData } from '../../src/api/data-consumer';
 import { convertTime, DataLayer, type SeriesUpdatePacket, stringToBusinessDay, type TimedData } from '../../src/api/data-layer';
 import { ensureDefined } from '../../src/helpers/assertions';
 import { Palette } from '../../src/model/palette';
@@ -23,7 +23,7 @@ function createSeriesMock<T extends SeriesType = 'Line'>(seriesType?: T): Series
 }
 
 // just for tests
-function dataItemAt(time: TimedData['time']): BarData & LineData & HistogramData {
+function dataItemAt(time: TimedData['time']): BarData & LineData {
 	return { time, value: 0, open: 0, high: 0, low: 0, close: 0 };
 }
 

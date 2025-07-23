@@ -5,7 +5,6 @@ import { Series } from './series';
 import { type Bar, SeriesPlotIndex } from './series-data';
 import type {
 	CandlestickStyleOptions,
-	HistogramStyleOptions,
 	LineStyleOptions,
 } from './series-options';
 import type { TimePoint, TimePointIndex } from './time-data';
@@ -46,9 +45,6 @@ export class SeriesBarColorer {
 
 			case 'Candlestick':
 				return this._candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
-
-			case 'Histogram':
-				return this._histogramStyle(seriesOptions as HistogramStyleOptions, barIndex, precomputedBars);
 		}
 
 		throw new Error('Unknown chart style');
@@ -80,19 +76,6 @@ export class SeriesBarColorer {
 			...emptyResult,
 			barColor: lineStyle.color,
 		};
-	}
-
-	private _histogramStyle(histogramStyle: HistogramStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
-		const result = { ...emptyResult };
-		const currentBar = ensureNotNull(this._findBar(barIndex, precomputedBars));
-		const colorValue = currentBar.value[SeriesPlotIndex.Color];
-		if (colorValue != null) {
-			const palette = ensureNotNull(this._series.palette());
-			result.barColor = palette.colorByIndex(colorValue);
-		} else {
-			result.barColor = histogramStyle.color;
-		}
-		return result;
 	}
 
 	private _getSeriesBars(): PlotList<TimePoint, Bar['value']> {

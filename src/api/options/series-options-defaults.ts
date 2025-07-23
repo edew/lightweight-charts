@@ -1,6 +1,5 @@
 import {
 	type CandlestickStyleOptions,
-	type HistogramStyleOptions,
 	type LineStyleOptions,
 	PriceLineSource,
 	type SeriesOptionsCommon,
@@ -27,12 +26,6 @@ export const lineStyleDefaults: LineStyleOptions = {
 	lineType: LineType.Simple,
 	crosshairMarkerVisible: true,
 	crosshairMarkerRadius: 4,
-};
-
-
-export const histogramStyleDefaults: HistogramStyleOptions = {
-	color: '#26a69a',
-	base: 0,
 };
 
 export const seriesOptionsDefaults: SeriesOptionsCommon = {

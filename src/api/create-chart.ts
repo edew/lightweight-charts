@@ -24,7 +24,7 @@ export {
 } from './data-consumer';
 export type {
 	BarData,
-	HistogramData, LineData
+	LineData
 } from './data-consumer';
 
 /**

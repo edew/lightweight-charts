@@ -9,7 +9,6 @@ import type { IDestroyable } from '../helpers/idestroyable';
 import { isInteger, merge } from '../helpers/strict-type-checks';
 
 import { SeriesCandlesticksPaneView } from '../views/pane/candlesticks-pane-view';
-import { SeriesHistogramPaneView } from '../views/pane/histogram-pane-view';
 import type { IPaneView } from '../views/pane/ipane-view';
 import type { IUpdatablePaneView } from '../views/pane/iupdatable-pane-view';
 import { SeriesLinePaneView } from '../views/pane/line-pane-view';
@@ -36,7 +35,6 @@ import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
 import type {
-	HistogramStyleOptions,
 	LineStyleOptions,
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -76,11 +74,8 @@ export interface MarkerData {
 }
 
 export interface SeriesDataAtTypeMap {
-	Bar: BarPrices;
 	Candlestick: BarPrices;
-	Area: BarPrice;
 	Line: BarPrice;
-	Histogram: BarPrice;
 }
 
 export class Series<T extends SeriesType = SeriesType> extends PriceDataSource implements IDestroyable {
@@ -372,7 +367,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		// TODO: refactor this
 		// series data is strongly hardcoded to keep bars
-		const priceSource = (this._seriesType === 'Line' || this._seriesType === 'Histogram') ? 'close' : null;
+		const priceSource = (this._seriesType === 'Line') ? 'close' : null;
 		let barsMinMax: MinMax | null;
 		if (priceSource !== null) {
 			barsMinMax = this.data().bars().minMaxOnRangeCached(startTimePoint, endTimePoint, [{ name: priceSource, offset: 0 }]);
@@ -381,12 +376,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		}
 
 		let range = barsMinMax !== null ? new PriceRange(barsMinMax.min, barsMinMax.max) : null;
-
-		if (this.seriesType() === 'Histogram') {
-			const base = (this._options as HistogramStyleOptions).base;
-			const rangeWithBase = new PriceRange(base, base);
-			range = range !== null ? range.merge(rangeWithBase) : rangeWithBase;
-		}
 
 		return {
 			priceRange: range,
@@ -506,11 +495,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 			case 'Line': {
 				this._paneView = new SeriesLinePaneView(this as Series<'Line'>, this.model());
-				break;
-			}
-
-			case 'Histogram': {
-				this._paneView = new SeriesHistogramPaneView(this as Series<'Histogram'>, this.model());
 				break;
 			}
 

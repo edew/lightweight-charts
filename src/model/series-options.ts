@@ -56,11 +56,6 @@ export interface LineStyleOptions {
 	crosshairMarkerRadius: number;
 }
 
-export interface HistogramStyleOptions {
-	color: string;
-	base: number;
-}
-
 /**
  * Structure describing series values formatting
  * Fields precision and minMove allow wide customization of formatting
@@ -198,12 +193,6 @@ export type CandlestickSeriesOptions = SeriesOptions<CandlestickStyleOptions>;
 export type CandlestickSeriesPartialOptions = SeriesPartialOptions<CandlestickStyleOptions>;
 
 /**
- * Structure describing histogram series options.
- */
-export type HistogramSeriesOptions = SeriesOptions<HistogramStyleOptions>;
-export type HistogramSeriesPartialOptions = SeriesPartialOptions<HistogramStyleOptions>;
-
-/**
  * Structure describing line series options.
  */
 export type LineSeriesOptions = SeriesOptions<LineStyleOptions>;
@@ -212,13 +201,11 @@ export type LineSeriesPartialOptions = SeriesPartialOptions<LineStyleOptions>;
 export interface SeriesOptionsMap {
 	Candlestick: CandlestickSeriesOptions;
 	Line: LineSeriesOptions;
-	Histogram: HistogramSeriesOptions;
 }
 
 export interface SeriesPartialOptionsMap {
 	Candlestick: CandlestickSeriesPartialOptions;
 	Line: LineSeriesPartialOptions;
-	Histogram: HistogramSeriesPartialOptions;
 }
 
 export type SeriesType = keyof SeriesOptionsMap;

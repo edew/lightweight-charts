@@ -26,16 +26,6 @@ export interface LineData {
 	value: number;
 }
 
-/**
- * Structure describing a single item of data for histogram series
- */
-export interface HistogramData extends LineData {
-	/**
-	 * Optional color value for certain data item. If missed, color from HistogramSeriesOptions is used
-	 */
-	color?: string;
-}
-
 export interface BarData {
 	time: Time;
 
@@ -46,11 +36,8 @@ export interface BarData {
 }
 
 export interface SeriesDataItemTypeMap {
-	Bar: BarData;
 	Candlestick: BarData;
-	Area: LineData;
 	Line: LineData;
-	Histogram: HistogramData;
 }
 
 export interface DataUpdatesConsumer<TSeriesType extends SeriesType> {

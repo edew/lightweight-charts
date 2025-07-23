@@ -11,8 +11,6 @@ import {
 	type CandlestickSeriesOptions,
 	type CandlestickSeriesPartialOptions,
 	fillUpDownCandlesticksColors,
-	type HistogramSeriesOptions,
-	type HistogramSeriesPartialOptions,
 	type LineSeriesOptions,
 	type LineSeriesPartialOptions,
 	precisionByMinMove,
@@ -32,7 +30,6 @@ import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 import { chartOptionsDefaults } from './options/chart-options-defaults';
 import {
 	candlestickStyleDefaults,
-	histogramStyleDefaults,
 	lineStyleDefaults,
 	seriesOptionsDefaults,
 } from './options/series-options-defaults';
@@ -149,19 +146,6 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		const series = this._chartWidget.model().createSeries('Candlestick', strictOptions);
 
 		const res = new CandlestickSeriesApi(series, this);
-		this._seriesMap.set(res, series);
-		this._seriesMapReversed.set(series, res);
-
-		return res;
-	}
-
-	public addHistogramSeries(options: HistogramSeriesPartialOptions = {}): ISeriesApi<'Histogram'> {
-		patchPriceFormat(options.priceFormat);
-
-		const strictOptions = merge(clone(seriesOptionsDefaults), histogramStyleDefaults, options) as HistogramSeriesOptions;
-		const series = this._chartWidget.model().createSeries('Histogram', strictOptions);
-
-		const res = new SeriesApi<'Histogram'>(series, this);
 		this._seriesMap.set(res, series);
 		this._seriesMapReversed.set(series, res);
 
