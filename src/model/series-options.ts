@@ -119,17 +119,6 @@ export const enum PriceAxisLastValueMode {
 	LastValueAccordingToScale,
 }
 
-export const enum PriceLineSource {
-	/**
-	 * The last bar data
-	 */
-	LastBar,
-	/**
-	 * The last visible bar in viewport
-	 */
-	LastVisible,
-}
-
 export interface OverlaySeriesSpecificOptions {
 	overlay: true;
 	scaleMargins?: PriceScaleMargins;
@@ -154,18 +143,6 @@ export interface SeriesOptionsCommon {
 	 */
 	seriesLastValueMode?: PriceAxisLastValueMode;
 
-	/** Visibility of the price line. Price line is a horizontal line indicating the last price of the series */
-	priceLineVisible: boolean;
-	/**
-	 *  Enum of possible modes of priceLine source
-	 */
-	priceLineSource: PriceLineSource;
-	/** Width of the price line. Ignored if priceLineVisible is false */
-	priceLineWidth: LineWidth;
-	/** Color of the price line. Ignored if priceLineVisible is false */
-	priceLineColor: string;
-	/** Price line style. Suitable for percentage and indexedTo100 scales */
-	priceLineStyle: LineStyle;
 	/** Formatting settings associated with the series */
 	priceFormat: PriceFormat;
 	/** Visibility of base line. Suitable for percentage and indexedTo100 scales */

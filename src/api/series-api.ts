@@ -1,9 +1,8 @@
 import type { IDestroyable } from '../helpers/idestroyable';
-import { clone, merge } from '../helpers/strict-type-checks';
+import { clone } from '../helpers/strict-type-checks';
 
 import type { BarPrice } from '../model/bar';
 import type { Coordinate } from '../model/coordinate';
-import type { PriceLineOptions } from '../model/price-line-options';
 import { Series } from '../model/series';
 import type {
 	SeriesOptionsMap,
@@ -12,10 +11,7 @@ import type {
 } from '../model/series-options';
 
 import type { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
-import type { IPriceLine } from './iprice-line';
 import type { IPriceFormatter, ISeriesApi } from './iseries-api';
-import { priceLineOptionsDefaults } from './options/price-line-options-defaults';
-import { PriceLine } from './price-line-api';
 
 export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSeriesType>, IDestroyable {
 	protected _series: Series<TSeriesType>;
@@ -70,15 +66,5 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 
 	public options(): Readonly<SeriesOptionsMap[TSeriesType]> {
 		return clone(this._series.options());
-	}
-
-	public createPriceLine(options: PriceLineOptions): IPriceLine {
-		const strictOptions = merge(clone(priceLineOptionsDefaults), options) as PriceLineOptions;
-		const priceLine = this._series.createPriceLine(strictOptions);
-		return new PriceLine(priceLine);
-	}
-
-	public removePriceLine(line: IPriceLine): void {
-		this._series.removePriceLine((line as PriceLine).priceLine());
 	}
 }

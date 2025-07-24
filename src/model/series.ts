@@ -14,7 +14,6 @@ import type { IUpdatablePaneView } from '../views/pane/iupdatable-pane-view';
 import { SeriesLinePaneView } from '../views/pane/line-pane-view';
 import { PanePriceAxisView } from '../views/pane/pane-price-axis-view';
 import { SeriesHorizontalBaseLinePaneView } from '../views/pane/series-horizontal-base-line-pane-view';
-import { SeriesPriceLinePaneView } from '../views/pane/series-price-line-pane-view';
 import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { SeriesPriceAxisView } from '../views/price-axis/series-price-axis-view';
 
@@ -22,14 +21,12 @@ import type { AutoscaleInfo } from './autoscale-info';
 import type { BarPrice, BarPrices } from './bar';
 import { ChartModel } from './chart-model';
 import type { Coordinate } from './coordinate';
-import { CustomPriceLine } from './custom-price-line';
 import type { FirstValue } from './iprice-data-source';
 import { Palette } from './palette';
 import { Pane } from './pane';
 import type { PlotRow } from './plot-data';
 import { type MinMax, PlotList, PlotRowSearchMode } from './plot-list';
 import { PriceDataSource } from './price-data-source';
-import type { PriceLineOptions } from './price-line-options';
 import { PriceRange } from './price-range';
 import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
@@ -84,8 +81,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private readonly _priceAxisViews: IPriceAxisView[];
 	private readonly _panePriceAxisView: PanePriceAxisView;
 	private _formatter!: IFormatter;
-	private readonly _priceLineView: SeriesPriceLinePaneView = new SeriesPriceLinePaneView(this);
-	private readonly _customPriceLines: CustomPriceLine[] = [];
 	private readonly _baseHorizontalLineView: SeriesHorizontalBaseLinePaneView = new SeriesHorizontalBaseLinePaneView(this);
 	private _endOfData: boolean = false;
 	private _paneView!: IUpdatablePaneView;
@@ -119,7 +114,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public priceLineColor(lastBarColor: string): string {
-		return this._options.priceLineColor || lastBarColor;
+		return lastBarColor;
 	}
 
 	public lastValueData(plot: SeriesPlotIndex | undefined, globalLast: boolean, withRawPrice?: false): LastValueDataResultWithoutRawPrice;
@@ -254,21 +249,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.model().lightUpdate();
 	}
 
-	public createPriceLine(options: PriceLineOptions): CustomPriceLine {
-		const result = new CustomPriceLine(this, options);
-		this._customPriceLines.push(result);
-		this.model().updateSource(this);
-		return result;
-	}
-
-	public removePriceLine(line: CustomPriceLine): void {
-		const index = this._customPriceLines.indexOf(line);
-		if (index !== -1) {
-			this._customPriceLines.splice(index, 1);
-		}
-		this.model().updateSource(this);
-	}
-
 	public palette(): Palette {
 		return this._palette;
 	}
@@ -340,12 +320,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			res.push(this._baseHorizontalLineView);
 		}
 
-		for (const customPriceLine of this._customPriceLines) {
-			res.push(customPriceLine.paneView());
-		}
-
 		res.push(this._paneView);
-		res.push(this._priceLineView);
 
 		res.push(this._panePriceAxisView);
 
@@ -354,9 +329,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 	public priceAxisViews(pane: Pane, priceScale: PriceScale): ReadonlyArray<IPriceAxisView> {
 		const result = [...this._priceAxisViews];
-		for (const customPriceLine of this._customPriceLines) {
-			result.push(customPriceLine.priceAxisView());
-		}
+
 		return result;
 	}
 
@@ -402,11 +375,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			priceAxisView.update();
 		}
 
-		for (const customPriceLine of this._customPriceLines) {
-			customPriceLine.update();
-		}
-
-		this._priceLineView.update();
 		this._baseHorizontalLineView.update();
 	}
 

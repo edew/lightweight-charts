@@ -5,7 +5,6 @@ export type { LineStyle, LineType, LineWidth } from './renderers/draw-line';
 export type { BarPrice } from './model/bar';
 export { CrosshairMode } from './model/crosshair';
 export { PriceScaleMode } from './model/price-scale';
-export { PriceLineSource } from './model/series-options';
 export type { UTCTimestamp } from './model/time-data';
 
 export type {

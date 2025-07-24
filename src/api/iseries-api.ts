@@ -1,6 +1,5 @@
 import type { BarPrice } from '../model/bar';
 import type { Coordinate } from '../model/coordinate';
-import type { PriceLineOptions } from '../model/price-line-options';
 import type {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -8,7 +7,6 @@ import type {
 } from '../model/series-options';
 
 import type { SeriesDataItemTypeMap } from './data-consumer';
-import type { IPriceLine } from './iprice-line';
 
 /** Interface to be implemented by the object in order to be used as a price formatter */
 export interface IPriceFormatter {
@@ -65,16 +63,4 @@ export interface ISeriesApi<TSeriesType extends SeriesType> {
 	 * If the new item's time is equal to the last existing item's time, then the existing item is replaced with the new one.
 	 */
 	update(bar: SeriesDataItemTypeMap[TSeriesType]): void;
-
-	/**
-	 * Creates a new price line
-	 * @param options - any subset of options
-	 */
-	createPriceLine(options: PriceLineOptions): IPriceLine;
-
-	/**
-	 * Removes an existing price line
-	 * @param line to remove
-	 */
-	removePriceLine(line: IPriceLine): void;
 }
