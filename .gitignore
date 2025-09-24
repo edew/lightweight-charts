@@ -1,4 +1,27 @@
-# nodejs & npm
+# Node.js & npm
 node_modules/
 npm-debug.log*
 package-lock.json
+
+# VS Code, Idea, Sublime Text
+.idea/**
+.vscode/**
+!/.vscode/launch.json
+!/.vscode/settings.json
+*.sublime-project
+*.sublime-workspace
+
+# Artifacts
+/lib/
+/dist/
+/src/**/*.js
+/src/**/*.d.ts
+/website/docs/api/
+/website/versioned_docs/**/api/
+/website/build
+/website/.docusaurus
+/website/.cache-loader
+/website/.previous-typings-cache/*.d.ts
+/website/versions.d.ts
+
+!/src/typings/**/*.d.ts
