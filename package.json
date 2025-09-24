@@ -30,12 +30,14 @@
   ],
   "scripts": {
     "start": "vite",
+    "build": "vite build",
     "test": "vitest tests/**/**.spec.ts"
   },
   "dependencies": {
     "fancy-canvas": "0.2.1"
   },
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "chai": "~5.2.1",
     "typescript": "~5.8.3",
     "vite": "~7.0.3",
