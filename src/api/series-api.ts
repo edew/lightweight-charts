@@ -5,15 +5,13 @@ import type { BarPrice } from '../model/bar';
 import type { Coordinate } from '../model/coordinate';
 import type { PriceLineOptions } from '../model/price-line-options';
 import { Series } from '../model/series';
-import type { SeriesMarker } from '../model/series-markers';
 import type {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from '../model/series-options';
 
-import type { DataUpdatesConsumer, SeriesDataItemTypeMap, Time } from './data-consumer';
-import { convertTime } from './data-layer';
+import type { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
 import type { IPriceLine } from './iprice-line';
 import type { IPriceFormatter, ISeriesApi } from './iseries-api';
 import { priceLineOptionsDefaults } from './options/price-line-options-defaults';
@@ -64,14 +62,6 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 
 	public update(bar: SeriesDataItemTypeMap[TSeriesType]): void {
 		this._dataUpdatesConsumer.updateData(this._series, bar);
-	}
-
-	public setMarkers(data: SeriesMarker<Time>[]): void {
-		const convertedMarkers = data.map((marker: SeriesMarker<Time>) => ({
-			...marker,
-			time: convertTime(marker.time),
-		}));
-		this._series.setMarkers(convertedMarkers);
 	}
 
 	public applyOptions(options: SeriesPartialOptionsMap[TSeriesType]): void {

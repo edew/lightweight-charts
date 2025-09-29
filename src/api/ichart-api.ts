@@ -3,7 +3,6 @@ import type { DeepPartial } from '../helpers/strict-type-checks';
 import type { BarPrice, BarPrices } from '../model/bar';
 import type { ChartOptions } from '../model/chart-model';
 import type { Point } from '../model/point';
-import type { SeriesMarker } from '../model/series-markers';
 import type {
 	AreaSeriesPartialOptions,
 	BarSeriesPartialOptions,
@@ -14,7 +13,6 @@ import type {
 } from '../model/series-options';
 import type { BusinessDay, UTCTimestamp } from '../model/time-data';
 
-import type { Time } from './data-consumer';
 import type { IPriceScaleApi } from './iprice-scale-api';
 import type { ISeriesApi } from './iseries-api';
 import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
@@ -24,7 +22,6 @@ export interface MouseEventParams {
 	point?: Point;
 	seriesPrices: Map<ISeriesApi<SeriesType>, BarPrice | BarPrices>;
 	hoveredSeries?: ISeriesApi<SeriesType>;
-	hoveredMarkerId?: SeriesMarker<Time>['id'];
 }
 
 export type MouseEventHandler = (param: MouseEventParams) => void;

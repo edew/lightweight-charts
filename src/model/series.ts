@@ -17,7 +17,6 @@ import type { IUpdatablePaneView } from '../views/pane/iupdatable-pane-view';
 import { SeriesLinePaneView } from '../views/pane/line-pane-view';
 import { PanePriceAxisView } from '../views/pane/pane-price-axis-view';
 import { SeriesHorizontalBaseLinePaneView } from '../views/pane/series-horizontal-base-line-pane-view';
-import { SeriesMarkersPaneView } from '../views/pane/series-markers-pane-view';
 import { SeriesPriceLinePaneView } from '../views/pane/series-price-line-pane-view';
 import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { SeriesPriceAxisView } from '../views/price-axis/series-price-axis-view';
@@ -38,7 +37,6 @@ import { PriceRange } from './price-range';
 import { PriceScale } from './price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
-import type { InternalSeriesMarker, SeriesMarker } from './series-markers';
 import type {
 	AreaStyleOptions,
 	HistogramStyleOptions,
@@ -47,7 +45,7 @@ import type {
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from './series-options';
-import type { TimePoint, TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-data';
 
 export interface LastValueDataResult {
 	noData: boolean;
@@ -103,9 +101,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private readonly _options: SeriesOptionsMap[T];
 	private _barFunction: BarFunction;
 	private readonly _palette: Palette = new Palette();
-	private _markers: SeriesMarker<TimePoint>[] = [];
-	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
-	private _markersPaneView!: SeriesMarkersPaneView;
 
 	public constructor(model: ChartModel, options: SeriesOptionsMap[T], seriesType: T) {
 		super(model);
@@ -257,35 +252,14 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			this._data.clear();
 		}
 		this._data.bars().merge(data);
-		this._recalculateMarkers();
 
 		this._paneView.update('data');
-		this._markersPaneView.update('data');
 
 		const sourcePane = this.model().paneForSource(this);
 		this.model().recalculatePane(sourcePane);
 		this.model().updateSource(this);
 		this.model().updateCrosshair();
 		this.model().lightUpdate();
-	}
-
-	public setMarkers(data: SeriesMarker<TimePoint>[]): void {
-		this._markers = data.map((item: SeriesMarker<TimePoint>) => ({ ...item }));
-		this._recalculateMarkers();
-		const sourcePane = this.model().paneForSource(this);
-		this._markersPaneView.update('data');
-		this.model().recalculatePane(sourcePane);
-		this.model().updateSource(this);
-		this.model().updateCrosshair();
-		this.model().lightUpdate();
-	}
-
-	public markers(): SeriesMarker<TimePoint>[] {
-		return this._markers;
-	}
-
-	public indexedMarkers(): InternalSeriesMarker<TimePointIndex>[] {
-		return this._indexedMarkers;
 	}
 
 	public createPriceLine(options: PriceLineOptions): CustomPriceLine {
@@ -382,7 +356,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		res.push(this._priceLineView);
 
 		res.push(this._panePriceAxisView);
-		res.push(this._markersPaneView);
 
 		return res;
 	}
@@ -420,7 +393,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		return {
 			priceRange: range,
-			margins: this._markersPaneView.autoScaleMargins(),
+			margins: null,
 		};
 	}
 
@@ -438,7 +411,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 	public updateAllViews(): void {
 		this._paneView.update();
-		this._markersPaneView.update();
 
 		for (const priceAxisView of this._priceAxisViews) {
 			priceAxisView.update();
@@ -529,21 +501,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this._barFunction = barFunction(priceSource);
 	}
 
-	private _recalculateMarkers(): void {
-		const timeScalePoints = this.model().timeScale().points();
-		this._indexedMarkers = this._markers.map((marker: SeriesMarker<TimePoint>, index: number) => ({
-			time: ensureNotNull(timeScalePoints.indexOf(marker.time.timestamp, true)),
-			position: marker.position,
-			shape: marker.shape,
-			color: marker.color,
-			id: marker.id,
-			internalId: index,
-		}));
-	}
-
 	private _recreatePaneViews(): void {
-		this._markersPaneView = new SeriesMarkersPaneView(this, this.model());
-
 		switch (this._seriesType) {
 			case 'Bar': {
 				this._paneView = new SeriesBarsPaneView(this as Series<'Bar'>, this.model());
