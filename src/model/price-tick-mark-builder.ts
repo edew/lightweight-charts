@@ -28,36 +28,6 @@ export class PriceTickMarkBuilder {
 		this._logicalToCoordinateFunc = logicalToCoordinateFunc;
 	}
 
-	public setBase(base: number): void {
-		if (base < 0) {
-			throw new Error('base < 0');
-		}
-		this._base = base;
-	}
-
-	public tickSpan(high: number, low: number): number {
-		if (high < low) {
-			throw new Error('high < low');
-		}
-
-		const scaleHeight = this._priceScale.height();
-		const markHeight = this._tickMarkHeight();
-
-		const maxTickSpan = (high - low) * markHeight / scaleHeight;
-
-		const spanCalculator1 = new PriceTickSpanCalculator(this._base, [2, 2.5, 2]);
-		const spanCalculator2 = new PriceTickSpanCalculator(this._base, [2, 2, 2.5]);
-		const spanCalculator3 = new PriceTickSpanCalculator(this._base, [2.5, 2, 2]);
-
-		const spans: number[] = [];
-
-		spans.push(spanCalculator1.tickSpan(high, low, maxTickSpan));
-		spans.push(spanCalculator2.tickSpan(high, low, maxTickSpan));
-		spans.push(spanCalculator3.tickSpan(high, low, maxTickSpan));
-
-		return min(spans);
-	}
-
 	public rebuildTickMarks(): void {
 		const priceScale = this._priceScale;
 
@@ -84,7 +54,7 @@ export class PriceTickMarkBuilder {
 			return;
 		}
 
-		let span = this.tickSpan(high, low);
+		let span = this._tickSpan(high, low);
 		let mod = high % span;
 		mod += mod < 0 ? span : 0;
 
@@ -122,7 +92,7 @@ export class PriceTickMarkBuilder {
 			prevCoord = coord;
 			if (priceScale.isLog()) {
 				// recalc span
-				span = this.tickSpan(logical * sign, low);
+				span = this._tickSpan(logical * sign, low);
 			}
 		}
 		this._marks.length = targetIndex;
@@ -130,6 +100,29 @@ export class PriceTickMarkBuilder {
 
 	public marks(): PriceMark[] {
 		return this._marks;
+	}
+
+	private _tickSpan(high: number, low: number): number {
+		if (high < low) {
+			throw new Error('high < low');
+		}
+
+		const scaleHeight = this._priceScale.height();
+		const markHeight = this._tickMarkHeight();
+
+		const maxTickSpan = (high - low) * markHeight / scaleHeight;
+
+		const spanCalculator1 = new PriceTickSpanCalculator(this._base, [2, 2.5, 2]);
+		const spanCalculator2 = new PriceTickSpanCalculator(this._base, [2, 2, 2.5]);
+		const spanCalculator3 = new PriceTickSpanCalculator(this._base, [2.5, 2, 2]);
+
+		const spans: number[] = [];
+
+		spans.push(spanCalculator1.tickSpan(high, low, maxTickSpan));
+		spans.push(spanCalculator2.tickSpan(high, low, maxTickSpan));
+		spans.push(spanCalculator3.tickSpan(high, low, maxTickSpan));
+
+		return min(spans);
 	}
 
 	private _fontHeight(): number {
