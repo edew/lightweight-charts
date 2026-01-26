@@ -14,14 +14,14 @@ export class TickMarks {
 	// Hash of tick marks
 	private _marksByIndex: Map<number, TickMark> = new Map();
 	// Sparse array with ordered arrays of tick marks
-	private _marksBySpan: (TickMark[] | undefined) [] = [];
+	private _marksBySpan: Map<number, TickMark[]> = new Map();
 	private _changed: Delegate = new Delegate();
 	private _cache: TickMark[] | null = null;
 	private _maxBar: number = NaN;
 
 	public reset(): void {
 		this._marksByIndex.clear();
-		this._marksBySpan = [];
+		this._marksBySpan.clear();
 		this._minIndex = Infinity;
 		this._maxIndex = -Infinity;
 		this._cache = null;
@@ -59,10 +59,10 @@ export class TickMarks {
 			}
 
 			// Store it in span arrays
-			let marks = marksBySpan[span];
+			let marks = marksBySpan.get(span);
 			if (marks === undefined) {
 				marks = [];
-				marksBySpan[span] = marks;
+				marksBySpan.set(span, marks);
 			}
 
 			marks.push(tickMark);
@@ -70,14 +70,13 @@ export class TickMarks {
 		}
 
 		// Clean up and sort arrays
-		for (let span = marksBySpan.length; span--;) {
-			const marks = marksBySpan[span];
+		for (const [span, marks] of marksBySpan) {
 			if (marks === undefined) {
 				continue;
 			}
 
 			if (marks.length === 0) {
-				delete marksBySpan[span];
+				marksBySpan.delete(span);
 			}
 
 			if (unsortedSpans[span]) {
@@ -129,18 +128,14 @@ export class TickMarks {
 
 		this._maxBar = maxBar;
 		let marks: TickMark[] = [];
-		for (let span = this._marksBySpan.length; span--;) {
-			if (!this._marksBySpan[span]) {
-				continue;
-			}
-
+		for (const span of this._marksBySpan.keys()) {
 			// Built tickMarks are now prevMarks, and marks it as new array
 			const prevMarks = marks;
 			marks = [];
 
 			const prevMarksLength = prevMarks.length;
 			let prevMarksPointer = 0;
-			const currentSpan = ensureDefined(this._marksBySpan[span]);
+			const currentSpan = ensureDefined(this._marksBySpan.get(span));
 			const currentSpanLength = currentSpan.length;
 
 			let rightIndex = Infinity;
@@ -202,7 +197,7 @@ export class TickMarks {
 			this._maxIndex = -Infinity;
 		}
 
-		const spanArray = ensureDefined(this._marksBySpan[tickMark.span]);
+		const spanArray = ensureDefined(this._marksBySpan.get(tickMark.span));
 		const position = spanArray.indexOf(tickMark);
 		if (position !== -1) {
 			// Keeps array sorted
