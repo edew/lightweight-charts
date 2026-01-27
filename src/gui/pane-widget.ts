@@ -8,7 +8,7 @@ import type { ISubscription } from '../helpers/isubscription';
 
 import { ChartModel, type HoveredObject } from '../model/chart-model';
 import type { Coordinate } from '../model/coordinate';
-import type { IDataSource } from '../model/idata-source';
+import type { IDataSource } from '../model/data-source/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
 import { Pane } from '../model/pane';
 import type { Point } from '../model/point';
