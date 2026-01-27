@@ -63,6 +63,7 @@ export class Pane implements IDestroyable {
 			}
 		});
 		this._destroyed.fire();
+		this._destroyed.destroy();
 	}
 
 	public stretchFactor(): number {

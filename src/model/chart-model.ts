@@ -179,6 +179,7 @@ export class ChartModel implements IDestroyable {
 	public updateAllPaneViews(): void {
 		this._panes.forEach((p: Pane) => p.updateAllViews());
 		this.updateCrosshair();
+		this._grid.updateAllViews();
 	}
 
 	public timeScale(): TimeScale {
@@ -378,7 +379,6 @@ export class ChartModel implements IDestroyable {
 			this._invalidateHandler(mask);
 		}
 
-		this._grid.invalidate();
 		this.lightUpdate();
 	}
 
@@ -499,6 +499,7 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public destroy(): void {
+		this._grid.destroy();
 		this._panes.forEach((p: Pane) => p.destroy());
 		this._panes.length = 0;
 
@@ -598,8 +599,6 @@ export class ChartModel implements IDestroyable {
 		if (this._invalidateHandler) {
 			this._invalidateHandler(mask);
 		}
-
-		this._grid.invalidate();
 	}
 
 	private _cursorUpdate(): void {
