@@ -26,7 +26,7 @@ export class Delegate<T1 = void, T2 = void> implements ISubscription<T1, T2> {
 	}
 
 	public unsubscribeAll(linkedObject: object): void {
-		this._listeners = this._listeners.filter((listener: Listener<T1, T2>) => listener.linkedObject === linkedObject);
+		this._listeners = this._listeners.filter((listener: Listener<T1, T2>) => listener.linkedObject !== linkedObject);
 	}
 
 	public fire(param1: T1, param2: T2): void {
