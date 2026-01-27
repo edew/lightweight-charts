@@ -17,7 +17,7 @@ import { SeriesHorizontalBaseLinePaneView } from '../views/pane/series-horizonta
 import type { IPriceAxisView } from '../views/price-axis/iprice-axis-view';
 import { SeriesPriceAxisView } from '../views/price-axis/series-price-axis-view';
 
-import type { AutoscaleInfo } from './autoscale-info';
+import type { AutoscaleInfo } from './data-source/autoscale-info';
 import type { BarPrice, BarPrices } from './bar';
 import { ChartModel } from './chart-model';
 import type { Coordinate } from './coordinate';

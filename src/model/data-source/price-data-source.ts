@@ -1,6 +1,6 @@
 import type { IFormatter } from '../../formatters/iformatter';
 
-import type { AutoscaleInfo } from '../autoscale-info';
+import type { AutoscaleInfo } from './autoscale-info';
 import type { ChartModel } from '../chart-model';
 import { DataSource } from './data-source';
 import type { FirstValue, IPriceDataSource } from './iprice-data-source';

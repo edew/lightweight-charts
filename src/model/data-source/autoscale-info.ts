@@ -1,5 +1,5 @@
-import type { Coordinate } from './coordinate';
-import { PriceRange } from './price-range';
+import type { Coordinate } from '../coordinate';
+import { PriceRange } from '../price-range';
 
 export interface AutoScaleMargins {
 	below: Coordinate;
