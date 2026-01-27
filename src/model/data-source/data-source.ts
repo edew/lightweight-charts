@@ -4,7 +4,7 @@ import { TimeAxisView } from '../../views/time-axis/time-axis-view';
 
 import type { IDataSource } from './idata-source';
 import type { Pane } from '../pane';
-import type { PriceScale } from '../price-scale';
+import type { PriceScale } from '../price-scale/price-scale';
 
 export abstract class DataSource implements IDataSource {
 	protected _priceScale: PriceScale | null = null;

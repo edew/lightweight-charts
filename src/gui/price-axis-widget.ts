@@ -10,7 +10,7 @@ import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
 import type { LayoutOptions } from '../model/layout-options';
 import type { PriceScalePosition } from '../model/pane';
-import { PriceScale } from '../model/price-scale';
+import { PriceScale } from '../model/price-scale/price-scale';
 import { TextWidthCache } from '../model/text-width-cache';
 import type { PriceAxisViewRendererOptions } from '../renderers/iprice-axis-view-renderer';
 import { PriceAxisRendererOptionsProvider } from '../renderers/price-axis-renderer-options-provider';

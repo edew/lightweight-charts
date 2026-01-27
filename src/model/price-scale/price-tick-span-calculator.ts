@@ -1,4 +1,4 @@
-import { equal, greaterOrEqual, isBaseDecimal, log10 } from '../helpers/mathex';
+import { equal, greaterOrEqual, isBaseDecimal, log10 } from '../../helpers/mathex';
 
 const TICK_SPAN_EPSILON = 1e-9;
 

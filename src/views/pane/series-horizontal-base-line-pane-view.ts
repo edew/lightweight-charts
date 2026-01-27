@@ -1,4 +1,4 @@
-import { PriceScaleMode } from '../../model/price-scale';
+import { PriceScaleMode } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 
 import { SeriesHorizontalLinePaneView } from './series-horizontal-line-pane-view';

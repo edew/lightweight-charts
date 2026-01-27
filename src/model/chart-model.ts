@@ -18,7 +18,7 @@ import type { LocalizationOptions } from './localization-options';
 import { Magnet } from './magnet';
 import { DEFAULT_STRETCH_FACTOR, Pane } from './pane';
 import type { Point } from './point';
-import { PriceScale, type PriceScaleOptions } from './price-scale';
+import { PriceScale, type PriceScaleOptions } from './price-scale/price-scale';
 import { Series } from './series';
 import type { SeriesOptionsMap, SeriesType } from './series-options';
 import type { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-data';

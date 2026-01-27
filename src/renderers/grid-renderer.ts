@@ -1,6 +1,6 @@
 import { ensureNotNull } from '../helpers/assertions';
 
-import type { PriceMark } from '../model/price-scale';
+import type { PriceMark } from '../model/price-scale/price-scale';
 
 import { LineStyle, setLineStyle, strokeInPixel } from './draw-line';
 import type { IPaneRenderer } from './ipane-renderer';

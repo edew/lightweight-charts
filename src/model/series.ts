@@ -28,7 +28,7 @@ import type { PlotRow } from './plot-data';
 import { type MinMax, PlotList, PlotRowSearchMode } from './plot-list';
 import { PriceDataSource } from './data-source/price-data-source';
 import { PriceRange } from './price-range';
-import { PriceScale } from './price-scale';
+import { PriceScale } from './price-scale/price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
 import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
 import type {

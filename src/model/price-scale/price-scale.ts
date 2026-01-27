@@ -1,21 +1,21 @@
-import type { IFormatter } from '../formatters/iformatter';
-import { PercentageFormatter } from '../formatters/percentage-formatter';
-import { PriceFormatter } from '../formatters/price-formatter';
+import type { IFormatter } from '../../formatters/iformatter';
+import { PercentageFormatter } from '../../formatters/percentage-formatter';
+import { PriceFormatter } from '../../formatters/price-formatter';
 
-import { ensureDefined, ensureNotNull } from '../helpers/assertions';
-import { Delegate } from '../helpers/delegate';
-import type { ISubscription } from '../helpers/isubscription';
-import { type DeepPartial, merge } from '../helpers/strict-type-checks';
+import { ensureDefined, ensureNotNull } from '../../helpers/assertions';
+import { Delegate } from '../../helpers/delegate';
+import type { ISubscription } from '../../helpers/isubscription';
+import { type DeepPartial, merge } from '../../helpers/strict-type-checks';
 
-import type { BarCoordinates, BarPrice, BarPrices } from './bar';
-import { BarsRange } from './bars-range';
-import type { Coordinate } from './coordinate';
-import type { IDataSource } from './data-source/idata-source';
-import type { FirstValue, IPriceDataSource } from './data-source/iprice-data-source';
-import type { LayoutOptions } from './layout-options';
-import type { LocalizationOptions } from './localization-options';
-import { PriceDataSource } from './data-source/price-data-source';
-import { PriceRange } from './price-range';
+import type { BarCoordinates, BarPrice, BarPrices } from '../bar';
+import { BarsRange } from '../bars-range';
+import type { Coordinate } from '../coordinate';
+import type { IDataSource } from '../data-source/idata-source';
+import type { FirstValue, IPriceDataSource } from '../data-source/iprice-data-source';
+import type { LayoutOptions } from '../layout-options';
+import type { LocalizationOptions } from '../localization-options';
+import { PriceDataSource } from '../data-source/price-data-source';
+import { PriceRange } from '../price-range';
 import {
 	canConvertPriceRangeFromLog,
 	convertPriceRangeFromLog,
@@ -30,9 +30,9 @@ import {
 	toPercentRange,
 } from './price-scale-conversions';
 import { PriceTickMarkBuilder } from './price-tick-mark-builder';
-import { Series } from './series';
-import { sortSources } from './data-source/sort-sources';
-import type { SeriesItemsIndexesRange } from './time-data';
+import { Series } from '../series';
+import { sortSources } from '../data-source/sort-sources';
+import type { SeriesItemsIndexesRange } from '../time-data';
 
 /**
  * Enum of possible price scale modes

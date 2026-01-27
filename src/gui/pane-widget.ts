@@ -12,7 +12,7 @@ import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
 import { Pane } from '../model/pane';
 import type { Point } from '../model/point';
-import type { PriceAxisPosition } from '../model/price-scale';
+import type { PriceAxisPosition } from '../model/price-scale/price-scale';
 import type { TimePointIndex } from '../model/time-data';
 import type { IPaneView } from '../views/pane/ipane-view';
 

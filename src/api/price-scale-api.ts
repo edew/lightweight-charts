@@ -2,7 +2,7 @@ import type { IDestroyable } from '../helpers/idestroyable';
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
 import { ChartModel } from '../model/chart-model';
-import { PriceScale, type PriceScaleOptions } from '../model/price-scale';
+import { PriceScale, type PriceScaleOptions } from '../model/price-scale/price-scale';
 
 import type { IPriceScaleApi } from './iprice-scale-api';
 

@@ -1,4 +1,4 @@
-import type { PricedValue } from '../model/price-scale';
+import type { PricedValue } from '../model/price-scale/price-scale';
 import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
 
 import type { LinePoint, LineWidth } from './draw-line';

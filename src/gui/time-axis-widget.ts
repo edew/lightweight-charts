@@ -8,7 +8,7 @@ import type { Coordinate } from '../model/coordinate';
 import type { IDataSource } from '../model/idata-source';
 import { InvalidationLevel } from '../model/invalidate-mask';
 import type { LayoutOptions } from '../model/layout-options';
-import type { PriceAxisPosition } from '../model/price-scale';
+import type { PriceAxisPosition } from '../model/price-scale/price-scale';
 import { TextWidthCache } from '../model/text-width-cache';
 import { MarkSpanBorder, type TimeMark } from '../model/time-scale';
 import type { TimeAxisViewRendererOptions } from '../renderers/itime-axis-view-renderer';

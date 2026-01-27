@@ -1,6 +1,6 @@
-import { min } from '../helpers/mathex';
+import { min } from '../../helpers/mathex';
 
-import type { Coordinate } from './coordinate';
+import type { Coordinate } from '../coordinate';
 import type { PriceMark, PriceScale } from './price-scale';
 import { PriceTickSpanCalculator } from './price-tick-span-calculator';
 

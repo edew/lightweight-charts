@@ -16,7 +16,7 @@ import { ChartModel } from './chart-model';
 import type { Coordinate } from './coordinate';
 import { DataSource } from './data-source/data-source';
 import { Pane } from './pane';
-import { PriceScale } from './price-scale';
+import { PriceScale } from './price-scale/price-scale';
 import { Series } from './series';
 import type { TimePoint, TimePointIndex } from './time-data';
 

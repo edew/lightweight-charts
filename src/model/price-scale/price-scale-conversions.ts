@@ -1,7 +1,7 @@
-import { log10 } from '../helpers/mathex';
+import { log10 } from '../../helpers/mathex';
 
-import type { Coordinate } from './coordinate';
-import { PriceRange } from './price-range';
+import type { Coordinate } from '../coordinate';
+import { PriceRange } from '../price-range';
 
 const enum Constants {
 	LogicalOffset = 4,

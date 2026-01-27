@@ -1,5 +1,5 @@
 import { ChartModel } from '../../model/chart-model';
-import { PriceScale } from '../../model/price-scale';
+import { PriceScale } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 import type { SeriesType } from '../../model/series-options';
 import { type SeriesItemsIndexesRange, type TimedValue, visibleTimedValues } from '../../model/time-data';

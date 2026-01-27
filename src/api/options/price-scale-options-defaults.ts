@@ -1,4 +1,4 @@
-import { PriceScaleMode, type PriceScaleOptions } from '../../model/price-scale';
+import { PriceScaleMode, type PriceScaleOptions } from '../../model/price-scale/price-scale';
 
 export const priceScaleOptionsDefaults: PriceScaleOptions = {
 	autoScale: true,

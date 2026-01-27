@@ -3,7 +3,7 @@ import { undefinedIfNull } from '../../helpers/strict-type-checks';
 import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
 import type { Coordinate } from '../../model/coordinate';
-import { type PricedValue, PriceScale } from '../../model/price-scale';
+import { type PricedValue, PriceScale } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
 import type { Bar } from '../../model/series-data';

@@ -3,7 +3,7 @@ import type { IPriceAxisView } from '../../views/price-axis/iprice-axis-view';
 import { TimeAxisView } from '../../views/time-axis/time-axis-view';
 
 import type { Pane } from '../pane';
-import type { PriceScale } from '../price-scale';
+import type { PriceScale } from '../price-scale/price-scale';
 
 export interface IDataSource {
 	zorder(): number | null;
