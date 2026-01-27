@@ -32,7 +32,7 @@ import {
 import { PriceTickMarkBuilder } from './price-tick-mark-builder';
 import { Series } from '../series';
 import { sortSources } from '../data-source/sort-sources';
-import type { SeriesItemsIndexesRange } from '../time-data';
+import type { SeriesItemsIndexesRange } from '../time-scale/time-data';
 
 /**
  * Enum of possible price scale modes

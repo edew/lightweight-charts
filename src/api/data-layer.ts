@@ -9,7 +9,7 @@ import type { PlotRow } from '../model/plot-data';
 import { Series } from '../model/series';
 import type { Bar } from '../model/series-data';
 import type { SeriesType } from '../model/series-options';
-import type { BusinessDay, TimePoint, TimePointIndex, UTCTimestamp } from '../model/time-data';
+import type { BusinessDay, TimePoint, TimePointIndex, UTCTimestamp } from '../model/time-scale/time-data';
 
 import {
 	type BarData,

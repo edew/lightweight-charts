@@ -1,5 +1,5 @@
-import { ensureDefined } from '../helpers/assertions';
-import { Delegate } from '../helpers/delegate';
+import { ensureDefined } from '../../helpers/assertions';
+import { Delegate } from '../../helpers/delegate';
 
 import type { TickMark, TimePoint } from './time-data';
 

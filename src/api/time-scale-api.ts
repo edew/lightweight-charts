@@ -3,8 +3,8 @@ import type { IDestroyable } from '../helpers/idestroyable';
 import { clone, type DeepPartial } from '../helpers/strict-type-checks';
 
 import { ChartModel } from '../model/chart-model';
-import type { TimePoint, TimePointIndex, TimePointsRange } from '../model/time-data';
-import { TimeScale, type TimeScaleOptions } from '../model/time-scale';
+import type { TimePoint, TimePointIndex, TimePointsRange } from '../model/time-scale/time-data';
+import { TimeScale, type TimeScaleOptions } from '../model/time-scale/time-scale';
 
 import type { Time } from './data-consumer';
 import { convertTime } from './data-layer';

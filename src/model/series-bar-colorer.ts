@@ -7,7 +7,7 @@ import type {
 	CandlestickStyleOptions,
 	LineStyleOptions,
 } from './series-options';
-import type { TimePoint, TimePointIndex } from './time-data';
+import type { TimePoint, TimePointIndex } from './time-scale/time-data';
 
 export interface PrecomputedBars {
 	value: Bar;

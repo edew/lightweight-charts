@@ -2,8 +2,8 @@ import { ChartModel } from '../../model/chart-model';
 import { PriceScale } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 import type { SeriesType } from '../../model/series-options';
-import { type SeriesItemsIndexesRange, type TimedValue, visibleTimedValues } from '../../model/time-data';
-import { TimeScale } from '../../model/time-scale';
+import { type SeriesItemsIndexesRange, type TimedValue, visibleTimedValues } from '../../model/time-scale/time-data';
+import { TimeScale } from '../../model/time-scale/time-scale';
 import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 
 import type { IUpdatablePaneView, UpdateType } from './iupdatable-pane-view';

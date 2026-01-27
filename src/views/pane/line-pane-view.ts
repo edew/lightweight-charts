@@ -1,7 +1,7 @@
 import type { BarPrice } from '../../model/bar';
 import { ChartModel } from '../../model/chart-model';
 import { Series } from '../../model/series';
-import type { TimePointIndex } from '../../model/time-data';
+import type { TimePointIndex } from '../../model/time-scale/time-data';
 import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import { type LineItem, PaneRendererLine, type PaneRendererLineData } from '../../renderers/line-renderer';
 

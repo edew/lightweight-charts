@@ -3,7 +3,7 @@ import { assert, ensureNotNull } from '../helpers/assertions';
 import type { Nominal } from '../helpers/nominal';
 
 import type { PlotRow, PlotValue } from '../model/plot-data';
-import type { TimePointIndex } from '../model/time-data';
+import type { TimePointIndex } from './time-scale/time-data';
 
 export const enum PlotRowSearchMode {
 	NearestLeft = -1,

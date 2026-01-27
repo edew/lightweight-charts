@@ -21,8 +21,8 @@ import type { Point } from './point';
 import { PriceScale, type PriceScaleOptions } from './price-scale/price-scale';
 import { Series } from './series';
 import type { SeriesOptionsMap, SeriesType } from './series-options';
-import type { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-data';
-import { TimeScale, type TimeScaleOptions } from './time-scale';
+import type { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-scale/time-data';
+import { TimeScale, type TimeScaleOptions } from './time-scale/time-scale';
 import { Watermark, type WatermarkOptions } from './watermark';
 
 export interface HandleScrollOptions {

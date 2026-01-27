@@ -8,7 +8,7 @@ import type {
 	LineSeriesPartialOptions,
 	SeriesType,
 } from '../model/series-options';
-import type { BusinessDay, UTCTimestamp } from '../model/time-data';
+import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
 import type { IPriceScaleApi } from './iprice-scale-api';
 import type { ISeriesApi } from './iseries-api';

@@ -37,7 +37,7 @@ import type {
 	SeriesPartialOptionsMap,
 	SeriesType,
 } from './series-options';
-import type { TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-scale/time-data';
 
 export interface LastValueDataResult {
 	noData: boolean;

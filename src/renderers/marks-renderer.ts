@@ -1,4 +1,4 @@
-import type { SeriesItemsIndexesRange } from '../model/time-data';
+import type { SeriesItemsIndexesRange } from '../model/time-scale/time-data';
 
 import type { LineItem } from './line-renderer';
 import { ScaledRenderer } from './scaled-renderer';

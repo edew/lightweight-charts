@@ -13,7 +13,7 @@ import { InvalidationLevel } from '../model/invalidate-mask';
 import { Pane } from '../model/pane';
 import type { Point } from '../model/point';
 import type { PriceAxisPosition } from '../model/price-scale/price-scale';
-import type { TimePointIndex } from '../model/time-data';
+import type { TimePointIndex } from '../model/time-scale/time-data';
 import type { IPaneView } from '../views/pane/ipane-view';
 
 import { createBoundCanvas, getContext2D, Size } from './canvas-utils';

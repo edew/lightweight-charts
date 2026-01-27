@@ -1,6 +1,6 @@
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import type { TimeScaleOptions } from '../model/time-scale';
+import type { TimeScaleOptions } from '../model/time-scale/time-scale';
 
 import type { Time } from './data-consumer';
 

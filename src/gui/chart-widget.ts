@@ -11,7 +11,7 @@ import type { Coordinate } from '../model/coordinate';
 import { InvalidateMask, InvalidationLevel } from '../model/invalidate-mask';
 import type { Point } from '../model/point';
 import { Series } from '../model/series';
-import type { TimePoint, TimePointIndex } from '../model/time-data';
+import type { TimePoint, TimePointIndex } from '../model/time-scale/time-data';
 
 import { createPreconfiguredCanvas, getCanvasDevicePixelRatio, getContext2D, Size } from './canvas-utils';
 import { PaneSeparator, SEPARATOR_HEIGHT } from './pane-separator';

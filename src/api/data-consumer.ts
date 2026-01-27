@@ -2,7 +2,7 @@ import { isNumber, isString } from '../helpers/strict-type-checks';
 
 import { Series } from '../model/series';
 import type { SeriesType } from '../model/series-options';
-import type { BusinessDay, UTCTimestamp } from '../model/time-data';
+import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
 export type Time = UTCTimestamp | BusinessDay | string;
 

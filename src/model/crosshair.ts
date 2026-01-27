@@ -18,7 +18,7 @@ import { DataSource } from './data-source/data-source';
 import { Pane } from './pane';
 import { PriceScale } from './price-scale/price-scale';
 import { Series } from './series';
-import type { TimePoint, TimePointIndex } from './time-data';
+import type { TimePoint, TimePointIndex } from './time-scale/time-data';
 
 export interface CrosshairPriceAndCoordinate {
 	price: number;

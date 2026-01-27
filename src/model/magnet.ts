@@ -6,7 +6,7 @@ import type { IDataSource } from './data-source/idata-source';
 import { Pane } from './pane';
 import { Series } from './series';
 import { SeriesPlotIndex } from './series-data';
-import type { TimePointIndex } from './time-data';
+import type { TimePointIndex } from './time-scale/time-data';
 
 export class Magnet {
 	private readonly _options: CrosshairOptions;

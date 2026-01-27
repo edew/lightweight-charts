@@ -5,7 +5,7 @@ import { ChartModel, type ChartOptionsInternal } from '../../model/chart-model';
 import type { Coordinate } from '../../model/coordinate';
 import { Crosshair } from '../../model/crosshair';
 import { Series } from '../../model/series';
-import type { SeriesItemsIndexesRange, TimePointIndex } from '../../model/time-data';
+import type { SeriesItemsIndexesRange, TimePointIndex } from '../../model/time-scale/time-data';
 import { CompositeRenderer } from '../../renderers/composite-renderer';
 import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import { type MarksRendererData, PaneRendererMarks } from '../../renderers/marks-renderer';

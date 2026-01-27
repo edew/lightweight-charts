@@ -4,7 +4,7 @@ import type { AutoscaleInfo } from '../autoscale-info';
 import type { ChartModel } from '../chart-model';
 import { DataSource } from './data-source';
 import type { FirstValue, IPriceDataSource } from './iprice-data-source';
-import type { TimePointIndex } from '../time-data';
+import type { TimePointIndex } from '../time-scale/time-data';
 
 export abstract class PriceDataSource extends DataSource implements IPriceDataSource {
 	private readonly _model: ChartModel;

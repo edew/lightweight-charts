@@ -1,6 +1,6 @@
 import { strokeRectInnerWithFill } from '../helpers/canvas-helpers';
 
-import type {SeriesItemsIndexesRange, TimedValue} from '../model/time-data';
+import type {SeriesItemsIndexesRange, TimedValue} from '../model/time-scale/time-data';
 import type { BarCoordinates, BarPrices } from '../model/bar';
 
 import type { IPaneRenderer } from './ipane-renderer';

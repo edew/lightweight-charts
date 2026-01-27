@@ -1,5 +1,5 @@
 import type { PricedValue } from '../model/price-scale/price-scale';
-import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
+import type { SeriesItemsIndexesRange, TimedValue } from '../model/time-scale/time-data';
 
 import type { LinePoint, LineWidth } from './draw-line';
 import { LineStyle, LineType, setLineStyle } from './draw-line';

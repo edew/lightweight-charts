@@ -12,7 +12,7 @@ export type { LineWidth } from '../renderers/draw-line';
 export type { BarPrice } from '../model/bar';
 export { CrosshairMode } from '../model/crosshair';
 export { PriceScaleMode } from '../model/price-scale/price-scale';
-export type { UTCTimestamp } from '../model/time-data';
+export type { UTCTimestamp } from '../model/time-scale/time-data';
 
 export type { IChartApi, MouseEventParams } from './ichart-api';
 export type { ISeriesApi } from './iseries-api';

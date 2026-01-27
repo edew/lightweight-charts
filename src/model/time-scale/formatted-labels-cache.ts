@@ -1,4 +1,4 @@
-import { ensureDefined } from '../helpers/assertions';
+import { ensureDefined } from '../../helpers/assertions';
 
 interface CachedTick {
 	string: string;

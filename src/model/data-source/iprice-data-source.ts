@@ -5,7 +5,7 @@ import type { IFormatter } from '../../formatters/iformatter';
 import type { AutoscaleInfo } from '../autoscale-info';
 import { ChartModel } from '../chart-model';
 import type { IDataSource } from './idata-source';
-import type { TimePoint, TimePointIndex } from '../time-data';
+import type { TimePoint, TimePointIndex } from '../time-scale/time-data';
 
 export interface FirstValue {
 	value: number;

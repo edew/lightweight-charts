@@ -18,7 +18,7 @@ import {
 	type PriceFormatBuiltIn,
 	type SeriesType,
 } from '../model/series-options';
-import type { TimePointIndex } from '../model/time-data';
+import type { TimePointIndex } from '../model/time-scale/time-data';
 
 import { CandlestickSeriesApi } from './candlestick-series-api';
 import type { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';

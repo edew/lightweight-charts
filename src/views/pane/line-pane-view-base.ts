@@ -7,8 +7,8 @@ import { type PricedValue, PriceScale } from '../../model/price-scale/price-scal
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
 import type { Bar } from '../../model/series-data';
-import type { TimedValue, TimePointIndex } from '../../model/time-data';
-import { TimeScale } from '../../model/time-scale';
+import type { TimedValue, TimePointIndex } from '../../model/time-scale/time-data';
+import { TimeScale } from '../../model/time-scale/time-scale';
 
 import { SeriesPaneViewBase } from './series-pane-view-base';
 
