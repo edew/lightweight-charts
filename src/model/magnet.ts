@@ -2,7 +2,7 @@ import { ensure } from '../helpers/assertions';
 
 import type { Coordinate } from './coordinate';
 import { CrosshairMode, type CrosshairOptions } from './crosshair';
-import type { IDataSource } from './idata-source';
+import type { IDataSource } from './data-source/idata-source';
 import { Pane } from './pane';
 import { Series } from './series';
 import { SeriesPlotIndex } from './series-data';

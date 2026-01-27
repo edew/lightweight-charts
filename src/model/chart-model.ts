@@ -10,9 +10,9 @@ import { PriceAxisRendererOptionsProvider } from '../renderers/price-axis-render
 import type { Coordinate } from './coordinate';
 import { Crosshair, type CrosshairOptions } from './crosshair';
 import { Grid, type GridOptions } from './grid';
-import type { IDataSource } from './idata-source';
+import type { IDataSource } from './data-source/idata-source';
 import { InvalidateMask, InvalidationLevel } from './invalidate-mask';
-import type { IPriceDataSource } from './iprice-data-source';
+import type { IPriceDataSource } from './data-source/iprice-data-source';
 import type { LayoutOptions } from './layout-options';
 import type { LocalizationOptions } from './localization-options';
 import { Magnet } from './magnet';

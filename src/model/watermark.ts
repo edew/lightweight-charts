@@ -3,7 +3,7 @@ import type { IPaneView } from '../views/pane/ipane-view';
 import { WatermarkPaneView } from '../views/pane/watermark-pane-view';
 
 import { ChartModel } from './chart-model';
-import { DataSource } from './data-source';
+import { DataSource } from './data-source/data-source';
 
 /** Structure describing watermark options */
 export interface WatermarkOptions {

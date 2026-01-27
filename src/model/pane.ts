@@ -6,11 +6,11 @@ import { clone } from '../helpers/strict-type-checks';
 
 import { ChartModel } from './chart-model';
 import type { IDataSource } from './idata-source';
-import type { IPriceDataSource } from './iprice-data-source';
-import { PriceDataSource } from './price-data-source';
+import type { IPriceDataSource } from './data-source/iprice-data-source';
+import { PriceDataSource } from './data-source/price-data-source';
 import { PriceScale, PriceScaleMode, type PriceScaleState } from './price-scale';
 import { Series } from './series';
-import { sortSources } from './sort-sources';
+import { sortSources } from './data-source/sort-sources';
 import { TimeScale } from './time-scale';
 
 export const DEFAULT_STRETCH_FACTOR = 1000;

@@ -10,11 +10,11 @@ import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 import type { BarCoordinates, BarPrice, BarPrices } from './bar';
 import { BarsRange } from './bars-range';
 import type { Coordinate } from './coordinate';
-import type { IDataSource } from './idata-source';
-import type { FirstValue, IPriceDataSource } from './iprice-data-source';
+import type { IDataSource } from './data-source/idata-source';
+import type { FirstValue, IPriceDataSource } from './data-source/iprice-data-source';
 import type { LayoutOptions } from './layout-options';
 import type { LocalizationOptions } from './localization-options';
-import { PriceDataSource } from './price-data-source';
+import { PriceDataSource } from './data-source/price-data-source';
 import { PriceRange } from './price-range';
 import {
 	canConvertPriceRangeFromLog,
@@ -31,7 +31,7 @@ import {
 } from './price-scale-conversions';
 import { PriceTickMarkBuilder } from './price-tick-mark-builder';
 import { Series } from './series';
-import { sortSources } from './sort-sources';
+import { sortSources } from './data-source/sort-sources';
 import type { SeriesItemsIndexesRange } from './time-data';
 
 /**

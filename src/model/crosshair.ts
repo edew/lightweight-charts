@@ -14,7 +14,7 @@ import { TimeAxisView } from '../views/time-axis/time-axis-view';
 import type { BarPrice } from './bar';
 import { ChartModel } from './chart-model';
 import type { Coordinate } from './coordinate';
-import { DataSource } from './data-source';
+import { DataSource } from './data-source/data-source';
 import { Pane } from './pane';
 import { PriceScale } from './price-scale';
 import { Series } from './series';

@@ -1,4 +1,4 @@
-import { ensureNotNull } from '../helpers/assertions';
+import { ensureNotNull } from '../../helpers/assertions';
 
 import type { IDataSource } from './idata-source';
 
