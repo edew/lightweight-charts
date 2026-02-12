@@ -9,9 +9,9 @@
 		import { createChart } from "./src/index.ts";
 
 		function generateData() {
-			var res = [];
-			var time = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
-			for (var i = 0; i < 500; ++i) {
+			const res = [];
+			const time = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
+			for (let i = 0; i < 500; ++i) {
 				res.push({
 					time: time.getTime() / 1000,
 					value: i,
@@ -23,9 +23,9 @@
 			return res;
 		}
 
-		var chart = createChart(document.getElementById('container'));
+		const chart = window.chart = createChart(document.getElementById('container'));
 
-		var mainSeries = chart.addLineSeries({
+		const mainSeries = chart.addLineSeries({
 			priceFormat: {
 				minMove: 1,
 				precision: 0,
