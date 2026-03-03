@@ -1,5 +1,5 @@
 import { ChartModel } from '../../model/chart-model';
-import type { IDataSource } from '../../model/idata-source';
+import type { IDataSource } from '../../model/data-source/idata-source';
 import { TextWidthCache } from '../../model/text-width-cache';
 import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import type { IPriceAxisViewRenderer, PriceAxisViewRendererOptions } from '../../renderers/iprice-axis-view-renderer';
