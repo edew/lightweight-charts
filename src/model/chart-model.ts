@@ -375,10 +375,7 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public invalidate(mask: InvalidateMask): void {
-		if (this._invalidateHandler) {
-			this._invalidateHandler(mask);
-		}
-
+		this._invalidate(mask);
 		this.lightUpdate();
 	}
 

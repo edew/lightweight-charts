@@ -407,7 +407,7 @@ export class ChartWidget implements IDestroyable {
 
 		// actions for full invalidation ONLY (not shared with light)
 		if (invalidationType === InvalidationLevel.Full) {
-			this._updateGui();
+			this._syncGuiWithModel();
 		}
 
 		// light or full invalidate actions
@@ -456,10 +456,6 @@ export class ChartWidget implements IDestroyable {
 				}
 			});
 		}
-	}
-
-	private _updateGui(): void {
-		this._syncGuiWithModel();
 	}
 
 	private _destroySeparator(separator: PaneSeparator): void {
