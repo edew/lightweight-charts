@@ -2,8 +2,9 @@ import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
 import { BarsRange } from '../../src/model/bars-range';
-import { Coordinate } from '../../src/model/coordinate';
-import { TimePointIndex, visibleTimedValues } from '../../src/model/time-data';
+import type { Coordinate } from '../../src/model/coordinate';
+import { visibleTimedValues } from '../../src/model/time-scale/time-data';
+import type { TimePointIndex } from '../../src/model/time-scale/time-data';
 
 // TODO: add tests for marks spans
 

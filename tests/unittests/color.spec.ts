@@ -5,9 +5,9 @@ import {
 	colorWithTransparency,
 	parseRgb,
 	resetTransparency,
-	Rgb,
 	rgbToBlackWhiteString,
 } from '../../src/helpers/color';
+import type { Rgb } from '../../src/helpers/color';
 
 describe('rgbToBlackWhiteString', () => {
 	it('should return \'black\' for black color and every non-zero threshold', () => {

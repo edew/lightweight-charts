@@ -8,7 +8,7 @@ import { Palette } from '../../src/model/palette';
 import { Series } from '../../src/model/series';
 import { SeriesData, SeriesPlotIndex } from '../../src/model/series-data';
 import type { SeriesType } from '../../src/model/series-options';
-import type { BusinessDay, TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
+import type { BusinessDay, TimePointIndex, UTCTimestamp } from '../../src/model/time-scale/time-data';
 
 // TODO: add tests for marks spans
 

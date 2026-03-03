@@ -4,7 +4,7 @@ import { describe, it, beforeEach } from 'vitest';
 import { ensure, ensureNotNull } from '../../src/helpers/assertions';
 import type { PlotRow, PlotValue } from '../../src/model/plot-data';
 import { mergePlotRows, type PlotInfoList, PlotList, PlotRowSearchMode } from '../../src/model/plot-list';
-import type { TimePointIndex, UTCTimestamp } from '../../src/model/time-data';
+import type { TimePointIndex, UTCTimestamp } from '../../src/model/time-scale/time-data';
 
 type PlotValueTuple = [PlotValue, PlotValue, PlotValue];
 type OHLCTuple = [PlotValue, PlotValue, PlotValue, PlotValue];
