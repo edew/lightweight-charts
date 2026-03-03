@@ -31,7 +31,8 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test": "vitest tests/**/**.spec.ts"
+    "test": "vitest tests/**/**.spec.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "fancy-canvas": "0.2.1"
