@@ -15,7 +15,6 @@ import { InvalidateMask, InvalidationLevel } from './invalidate-mask';
 import type { IPriceDataSource } from './data-source/iprice-data-source';
 import type { LayoutOptions } from './layout-options';
 import type { LocalizationOptions } from './localization-options';
-import { Magnet } from './magnet';
 import { DEFAULT_STRETCH_FACTOR, Pane } from './pane';
 import type { Point } from './point';
 import { PriceScale, type PriceScaleOptions } from './price-scale/price-scale';
@@ -96,7 +95,6 @@ export class ChartModel implements IDestroyable {
 	private readonly _panes: Pane[] = [];
 	private readonly _grid: Grid;
 	private readonly _crosshair: Crosshair;
-	private readonly _magnet: Magnet;
 	private readonly _watermark: Watermark;
 
 	private _serieses: Series[] = [];
@@ -116,7 +114,6 @@ export class ChartModel implements IDestroyable {
 		this._timeScale = new TimeScale(this, options.timeScale, this._options.localization);
 		this._grid = new Grid();
 		this._crosshair = new Crosshair(this, options.crosshair);
-		this._magnet = new Magnet(options.crosshair);
 		this._watermark = new Watermark(this, options.watermark);
 
 		this.createPane();
@@ -404,7 +401,6 @@ export class ChartModel implements IDestroyable {
 			if (firstValue !== null) {
 				price = priceScale.coordinateToPrice(y, firstValue);
 			}
-			price = this._magnet.align(price, index, pane);
 		}
 
 		this._crosshair.setPosition(index, price, pane);
@@ -421,7 +417,6 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public updateCrosshair(): void {
-		// apply magnet
 		const pane = this._crosshair.pane();
 		if (pane !== null) {
 			const x = this._crosshair.originCoordX();
