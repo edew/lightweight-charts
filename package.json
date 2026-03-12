@@ -31,7 +31,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test": "vitest tests/**/**.spec.ts",
+    "test": "vitest run tests/**/**.spec.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
