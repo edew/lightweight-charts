@@ -1,5 +1,4 @@
 import { ensureDefined } from '../../helpers/assertions';
-import { Delegate } from '../../helpers/delegate';
 
 import type { TickMark, TimePoint } from './time-data';
 
@@ -15,9 +14,8 @@ export class TickMarks {
 	private _marksByIndex: Map<number, TickMark> = new Map();
 	// Sparse array with ordered arrays of tick marks
 	private _marksBySpan: Map<number, TickMark[]> = new Map();
-	private _changed: Delegate = new Delegate();
 	private _cache: TickMark[] | null = null;
-	private _maxBar: number = NaN;
+	private _minIndexesBetweenMarksCount: number = NaN;
 
 	public reset(): void {
 		this._marksByIndex.clear();
@@ -25,7 +23,6 @@ export class TickMarks {
 		this._minIndex = Infinity;
 		this._maxIndex = -Infinity;
 		this._cache = null;
-		this._changed.fire();
 	}
 
 	public merge(tickMarks: TickMark[]): void {
@@ -85,7 +82,6 @@ export class TickMarks {
 		}
 
 		this._cache = null;
-		this._changed.fire();
 	}
 
 	public indexToTime(index: number): TimePoint | null {
@@ -98,59 +94,70 @@ export class TickMarks {
 	}
 
 	public build(spacing: number, maxWidth: number): TickMark[] {
-		const maxBar = Math.ceil(maxWidth / spacing);
-		if (this._maxBar === maxBar && this._cache) {
+		// maxWidth is the pixel width of the widest label; spacing is pixels per bar index.
+		// Dividing gives the label's footprint in bar-index units: how many bar indices
+		// one label spans on screen. Two marks must be at least this far apart (in indices)
+		// or their labels will overlap.
+		const minIndexesBetweenMarksCount = Math.ceil(maxWidth / spacing);
+		if (this._minIndexesBetweenMarksCount === minIndexesBetweenMarksCount && this._cache) {
 			return this._cache;
 		}
 
-		this._maxBar = maxBar;
-		let marks: TickMark[] = [];
-		for (const span of this._marksBySpan.keys()) {
-			// Built tickMarks are now prevMarks, and marks it as new array
-			const prevMarks = marks;
-			marks = [];
+		this._minIndexesBetweenMarksCount = minIndexesBetweenMarksCount;
 
-			const prevMarksLength = prevMarks.length;
-			let prevMarksPointer = 0;
-			const currentSpan = ensureDefined(this._marksBySpan.get(span));
-			const currentSpanLength = currentSpan.length;
+		// Multi-pass filtering across span levels (e.g., daily -> 12-hourly -> hourly).
+		// Each pass tries to fill in smaller marks between already-accepted bigger marks,
+		// keeping only candidates that satisfy the minimum spacing on both sides.
+		let acceptedMarks: TickMark[] = [];
+		for (const currentSpanMarks of this._marksBySpan.values()) {
+			const previouslyAccepted = acceptedMarks;
+			acceptedMarks = [];
 
-			let rightIndex = Infinity;
-			let leftIndex = -Infinity;
+			const previouslyAcceptedLength = previouslyAccepted.length;
+			let acceptedIdx = 0;
+			const currentSpanLength = currentSpanMarks.length;
+
+			let rightNeighborIndex = Infinity;
+			let leftNeighborIndex = -Infinity;
 			for (let i = 0; i < currentSpanLength; i++) {
-				const mark = currentSpan[i];
-				const currentIndex = mark.index;
+				const candidate = currentSpanMarks[i];
+				const candidateIndex = candidate.index;
 
-				// Determine indexes with which current index will be compared
-				// All marks to the right is moved to new array
-				while (prevMarksPointer < prevMarksLength) {
-					const lastMark = prevMarks[prevMarksPointer];
-					const lastIndex = lastMark.index;
-					if (lastIndex < currentIndex) {
-						prevMarksPointer++;
-						marks.push(lastMark);
-						leftIndex = lastIndex;
-						rightIndex = Infinity;
+				// Merge previously-accepted marks that lie to the left of the candidate,
+				// and find the nearest left and right neighbors for spacing validation.
+				while (acceptedIdx < previouslyAcceptedLength) {
+					const acceptedMark = previouslyAccepted[acceptedIdx];
+					const acceptedIndex = acceptedMark.index;
+					if (acceptedIndex < candidateIndex) {
+						// This accepted mark is to the left — keep it and update left boundary
+						acceptedIdx++;
+						acceptedMarks.push(acceptedMark);
+						leftNeighborIndex = acceptedIndex;
+						rightNeighborIndex = Infinity;
 					} else {
-						rightIndex = lastIndex;
+						// This accepted mark is at or to the right — it becomes the right boundary
+						rightNeighborIndex = acceptedIndex;
 						break;
 					}
 				}
 
-				if (rightIndex - currentIndex >= maxBar && currentIndex - leftIndex >= maxBar) {
-					// TickMark fits. Place it into new array
-					marks.push(mark);
-					leftIndex = currentIndex;
+				// Include the candidate only if neither neighbor's label would overlap with it.
+				// The distance in bar indices must be >= the label footprint on each side.
+				const hasSpaceOnRight = rightNeighborIndex - candidateIndex >= minIndexesBetweenMarksCount;
+				const hasSpaceOnLeft = candidateIndex - leftNeighborIndex >= minIndexesBetweenMarksCount;
+				if (hasSpaceOnRight && hasSpaceOnLeft) {
+					acceptedMarks.push(candidate);
+					leftNeighborIndex = candidateIndex;
 				}
 			}
 
-			// Place all unused tickMarks into new array;
-			for (; prevMarksPointer < prevMarksLength; prevMarksPointer++) {
-				marks.push(prevMarks[prevMarksPointer]);
+			// Append remaining previously-accepted marks that were to the right of all candidates
+			for (; acceptedIdx < previouslyAcceptedLength; acceptedIdx++) {
+				acceptedMarks.push(previouslyAccepted[acceptedIdx]);
 			}
 		}
 
-		this._cache = marks;
+		this._cache = acceptedMarks;
 		return this._cache;
 	}
 
