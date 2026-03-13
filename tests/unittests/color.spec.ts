@@ -38,14 +38,6 @@ describe('rgbToBlackWhiteString', () => {
 
 // parsers
 describe('parseRgb', () => {
-	it('should correctly parse known named colors', () => {
-		expect(parseRgb('aliceblue')).to.deep.equal([240, 248, 255]);
-		expect(parseRgb('coral')).to.deep.equal([255, 127, 80]);
-		expect(parseRgb('darkmagenta')).to.deep.equal([139, 0, 139]);
-		expect(parseRgb('linen')).to.deep.equal([250, 240, 230]);
-		expect(parseRgb('whitesmoke')).to.deep.equal([245, 245, 245]);
-	});
-
 	it('should correctly parse RGB tuple string', () => {
 		expect(parseRgb('rgb(10, 20, 30)')).to.deep.equal([10, 20, 30]);
 		expect(parseRgb('rgb(0,0,0)')).to.deep.equal([0, 0, 0]);
@@ -135,8 +127,9 @@ describe('parseRgb with rgba', () => {
 
 describe('resetTransparency', () => {
 	it('should work', () => {
-		expect(resetTransparency('red')).to.equal('rgba(255, 0, 0, 1)');
 		expect(resetTransparency('rgba(255, 0, 0, .1)')).to.equal('rgba(255, 0, 0, 1)');
+		expect(resetTransparency('rgba(0, 255, 0, .6)')).to.equal('rgba(0, 255, 0, 1)');
+		expect(resetTransparency('rgba(0, 0, 255, 0)')).to.equal('rgba(0, 0, 255, 1)');
 	});
 
 	it('should keep hex colors as is', () => {
@@ -147,9 +140,9 @@ describe('resetTransparency', () => {
 
 describe('colorWithTransparency', () => {
 	it('should work', () => {
-		expect(colorWithTransparency('red', 1)).to.equal('rgba(255, 0, 0, 1)');
-		expect(colorWithTransparency('red', 0.5)).to.equal('rgba(255, 0, 0, 0.5)');
-		expect(colorWithTransparency('red', 0)).to.equal('rgba(255, 0, 0, 0)');
+		expect(colorWithTransparency('#ff0000', 1)).to.equal('rgba(255, 0, 0, 1)');
+		expect(colorWithTransparency('#ff0000', 0.5)).to.equal('rgba(255, 0, 0, 0.5)');
+		expect(colorWithTransparency('#ff0000', 0)).to.equal('rgba(255, 0, 0, 0)');
 
 		expect(colorWithTransparency('#0f0', 0.2)).to.equal('rgba(0, 255, 0, 0.2)');
 		expect(colorWithTransparency('#00ff00', 0.7)).to.equal('rgba(0, 255, 0, 0.7)');
@@ -160,11 +153,11 @@ describe('colorWithTransparency', () => {
 	});
 
 	it('should normalize alpha channel', () => {
-		expect(colorWithTransparency('red', -1)).to.equal('rgba(255, 0, 0, 0)');
-		expect(colorWithTransparency('red', 2)).to.equal('rgba(255, 0, 0, 1)');
-		expect(colorWithTransparency('red', -0)).to.equal('rgba(255, 0, 0, 0)');
-		expect(colorWithTransparency('red', NaN)).to.equal('rgba(255, 0, 0, 0)');
-		expect(colorWithTransparency('red', 0.30004)).to.equal('rgba(255, 0, 0, 0.3)');
-		expect(colorWithTransparency('red', 0.30006)).to.equal('rgba(255, 0, 0, 0.3001)');
+		expect(colorWithTransparency('#ff0000', -1)).to.equal('rgba(255, 0, 0, 0)');
+		expect(colorWithTransparency('#ff0000', 2)).to.equal('rgba(255, 0, 0, 1)');
+		expect(colorWithTransparency('#ff0000', -0)).to.equal('rgba(255, 0, 0, 0)');
+		expect(colorWithTransparency('#ff0000', NaN)).to.equal('rgba(255, 0, 0, 0)');
+		expect(colorWithTransparency('#ff0000', 0.30004)).to.equal('rgba(255, 0, 0, 0.3)');
+		expect(colorWithTransparency('#ff0000', 0.30006)).to.equal('rgba(255, 0, 0, 0.3001)');
 	});
 });
