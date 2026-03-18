@@ -1,4 +1,4 @@
-import type { IFormatter } from '../../formatters/iformatter';
+import type { IPriceFormatter } from '../../formatters/iformatter';
 import { PercentageFormatter } from '../../formatters/percentage-formatter';
 import { PriceFormatter } from '../../formatters/price-formatter';
 
@@ -138,7 +138,7 @@ export class PriceScale {
 
 	private _scaleStartPoint: number | null = null;
 	private _scrollStartPoint: number | null = null;
-	private _formatter: IFormatter = defaultPriceFormatter;
+	private _formatter: IPriceFormatter = defaultPriceFormatter;
 	private readonly _optionsChanged: Delegate = new Delegate();
 
 	public constructor(options: PriceScaleOptions, layoutOptions: LayoutOptions, localizationOptions: LocalizationOptions) {
@@ -682,7 +682,7 @@ export class PriceScale {
 		this._priceRangeSnapshot = null;
 	}
 
-	public formatter(): IFormatter {
+	public formatter(): IPriceFormatter {
 		if (!this._formatter) {
 			this.updateFormatter();
 		}
@@ -831,7 +831,7 @@ export class PriceScale {
 		this._markBuilder.rebuildTickMarks();
 	}
 
-	private _mainSourceFormatter(): IFormatter {
+	private _mainSourceFormatter(): IPriceFormatter {
 		const mainSource = ensureNotNull(this.mainSource());
 		return mainSource.formatter();
 	}
@@ -926,7 +926,7 @@ export class PriceScale {
 		return null;
 	}
 
-	private _formatPrice(price: BarPrice, fallbackFormatter?: IFormatter): string {
+	private _formatPrice(price: BarPrice, fallbackFormatter?: IPriceFormatter): string {
 		if (this._localizationOptions.priceFormatter === undefined) {
 			if (fallbackFormatter === undefined) {
 				fallbackFormatter = this.formatter();

@@ -1,7 +1,7 @@
 import { type DateFormat, type DateFormatFn, dateFormatFunctions } from './date-format';
-import type { IFormatter } from './iformatter';
+import type { IDateTimeFormatter } from './iformatter';
 
-export class DateFormatter implements IFormatter {
+export class DateFormatter implements IDateTimeFormatter {
 	private readonly _locale: string;
 	private readonly _dateFormatFunc: DateFormatFn;
 

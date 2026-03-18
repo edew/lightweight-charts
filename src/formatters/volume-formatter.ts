@@ -1,6 +1,6 @@
-import type { IFormatter } from './iformatter';
+import type { IPriceFormatter } from './iformatter';
 
-export class VolumeFormatter implements IFormatter {
+export class VolumeFormatter implements IPriceFormatter {
 	private readonly _precision: number;
 
 	public constructor(precision: number) {

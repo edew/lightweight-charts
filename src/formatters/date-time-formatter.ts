@@ -1,6 +1,6 @@
 import type { DateFormat } from './date-format';
 import { DateFormatter } from './date-formatter';
-import type { IFormatter } from './iformatter';
+import type { IDateTimeFormatter } from './iformatter';
 import { TimeFormatter } from './time-formatter';
 
 export interface DateTimeFormatterParams {
@@ -17,7 +17,7 @@ const defaultParams: DateTimeFormatterParams = {
 	locale: 'default',
 };
 
-export class DateTimeFormatter implements IFormatter {
+export class DateTimeFormatter implements IDateTimeFormatter {
 	private readonly _dateFormatter: DateFormatter;
 	private readonly _timeFormatter: TimeFormatter;
 	private readonly _separator: string;

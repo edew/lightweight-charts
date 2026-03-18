@@ -1,7 +1,7 @@
-import type { IFormatter } from './iformatter';
+import type { IDateTimeFormatter } from './iformatter';
 import { numberToStringWithLeadingZero } from './price-formatter';
 
-export class TimeFormatter implements IFormatter {
+export class TimeFormatter implements IDateTimeFormatter {
 	private _formatStr: string;
 
 	public constructor(format?: string) {

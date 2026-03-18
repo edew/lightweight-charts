@@ -1,6 +1,4 @@
-// NOTE: this type definition file is incomplete. Feel free to define other entities from companion JS
-
-import type { IFormatter } from '../../formatters/iformatter';
+import type { IPriceFormatter } from '../../formatters/iformatter';
 
 import type { AutoscaleInfo } from './autoscale-info';
 import { ChartModel } from '../chart-model';
@@ -14,7 +12,7 @@ export interface FirstValue {
 
 export interface IPriceDataSource extends IDataSource {
 	firstValue(): FirstValue | null;
-	formatter(): IFormatter;
+	formatter(): IPriceFormatter;
 	priceLineColor(lastBarColor: string): string;
 	model(): ChartModel;
 	minMove(): number;
