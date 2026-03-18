@@ -9,56 +9,56 @@ import { PaneWidget } from './pane-widget';
 export const SEPARATOR_HEIGHT = 1;
 
 export class PaneSeparator implements IDestroyable {
-	private readonly _chartWidget: ChartWidget;
-	private readonly _rowElement: HTMLTableRowElement;
-	private readonly _cell: HTMLTableCellElement;
-	private readonly _handle: HTMLDivElement | null;
-	private readonly _mouseEventHandler: MouseEventHandler | null;
-	private readonly _paneA: PaneWidget;
-	private readonly _paneB: PaneWidget;
+	readonly #chartWidget: ChartWidget;
+	readonly #rowElement: HTMLTableRowElement;
+	readonly #cell: HTMLTableCellElement;
+	readonly #handle: HTMLDivElement | null;
+	readonly #mouseEventHandler: MouseEventHandler | null;
+	readonly #paneA: PaneWidget;
+	readonly #paneB: PaneWidget;
 
-	private _startY: number = 0;
-	private _deltaY: number = 0;
-	private _totalHeight: number = 0;
-	private _totalStretch: number = 0;
-	private _minPaneHeight: number = 0;
-	private _maxPaneHeight: number = 0;
-	private _pixelStretchFactor: number = 0;
+	#startY: number = 0;
+	#deltaY: number = 0;
+	#totalHeight: number = 0;
+	#totalStretch: number = 0;
+	#minPaneHeight: number = 0;
+	#maxPaneHeight: number = 0;
+	#pixelStretchFactor: number = 0;
 
 	public constructor(chartWidget: ChartWidget, topPaneIndex: number, bottomPaneIndex: number, disableResize: boolean) {
-		this._chartWidget = chartWidget;
-		this._paneA = chartWidget.paneWidgets()[topPaneIndex];
-		this._paneB = chartWidget.paneWidgets()[bottomPaneIndex];
+		this.#chartWidget = chartWidget;
+		this.#paneA = chartWidget.paneWidgets()[topPaneIndex];
+		this.#paneB = chartWidget.paneWidgets()[bottomPaneIndex];
 
-		this._rowElement = document.createElement('tr');
-		this._rowElement.style.height = SEPARATOR_HEIGHT + 'px';
+		this.#rowElement = document.createElement('tr');
+		this.#rowElement.style.height = SEPARATOR_HEIGHT + 'px';
 
-		this._cell = document.createElement('td');
-		this._cell.style.padding = '0';
-		this._cell.setAttribute('colspan', '3');
+		this.#cell = document.createElement('td');
+		this.#cell.style.padding = '0';
+		this.#cell.setAttribute('colspan', '3');
 
-		this._updateBorderColor();
-		this._rowElement.appendChild(this._cell);
+		this.#updateBorderColor();
+		this.#rowElement.appendChild(this.#cell);
 
 		if (disableResize) {
-			this._handle = null;
-			this._mouseEventHandler = null;
+			this.#handle = null;
+			this.#mouseEventHandler = null;
 		} else {
-			this._handle = document.createElement('div');
-			this._handle.style.position = 'absolute';
-			this._handle.style.zIndex = '50';
-			this._handle.style.height = '5px';
-			this._handle.style.width = '100%';
-			this._handle.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-			this._handle.style.cursor = 'ns-resize';
-			this._cell.appendChild(this._handle);
+			this.#handle = document.createElement('div');
+			this.#handle.style.position = 'absolute';
+			this.#handle.style.zIndex = '50';
+			this.#handle.style.height = '5px';
+			this.#handle.style.width = '100%';
+			this.#handle.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+			this.#handle.style.cursor = 'ns-resize';
+			this.#cell.appendChild(this.#handle);
 			const handlers: MouseEventHandlers = {
-				mouseDownEvent: this._mouseDownEvent.bind(this),
-				pressedMouseMoveEvent: this._pressedMouseMoveEvent.bind(this),
-				mouseUpEvent: this._mouseUpEvent.bind(this),
+				mouseDownEvent: this.#mouseDownEvent.bind(this),
+				pressedMouseMoveEvent: this.#pressedMouseMoveEvent.bind(this),
+				mouseUpEvent: this.#mouseUpEvent.bind(this),
 			};
-			this._mouseEventHandler = new MouseEventHandler(
-				this._handle,
+			this.#mouseEventHandler = new MouseEventHandler(
+				this.#handle,
 				handlers,
 				{
 					treatVertTouchDragAsPageScroll: false,
@@ -69,70 +69,70 @@ export class PaneSeparator implements IDestroyable {
 	}
 
 	public destroy(): void {
-		if (this._mouseEventHandler !== null) {
-			this._mouseEventHandler.destroy();
+		if (this.#mouseEventHandler !== null) {
+			this.#mouseEventHandler.destroy();
 		}
 	}
 
 	public getElement(): HTMLElement {
-		return this._rowElement;
+		return this.#rowElement;
 	}
 
 	public getSize(): Readonly<Size> {
-		return new Size(this._paneA.getSize().w, SEPARATOR_HEIGHT);
+		return new Size(this.#paneA.getSize().w, SEPARATOR_HEIGHT);
 	}
 
 	public getImage(): HTMLCanvasElement {
 		const size = this.getSize();
 		const res = createPreconfiguredCanvas(document, size);
 		const ctx = getContext2D(res);
-		ctx.fillStyle = this._chartWidget.options().timeScale.borderColor;
+		ctx.fillStyle = this.#chartWidget.options().timeScale.borderColor;
 		ctx.fillRect(0, 0, size.w, size.h);
 		return res;
 	}
 
 	public update(): void {
-		this._updateBorderColor();
+		this.#updateBorderColor();
 	}
 
-	private _updateBorderColor(): void {
-		this._cell.style.background = this._chartWidget.options().timeScale.borderColor;
+	#updateBorderColor(): void {
+		this.#cell.style.background = this.#chartWidget.options().timeScale.borderColor;
 	}
 
-	private _mouseDownEvent(event: TouchMouseEvent): void {
-		this._startY = event.pageY;
-		this._deltaY = 0;
-		this._totalHeight = this._paneA.getSize().h + this._paneB.getSize().h;
-		this._totalStretch = this._paneA.stretchFactor() + this._paneB.stretchFactor();
-		this._minPaneHeight = 30;
-		this._maxPaneHeight = this._totalHeight - this._minPaneHeight;
-		this._pixelStretchFactor = this._totalStretch / this._totalHeight;
+	#mouseDownEvent(event: TouchMouseEvent): void {
+		this.#startY = event.pageY;
+		this.#deltaY = 0;
+		this.#totalHeight = this.#paneA.getSize().h + this.#paneB.getSize().h;
+		this.#totalStretch = this.#paneA.stretchFactor() + this.#paneB.stretchFactor();
+		this.#minPaneHeight = 30;
+		this.#maxPaneHeight = this.#totalHeight - this.#minPaneHeight;
+		this.#pixelStretchFactor = this.#totalStretch / this.#totalHeight;
 	}
 
-	private _pressedMouseMoveEvent(event: TouchMouseEvent): void {
-		this._deltaY = (event.pageY - this._startY);
-		const upperHeight = this._paneA.getSize().h;
-		const newUpperPaneHeight = clamp(upperHeight + this._deltaY, this._minPaneHeight, this._maxPaneHeight);
+	#pressedMouseMoveEvent(event: TouchMouseEvent): void {
+		this.#deltaY = (event.pageY - this.#startY);
+		const upperHeight = this.#paneA.getSize().h;
+		const newUpperPaneHeight = clamp(upperHeight + this.#deltaY, this.#minPaneHeight, this.#maxPaneHeight);
 
-		const newUpperPaneStretch = newUpperPaneHeight * this._pixelStretchFactor;
-		const newLowerPaneStretch = this._totalStretch - newUpperPaneStretch;
-		this._paneA.setStretchFactor(newUpperPaneStretch);
-		this._paneB.setStretchFactor(newLowerPaneStretch);
+		const newUpperPaneStretch = newUpperPaneHeight * this.#pixelStretchFactor;
+		const newLowerPaneStretch = this.#totalStretch - newUpperPaneStretch;
+		this.#paneA.setStretchFactor(newUpperPaneStretch);
+		this.#paneB.setStretchFactor(newLowerPaneStretch);
 
-		this._chartWidget.adjustSize();
+		this.#chartWidget.adjustSize();
 
-		if (this._paneA.getSize().h !== upperHeight) {
-			this._startY = event.pageY;
+		if (this.#paneA.getSize().h !== upperHeight) {
+			this.#startY = event.pageY;
 		}
 	}
 
-	private _mouseUpEvent(event: TouchMouseEvent): void {
-		this._startY = 0;
-		this._deltaY = 0;
-		this._totalHeight = 0;
-		this._totalStretch = 0;
-		this._minPaneHeight = 0;
-		this._maxPaneHeight = 0;
-		this._pixelStretchFactor = 0;
+	#mouseUpEvent(event: TouchMouseEvent): void {
+		this.#startY = 0;
+		this.#deltaY = 0;
+		this.#totalHeight = 0;
+		this.#totalStretch = 0;
+		this.#minPaneHeight = 0;
+		this.#maxPaneHeight = 0;
+		this.#pixelStretchFactor = 0;
 	}
 }

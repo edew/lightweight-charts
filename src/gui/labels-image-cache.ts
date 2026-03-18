@@ -19,27 +19,27 @@ interface Item {
 }
 
 export class LabelsImageCache implements IDestroyable {
-	private _textWidthCache: TextWidthCache = new TextWidthCache(MAX_COUNT);
-	private _fontSize: number = 0;
-	private _color: string = '';
-	private _font: string = '';
-	private _keys: string[] = [];
-	private _hash: Map<string, Item> = new Map();
+	#textWidthCache: TextWidthCache = new TextWidthCache(MAX_COUNT);
+	#fontSize: number = 0;
+	#color: string = '';
+	#font: string = '';
+	#keys: string[] = [];
+	#hash: Map<string, Item> = new Map();
 
 	public constructor(fontSize: number, color: string, fontFamily?: string, fontStyle?: string) {
-		this._fontSize = fontSize;
-		this._color = color;
-		this._font = makeFont(fontSize, fontFamily, fontStyle);
+		this.#fontSize = fontSize;
+		this.#color = color;
+		this.#font = makeFont(fontSize, fontFamily, fontStyle);
 	}
 
 	public destroy(): void {
-		(this._textWidthCache as unknown as null) = null;
-		this._keys = [];
-		this._hash.clear();
+		(this.#textWidthCache as unknown as null) = null;
+		this.#keys = [];
+		this.#hash.clear();
 	}
 
 	public paintTo(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, align: string): void {
-		const label = this._getLabelImage(ctx, text);
+		const label = this.#getLabelImage(ctx, text);
 		if (align !== 'left') {
 			const pixelRatio = getCanvasDevicePixelRatio(ctx.canvas);
 			x -= Math.floor(label.textWidth * pixelRatio);
@@ -54,24 +54,24 @@ export class LabelsImageCache implements IDestroyable {
 		);
 	}
 
-	private _getLabelImage(ctx: CanvasRenderingContext2D, text: string): Item {
+	#getLabelImage(ctx: CanvasRenderingContext2D, text: string): Item {
 		let item: Item;
-		if (this._hash.has(text)) {
+		if (this.#hash.has(text)) {
 			// Cache hit!
-			item = ensureDefined(this._hash.get(text));
+			item = ensureDefined(this.#hash.get(text));
 		} else {
-			if (this._keys.length >= MAX_COUNT) {
-				const key = ensureDefined(this._keys.shift());
-				this._hash.delete(key);
+			if (this.#keys.length >= MAX_COUNT) {
+				const key = ensureDefined(this.#keys.shift());
+				this.#hash.delete(key);
 			}
 
 			const pixelRatio = getCanvasDevicePixelRatio(ctx.canvas);
 
-			const margin = Math.ceil(this._fontSize / 4.5);
-			const baselineOffset = Math.round(this._fontSize / 10);
-			const textWidth = Math.ceil(this._textWidthCache.measureText(ctx, text));
+			const margin = Math.ceil(this.#fontSize / 4.5);
+			const baselineOffset = Math.round(this.#fontSize / 10);
+			const textWidth = Math.ceil(this.#textWidthCache.measureText(ctx, text));
 			const width = ceiledEven(Math.round(textWidth + margin * 2));
-			const height = ceiledEven(this._fontSize + margin * 2);
+			const height = ceiledEven(this.#fontSize + margin * 2);
 			const canvas = createPreconfiguredCanvas(document, new Size(width, height));
 
 			// Allocate new
@@ -84,14 +84,14 @@ export class LabelsImageCache implements IDestroyable {
 			};
 
 			if (textWidth !== 0) {
-				this._keys.push(item.text);
-				this._hash.set(item.text, item);
+				this.#keys.push(item.text);
+				this.#hash.set(item.text, item);
 			}
 
 			ctx = getContext2D(item.canvas);
 			drawScaled(ctx, pixelRatio, () => {
-				ctx.font = this._font;
-				ctx.fillStyle = this._color;
+				ctx.font = this.#font;
+				ctx.fillStyle = this.#color;
 				ctx.fillText(text, 0, height - margin - baselineOffset);
 			});
 		}

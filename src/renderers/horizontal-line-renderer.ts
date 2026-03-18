@@ -15,32 +15,32 @@ export interface HorizontalLineRendererData {
 }
 
 export class HorizontalLineRenderer implements IPaneRenderer {
-	private _data: HorizontalLineRendererData | null = null;
+	#data: HorizontalLineRendererData | null = null;
 
 	public setData(data: HorizontalLineRendererData): void {
-		this._data = data;
+		this.#data = data;
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void {
-		if (this._data === null) {
+		if (this.#data === null) {
 			return;
 		}
 
-		if (this._data.visible === false) {
+		if (this.#data.visible === false) {
 			return;
 		}
 
-		const y = Math.round(this._data.y * pixelRatio);
+		const y = Math.round(this.#data.y * pixelRatio);
 
-		if (y < 0 || y > Math.ceil(this._data.height * pixelRatio)) {
+		if (y < 0 || y > Math.ceil(this.#data.height * pixelRatio)) {
 			return;
 		}
 
-		const width = Math.ceil(this._data.width * pixelRatio);
+		const width = Math.ceil(this.#data.width * pixelRatio);
 		ctx.lineCap = 'butt';
-		ctx.strokeStyle = this._data.color;
-		ctx.lineWidth = Math.floor(this._data.lineWidth * pixelRatio);
-		setLineStyle(ctx, this._data.lineStyle);
+		ctx.strokeStyle = this.#data.color;
+		ctx.lineWidth = Math.floor(this.#data.lineWidth * pixelRatio);
+		setLineStyle(ctx, this.#data.lineStyle);
 		drawHorizontalLine(ctx, y, 0, width);
 	}
 }

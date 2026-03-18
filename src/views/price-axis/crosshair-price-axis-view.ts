@@ -9,15 +9,15 @@ import { PriceAxisView } from './price-axis-view';
 export type CrosshairPriceAxisViewValueProvider = (priceScale: PriceScale) => CrosshairPriceAndCoordinate;
 
 export class CrosshairPriceAxisView extends PriceAxisView {
-	private _source: Crosshair;
-	private readonly _priceScale: PriceScale;
-	private readonly _valueProvider: CrosshairPriceAxisViewValueProvider;
+	#source: Crosshair;
+	readonly #priceScale: PriceScale;
+	readonly #valueProvider: CrosshairPriceAxisViewValueProvider;
 
 	public constructor(source: Crosshair, priceScale: PriceScale, valueProvider: CrosshairPriceAxisViewValueProvider) {
 		super();
-		this._source = source;
-		this._priceScale = priceScale;
-		this._valueProvider = valueProvider;
+		this.#source = source;
+		this.#priceScale = priceScale;
+		this.#valueProvider = valueProvider;
 	}
 
 	protected _updateRendererData(
@@ -26,22 +26,22 @@ export class CrosshairPriceAxisView extends PriceAxisView {
 		commonRendererData: PriceAxisViewRendererCommonData
 	): void {
 		axisRendererData.visible = false;
-		const options = this._source.options().horzLine;
+		const options = this.#source.options().horzLine;
 		if (!options.labelVisible) {
 			return;
 		}
 
-		const firstValue = this._priceScale.firstValue();
-		if (!this._source.visible() || this._priceScale.isEmpty() || (firstValue === null)) {
+		const firstValue = this.#priceScale.firstValue();
+		if (!this.#source.visible() || this.#priceScale.isEmpty() || (firstValue === null)) {
 			return;
 		}
 
 		commonRendererData.background = options.labelBackgroundColor;
 		commonRendererData.color = generateTextColor(options.labelBackgroundColor);
 
-		const value = this._valueProvider(this._priceScale);
+		const value = this.#valueProvider(this.#priceScale);
 		commonRendererData.coordinate = value.coordinate;
-		axisRendererData.text = this._priceScale.formatPrice(value.price, firstValue);
+		axisRendererData.text = this.#priceScale.formatPrice(value.price, firstValue);
 		axisRendererData.visible = true;
 	}
 }

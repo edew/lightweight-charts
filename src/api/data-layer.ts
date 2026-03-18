@@ -237,41 +237,41 @@ function convertStringsToBusinessDays(data: TimedData[]): void {
 }
 
 export class DataLayer {
-	private _pointDataByTimePoint: Map<UTCTimestamp, TimePointData> = new Map();
-	private _timePointsByIndex: Map<TimePointIndex, TimePoint> = new Map();
-	private _sortedTimePoints: TimePoint[] = [];
+	#pointDataByTimePoint: Map<UTCTimestamp, TimePointData> = new Map();
+	#timePointsByIndex: Map<TimePointIndex, TimePoint> = new Map();
+	#sortedTimePoints: TimePoint[] = [];
 
 	public destroy(): void {
-		this._pointDataByTimePoint.clear();
-		this._timePointsByIndex.clear();
-		this._sortedTimePoints = [];
+		this.#pointDataByTimePoint.clear();
+		this.#timePointsByIndex.clear();
+		this.#sortedTimePoints = [];
 	}
 
 	public setSeriesData<TSeriesType extends SeriesType>(series: Series<TSeriesType>, data: SeriesDataItemTypeMap[TSeriesType][]): UpdatePacket {
 		series.clearData();
 
 		convertStringsToBusinessDays(data);
-		this._pointDataByTimePoint.forEach((value: TimePointData) => value.mapping.delete(series));
+		this.#pointDataByTimePoint.forEach((value: TimePointData) => value.mapping.delete(series));
 		const timeConverter = selectTimeConverter(data);
 		if (timeConverter !== null) {
 			data.forEach((item: SeriesDataItemTypeMap[TSeriesType]) => {
 				const time = timeConverter(item.time);
-				const timePointData: TimePointData = this._pointDataByTimePoint.get(time.timestamp) ||
+				const timePointData: TimePointData = this.#pointDataByTimePoint.get(time.timestamp) ||
 					{ index: 0 as TimePointIndex, mapping: new Map<Series, SeriesDataItemTypeMap[TSeriesType]>(), timePoint: time };
 				timePointData.mapping.set(series, item);
-				this._pointDataByTimePoint.set(time.timestamp, timePointData);
+				this.#pointDataByTimePoint.set(time.timestamp, timePointData);
 			});
 		}
 
 		// remove from points items without series
 		const newPoints = new Map<UTCTimestamp, TimePointData>();
-		this._pointDataByTimePoint.forEach((pointData: TimePointData, key: UTCTimestamp) => {
+		this.#pointDataByTimePoint.forEach((pointData: TimePointData, key: UTCTimestamp) => {
 			if (pointData.mapping.size > 0) {
 				newPoints.set(key, pointData);
 			}
 		});
 
-		return this._setNewPoints(newPoints);
+		return this.#setNewPoints(newPoints);
 	}
 
 	public removeSeries(series: Series): UpdatePacket {
@@ -298,33 +298,33 @@ export class DataLayer {
 
 		const changedTimePointTime = ensureNotNull(selectTimeConverter([data]))(data.time);
 
-		const pointData: TimePointData = this._pointDataByTimePoint.get(changedTimePointTime.timestamp) ||
+		const pointData: TimePointData = this.#pointDataByTimePoint.get(changedTimePointTime.timestamp) ||
 			{ index: 0 as TimePointIndex, mapping: new Map<Series, SeriesDataItemTypeMap[TSeriesType]>(), timePoint: changedTimePointTime };
 		const newPoint = pointData.mapping.size === 0;
 		pointData.mapping.set(series, data);
 		let updateAllSeries = false;
 		if (newPoint) {
-			let index = this._pointDataByTimePoint.size as TimePointIndex;
-			if (this._sortedTimePoints.length > 0 && this._sortedTimePoints[this._sortedTimePoints.length - 1].timestamp > changedTimePointTime.timestamp) {
+			let index = this.#pointDataByTimePoint.size as TimePointIndex;
+			if (this.#sortedTimePoints.length > 0 && this.#sortedTimePoints[this.#sortedTimePoints.length - 1].timestamp > changedTimePointTime.timestamp) {
 				// new point in the middle
-				index = upperbound(this._sortedTimePoints, changedTimePointTime, compareTimePoints) as TimePointIndex;
-				this._sortedTimePoints.splice(index, 0, changedTimePointTime);
-				this._incrementIndicesFrom(index);
+				index = upperbound(this.#sortedTimePoints, changedTimePointTime, compareTimePoints) as TimePointIndex;
+				this.#sortedTimePoints.splice(index, 0, changedTimePointTime);
+				this.#incrementIndicesFrom(index);
 				updateAllSeries = true;
 			} else {
 				// new point in the end
-				this._sortedTimePoints.push(changedTimePointTime);
+				this.#sortedTimePoints.push(changedTimePointTime);
 			}
 
 			pointData.index = index;
-			this._timePointsByIndex.set(pointData.index, changedTimePointTime);
+			this.#timePointsByIndex.set(pointData.index, changedTimePointTime);
 		}
-		this._pointDataByTimePoint.set(changedTimePointTime.timestamp, pointData);
+		this.#pointDataByTimePoint.set(changedTimePointTime.timestamp, pointData);
 		const seriesUpdates: Map<Series, SeriesUpdatePacket> = new Map();
 
-		for (let index = pointData.index; index < this._pointDataByTimePoint.size; ++index) {
-			const timePoint = ensureDefined(this._timePointsByIndex.get(index));
-			const currentIndexData = ensureDefined(this._pointDataByTimePoint.get(timePoint.timestamp));
+		for (let index = pointData.index; index < this.#pointDataByTimePoint.size; ++index) {
+			const timePoint = ensureDefined(this.#timePointsByIndex.get(index));
+			const currentIndexData = ensureDefined(this.#pointDataByTimePoint.get(timePoint.timestamp));
 			currentIndexData.mapping.forEach((currentData: DataItemType, currentSeries: Series) => {
 				if (!updateAllSeries && currentSeries !== series) {
 					return;
@@ -343,8 +343,8 @@ export class DataLayer {
 			});
 		}
 
-		const marks: TickMarkPacket[] = newPoint ? this._generateMarksSinceIndex(pointData.index) : [];
-		const timePointChanges = newPoint ? this._sortedTimePoints.slice(pointData.index) : [];
+		const marks: TickMarkPacket[] = newPoint ? this.#generateMarksSinceIndex(pointData.index) : [];
+		const timePointChanges = newPoint ? this.#sortedTimePoints.slice(pointData.index) : [];
 
 		const timeScaleUpdate: TimeScaleUpdatePacket = {
 			seriesUpdates,
@@ -358,15 +358,15 @@ export class DataLayer {
 		};
 	}
 
-	private _setNewPoints(newPoints: Map<UTCTimestamp, TimePointData>): UpdatePacket {
-		this._pointDataByTimePoint = newPoints;
+	#setNewPoints(newPoints: Map<UTCTimestamp, TimePointData>): UpdatePacket {
+		this.#pointDataByTimePoint = newPoints;
 
-		this._sortedTimePoints = Array.from(this._pointDataByTimePoint.values()).map((d: TimePointData) => d.timePoint);
-		this._sortedTimePoints.sort((t1: TimePoint, t2: TimePoint) => t1.timestamp - t2.timestamp);
+		this.#sortedTimePoints = Array.from(this.#pointDataByTimePoint.values()).map((d: TimePointData) => d.timePoint);
+		this.#sortedTimePoints.sort((t1: TimePoint, t2: TimePoint) => t1.timestamp - t2.timestamp);
 
 		const seriesUpdates: Map<Series, SeriesUpdatePacket> = new Map();
-		this._sortedTimePoints.forEach((time: TimePoint, index: number) => {
-			const pointData = ensureDefined(this._pointDataByTimePoint.get(time.timestamp));
+		this.#sortedTimePoints.forEach((time: TimePoint, index: number) => {
+			const pointData = ensureDefined(this.#pointDataByTimePoint.get(time.timestamp));
 			pointData.index = index as TimePointIndex;
 			pointData.mapping.forEach((targetData: DataItemType, targetSeries: Series) => {
 				// add point to series
@@ -383,7 +383,7 @@ export class DataLayer {
 		});
 
 		let prevTime: TimePoint | null = null;
-		const marks = this._sortedTimePoints.map((time: TimePoint, index: number) => {
+		const marks = this.#sortedTimePoints.map((time: TimePoint, index: number) => {
 			const span = spanByTime(time, prevTime);
 			prevTime = time;
 			return {
@@ -395,41 +395,41 @@ export class DataLayer {
 
 		const timeScaleUpdate: TimeScaleUpdatePacket = {
 			seriesUpdates,
-			changes: this._sortedTimePoints.slice(),
+			changes: this.#sortedTimePoints.slice(),
 			index: 0 as TimePointIndex,
 			marks,
 		};
 
-		this._rebuildTimePointsByIndex();
+		this.#rebuildTimePointsByIndex();
 
 		return {
 			timeScaleUpdate,
 		};
 	}
 
-	private _incrementIndicesFrom(index: TimePointIndex): void {
-		for (let indexToUpdate: TimePointIndex = this._timePointsByIndex.size - 1 as TimePointIndex; indexToUpdate >= index; --indexToUpdate) {
-			const timePoint = ensureDefined(this._timePointsByIndex.get(indexToUpdate));
-			const updatedData = ensureDefined(this._pointDataByTimePoint.get(timePoint.timestamp));
+	#incrementIndicesFrom(index: TimePointIndex): void {
+		for (let indexToUpdate: TimePointIndex = this.#timePointsByIndex.size - 1 as TimePointIndex; indexToUpdate >= index; --indexToUpdate) {
+			const timePoint = ensureDefined(this.#timePointsByIndex.get(indexToUpdate));
+			const updatedData = ensureDefined(this.#pointDataByTimePoint.get(timePoint.timestamp));
 			const newIndex = indexToUpdate + 1 as TimePointIndex;
 			updatedData.index = newIndex;
-			this._timePointsByIndex.delete(indexToUpdate);
-			this._timePointsByIndex.set(newIndex, timePoint);
+			this.#timePointsByIndex.delete(indexToUpdate);
+			this.#timePointsByIndex.set(newIndex, timePoint);
 		}
 	}
 
-	private _rebuildTimePointsByIndex(): void {
-		this._timePointsByIndex.clear();
-		this._pointDataByTimePoint.forEach((data: TimePointData, timePoint: UTCTimestamp) => {
-			this._timePointsByIndex.set(data.index, data.timePoint);
+	#rebuildTimePointsByIndex(): void {
+		this.#timePointsByIndex.clear();
+		this.#pointDataByTimePoint.forEach((data: TimePointData, timePoint: UTCTimestamp) => {
+			this.#timePointsByIndex.set(data.index, data.timePoint);
 		});
 	}
 
-	private _generateMarksSinceIndex(startIndex: TimePointIndex): TickMarkPacket[] {
+	#generateMarksSinceIndex(startIndex: TimePointIndex): TickMarkPacket[] {
 		const result: TickMarkPacket[] = [];
-		let prevTime = this._timePointsByIndex.get(startIndex - 1 as TimePointIndex) || null;
-		for (let index = startIndex; index < this._timePointsByIndex.size; ++index) {
-			const time = ensureDefined(this._timePointsByIndex.get(index));
+		let prevTime = this.#timePointsByIndex.get(startIndex - 1 as TimePointIndex) || null;
+		for (let index = startIndex; index < this.#timePointsByIndex.size; ++index) {
+			const time = ensureDefined(this.#timePointsByIndex.get(index));
 			const span = spanByTime(time, prevTime);
 			prevTime = time;
 			result.push({

@@ -25,28 +25,28 @@ export interface GridOptions {
 }
 
 export class Grid extends DataSource {
-	private _paneViews: Map<Pane, GridPaneView> = new Map();
+	#paneViews: Map<Pane, GridPaneView> = new Map();
 
 	public destroy(): void {
-		this._paneViews.forEach((paneView: GridPaneView, pane: Pane) => this._onPaneDestroyed(pane));
+		this.#paneViews.forEach((paneView: GridPaneView, pane: Pane) => this.#onPaneDestroyed(pane));
 	}
 
 	public paneViews(pane: Pane): ReadonlyArray<IPaneView> {
-		if (!this._paneViews.has(pane)) {
-			this._paneViews.set(pane, new GridPaneView(pane));
+		if (!this.#paneViews.has(pane)) {
+			this.#paneViews.set(pane, new GridPaneView(pane));
 
-			pane.onDestroyed().subscribe(() => this._onPaneDestroyed(pane), this);
+			pane.onDestroyed().subscribe(() => this.#onPaneDestroyed(pane), this);
 		}
 
-		return [ensureDefined(this._paneViews.get(pane))];
+		return [ensureDefined(this.#paneViews.get(pane))];
 	}
 
 	public updateAllViews(): void {
-		this._paneViews.forEach((paneView: GridPaneView) => paneView.update());
+		this.#paneViews.forEach((paneView: GridPaneView) => paneView.update());
 	}
 
-	private _onPaneDestroyed(pane: Pane): void {
-		this._paneViews.delete(pane);
+	#onPaneDestroyed(pane: Pane): void {
+		this.#paneViews.delete(pane);
 		pane.onDestroyed().unsubscribeAll(this);
 	}
 }

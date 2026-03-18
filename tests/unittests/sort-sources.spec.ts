@@ -6,18 +6,18 @@ import type { IDataSource } from '../../src/model/data-source/idata-source';
 
 // Mock data source for testing
 class MockDataSource implements IDataSource {
-	private _zorder: number;
+	#zorder: number;
 
 	public constructor(zorder: number) {
-		this._zorder = zorder;
+		this.#zorder = zorder;
 	}
 
 	public zorder(): number {
-		return this._zorder;
+		return this.#zorder;
 	}
 
 	public setZorder(zorder: number): void {
-		this._zorder = zorder;
+		this.#zorder = zorder;
 	}
 
 	public priceScale() {

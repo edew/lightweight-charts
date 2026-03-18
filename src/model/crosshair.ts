@@ -74,36 +74,36 @@ type RawCoordinateProvider = () => Coordinate;
 type RawIndexProvider = () => TimePointIndex;
 
 export class Crosshair extends DataSource {
-	private _pane: Pane | null = null;
-	private _price: number = NaN;
-	private _index: TimePointIndex = 0 as TimePointIndex;
-	private _visible: boolean = true;
-	private readonly _model: ChartModel;
-	private _priceAxisViews: Map<PriceScale, CrosshairPriceAxisView> = new Map();
-	private readonly _timeAxisView: CrosshairTimeAxisView;
-	private readonly _markersPaneView: CrosshairMarksPaneView;
-	private _subscribed: boolean = false;
-	private readonly _currentPosPriceProvider: PriceAndCoordinateProvider;
-	private readonly _options: CrosshairOptions;
-	private readonly _paneView: CrosshairPaneView;
+	#pane: Pane | null = null;
+	#price: number = NaN;
+	#index: TimePointIndex = 0 as TimePointIndex;
+	#visible: boolean = true;
+	readonly #model: ChartModel;
+	#priceAxisViews: Map<PriceScale, CrosshairPriceAxisView> = new Map();
+	readonly #timeAxisView: CrosshairTimeAxisView;
+	readonly #markersPaneView: CrosshairMarksPaneView;
+	#subscribed: boolean = false;
+	readonly #currentPosPriceProvider: PriceAndCoordinateProvider;
+	readonly #options: CrosshairOptions;
+	readonly #paneView: CrosshairPaneView;
 
-	private _x: Coordinate = NaN as Coordinate;
-	private _y: Coordinate = NaN as Coordinate;
+	#x: Coordinate = NaN as Coordinate;
+	#y: Coordinate = NaN as Coordinate;
 
-	private _originX: Coordinate = NaN as Coordinate;
-	private _originY: Coordinate = NaN as Coordinate;
+	#originX: Coordinate = NaN as Coordinate;
+	#originY: Coordinate = NaN as Coordinate;
 
 	public constructor(model: ChartModel, options: CrosshairOptions) {
 		super();
-		this._model = model;
-		this._options = options;
-		this._markersPaneView = new CrosshairMarksPaneView(model, this);
+		this.#model = model;
+		this.#options = options;
+		this.#markersPaneView = new CrosshairMarksPaneView(model, this);
 
 		const valuePriceProvider = (rawPriceProvider: RawPriceProvider, rawCoordinateProvider: RawCoordinateProvider) => {
 			return (priceScale: PriceScale) => {
 				const coordinate = rawCoordinateProvider();
 				const rawPrice = rawPriceProvider();
-				if (priceScale === ensureNotNull(this._pane).defaultPriceScale()) {
+				if (priceScale === ensureNotNull(this.#pane).defaultPriceScale()) {
 					// price must be defined
 					return { price: rawPrice, coordinate: coordinate };
 				} else {
@@ -118,131 +118,131 @@ export class Crosshair extends DataSource {
 		const valueTimeProvider = (rawIndexProvider: RawIndexProvider, rawCoordinateProvider: RawCoordinateProvider) => {
 			return () => {
 				return {
-					time: this._model.timeScale().indexToUserTime(rawIndexProvider()),
+					time: this.#model.timeScale().indexToUserTime(rawIndexProvider()),
 					coordinate: rawCoordinateProvider(),
 				};
 			};
 		};
 
 		// for current position always return both price and coordinate
-		this._currentPosPriceProvider = valuePriceProvider(
-			() => this._price as BarPrice,
-			() => this._y
+		this.#currentPosPriceProvider = valuePriceProvider(
+			() => this.#price as BarPrice,
+			() => this.#y
 		);
 
 		const currentPosTimeProvider = valueTimeProvider(
-			() => this._index,
+			() => this.#index,
 			() => this.appliedX()
 		);
 
-		this._timeAxisView = new CrosshairTimeAxisView(this, model, currentPosTimeProvider);
-		this._paneView = new CrosshairPaneView(this);
+		this.#timeAxisView = new CrosshairTimeAxisView(this, model, currentPosTimeProvider);
+		this.#paneView = new CrosshairPaneView(this);
 	}
 
 	public index(): TimePointIndex {
-		return this._index;
+		return this.#index;
 	}
 
 	public options(): Readonly<CrosshairOptions> {
-		return this._options;
+		return this.#options;
 	}
 
 	public saveOriginCoord(x: Coordinate, y: Coordinate): void {
-		this._originX = x;
-		this._originY = y;
+		this.#originX = x;
+		this.#originY = y;
 	}
 
 	public clearOriginCoord(): void {
-		this._originX = NaN as Coordinate;
-		this._originY = NaN as Coordinate;
+		this.#originX = NaN as Coordinate;
+		this.#originY = NaN as Coordinate;
 	}
 
 	public originCoordX(): Coordinate {
-		return this._originX;
+		return this.#originX;
 	}
 
 	public originCoordY(): Coordinate {
-		return this._originY;
+		return this.#originY;
 	}
 
 	public setPosition(index: TimePointIndex, price: number, pane: Pane): void {
-		if (!this._subscribed) {
-			this._subscribed = true;
+		if (!this.#subscribed) {
+			this.#subscribed = true;
 		}
 
-		this._visible = true;
+		this.#visible = true;
 
-		this._tryToUpdateViews(index, price, pane);
+		this.#tryToUpdateViews(index, price, pane);
 	}
 
 	public appliedIndex(): TimePointIndex {
-		return this._index;
+		return this.#index;
 	}
 
 	public appliedX(): Coordinate {
-		return this._x;
+		return this.#x;
 	}
 
 	public appliedY(): Coordinate {
-		return this._y;
+		return this.#y;
 	}
 
 	public visible(): boolean {
-		return this._visible;
+		return this.#visible;
 	}
 
 	public clearPosition(): void {
-		this._visible = false;
-		this._setIndexToLastSeriesBarIndex();
+		this.#visible = false;
+		this.#setIndexToLastSeriesBarIndex();
 
-		this._price = NaN;
-		this._x = NaN as Coordinate;
-		this._y = NaN as Coordinate;
-		this._pane = null;
+		this.#price = NaN;
+		this.#x = NaN as Coordinate;
+		this.#y = NaN as Coordinate;
+		this.#pane = null;
 
 		this.clearOriginCoord();
 	}
 
 	public paneViews(pane: Pane): ReadonlyArray<IPaneView> {
-		return this._pane !== null ? [this._paneView, this._markersPaneView] : [];
+		return this.#pane !== null ? [this.#paneView, this.#markersPaneView] : [];
 	}
 
 	public horzLineVisible(pane: Pane): boolean {
-		return pane === this._pane && this._options.horzLine.visible;
+		return pane === this.#pane && this.#options.horzLine.visible;
 	}
 
 	public vertLineVisible(): boolean {
-		return this._options.vertLine.visible;
+		return this.#options.vertLine.visible;
 	}
 
 	public priceAxisViews(pane: Pane, priceScale: PriceScale): IPriceAxisView[] {
-		if (!this._visible || this._pane !== pane) {
-			this._priceAxisViews.clear();
+		if (!this.#visible || this.#pane !== pane) {
+			this.#priceAxisViews.clear();
 		}
 
 		const views: IPriceAxisView[] = [];
-		if (this._pane === pane) {
-			views.push(this._createPriceAxisViewOnDemand(this._priceAxisViews, priceScale, this._currentPosPriceProvider));
+		if (this.#pane === pane) {
+			views.push(this.#createPriceAxisViewOnDemand(this.#priceAxisViews, priceScale, this.#currentPosPriceProvider));
 		}
 
 		return views;
 	}
 
 	public timeAxisViews(): ReadonlyArray<TimeAxisView> {
-		return this._visible ? [this._timeAxisView] : [];
+		return this.#visible ? [this.#timeAxisView] : [];
 	}
 
 	public pane(): Pane | null {
-		return this._pane;
+		return this.#pane;
 	}
 
 	public updateAllViews(): void {
-		this._priceAxisViews.forEach((value: PriceAxisView) => value.update());
-		this._timeAxisView.update();
-		this._markersPaneView.update();
+		this.#priceAxisViews.forEach((value: PriceAxisView) => value.update());
+		this.#timeAxisView.update();
+		this.#markersPaneView.update();
 	}
 
-	private _priceScaleByPane(pane: Pane): PriceScale | null {
+	#priceScaleByPane(pane: Pane): PriceScale | null {
 		if (pane && !pane.defaultPriceScale().isEmpty()) {
 			return pane.defaultPriceScale();
 		}
@@ -250,46 +250,46 @@ export class Crosshair extends DataSource {
 		return null;
 	}
 
-	private _tryToUpdateViews(index: TimePointIndex, price: number, pane: Pane): void {
-		if (this._tryToUpdateData(index, price, pane)) {
+	#tryToUpdateViews(index: TimePointIndex, price: number, pane: Pane): void {
+		if (this.#tryToUpdateData(index, price, pane)) {
 			this.updateAllViews();
 		}
 	}
 
-	private _tryToUpdateData(newIndex: TimePointIndex, newPrice: number, newPane: Pane): boolean {
-		const oldX = this._x;
-		const oldY = this._y;
-		const oldPrice = this._price;
-		const oldIndex = this._index;
-		const oldPane = this._pane;
-		const priceScale = this._priceScaleByPane(newPane);
+	#tryToUpdateData(newIndex: TimePointIndex, newPrice: number, newPane: Pane): boolean {
+		const oldX = this.#x;
+		const oldY = this.#y;
+		const oldPrice = this.#price;
+		const oldIndex = this.#index;
+		const oldPane = this.#pane;
+		const priceScale = this.#priceScaleByPane(newPane);
 
-		this._index = newIndex;
-		this._x = isNaN(newIndex) ? NaN as Coordinate : this._model.timeScale().indexToCoordinate(newIndex);
-		this._pane = newPane;
+		this.#index = newIndex;
+		this.#x = isNaN(newIndex) ? NaN as Coordinate : this.#model.timeScale().indexToCoordinate(newIndex);
+		this.#pane = newPane;
 
 		const firstValue = priceScale !== null ? priceScale.firstValue() : null;
 		if (priceScale !== null && firstValue !== null) {
-			this._price = newPrice;
-			this._y = priceScale.priceToCoordinate(newPrice, firstValue);
+			this.#price = newPrice;
+			this.#y = priceScale.priceToCoordinate(newPrice, firstValue);
 		} else {
-			this._price = NaN;
-			this._y = NaN as Coordinate;
+			this.#price = NaN;
+			this.#y = NaN as Coordinate;
 		}
 
-		return (oldX !== this._x || oldY !== this._y || oldIndex !== this._index ||
-			oldPrice !== this._price || oldPane !== this._pane);
+		return (oldX !== this.#x || oldY !== this.#y || oldIndex !== this.#index ||
+			oldPrice !== this.#price || oldPane !== this.#pane);
 	}
 
-	private _setIndexToLastSeriesBarIndex(): void {
-		const lastIndexes = this._model.serieses()
+	#setIndexToLastSeriesBarIndex(): void {
+		const lastIndexes = this.#model.serieses()
 			.map((s: Series) => s.bars().lastIndex())
 			.filter(notNull);
 		const lastBarIndex = (lastIndexes.length === 0) ? null : (Math.max(...lastIndexes) as TimePointIndex);
-		this._index = lastBarIndex !== null ? lastBarIndex : NaN as TimePointIndex;
+		this.#index = lastBarIndex !== null ? lastBarIndex : NaN as TimePointIndex;
 	}
 
-	private _createPriceAxisViewOnDemand(map: Map<PriceScale, CrosshairPriceAxisView>, priceScale: PriceScale, valueProvider: PriceAndCoordinateProvider): IPriceAxisView {
+	#createPriceAxisViewOnDemand(map: Map<PriceScale, CrosshairPriceAxisView>, priceScale: PriceScale, valueProvider: PriceAndCoordinateProvider): IPriceAxisView {
 		let view = map.get(priceScale);
 
 		if (view === undefined) {

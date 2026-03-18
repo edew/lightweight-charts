@@ -86,61 +86,61 @@ export type ChartOptionsInternal =
 	};
 
 export class ChartModel implements IDestroyable {
-	private readonly _options: ChartOptionsInternal;
-	private readonly _invalidateHandler: InvalidateHandler;
+	readonly #options: ChartOptionsInternal;
+	readonly #invalidateHandler: InvalidateHandler;
 
-	private readonly _rendererOptionsProvider: PriceAxisRendererOptionsProvider;
+	readonly #rendererOptionsProvider: PriceAxisRendererOptionsProvider;
 
-	private readonly _timeScale: TimeScale;
-	private readonly _panes: Pane[] = [];
-	private readonly _grid: Grid;
-	private readonly _crosshair: Crosshair;
-	private readonly _watermark: Watermark;
+	readonly #timeScale: TimeScale;
+	readonly #panes: Pane[] = [];
+	readonly #grid: Grid;
+	readonly #crosshair: Crosshair;
+	readonly #watermark: Watermark;
 
-	private _serieses: Series[] = [];
+	#serieses: Series[] = [];
 
-	private _width: number = 0;
-	private _initialTimeScrollPos: number | null = null;
-	private _hoveredSource: HoveredSource | null = null;
-	private readonly _mainPriceScaleOptionsChanged: Delegate = new Delegate();
-	private _crosshairMoved: Delegate<TimePointIndex | null, Point | null> = new Delegate();
+	#width: number = 0;
+	#initialTimeScrollPos: number | null = null;
+	#hoveredSource: HoveredSource | null = null;
+	readonly #mainPriceScaleOptionsChanged: Delegate = new Delegate();
+	#crosshairMoved: Delegate<TimePointIndex | null, Point | null> = new Delegate();
 
 	public constructor(invalidateHandler: InvalidateHandler, options: ChartOptionsInternal) {
-		this._invalidateHandler = invalidateHandler;
-		this._options = options;
+		this.#invalidateHandler = invalidateHandler;
+		this.#options = options;
 
-		this._rendererOptionsProvider = new PriceAxisRendererOptionsProvider(this);
+		this.#rendererOptionsProvider = new PriceAxisRendererOptionsProvider(this);
 
-		this._timeScale = new TimeScale(this, options.timeScale, this._options.localization);
-		this._grid = new Grid();
-		this._crosshair = new Crosshair(this, options.crosshair);
-		this._watermark = new Watermark(this, options.watermark);
+		this.#timeScale = new TimeScale(this, options.timeScale, this.#options.localization);
+		this.#grid = new Grid();
+		this.#crosshair = new Crosshair(this, options.crosshair);
+		this.#watermark = new Watermark(this, options.watermark);
 
 		this.createPane();
-		this._panes[0].setStretchFactor(DEFAULT_STRETCH_FACTOR * 2);
-		this._panes[0].addDataSource(this._watermark, true, false);
+		this.#panes[0].setStretchFactor(DEFAULT_STRETCH_FACTOR * 2);
+		this.#panes[0].addDataSource(this.#watermark, true, false);
 	}
 
 	public fullUpdate(): void {
-		this._invalidate(new InvalidateMask(InvalidationLevel.Full));
+		this.#invalidate(new InvalidateMask(InvalidationLevel.Full));
 	}
 
 	public lightUpdate(): void {
-		this._invalidate(new InvalidateMask(InvalidationLevel.Light));
+		this.#invalidate(new InvalidateMask(InvalidationLevel.Light));
 	}
 
 	public updateSource(source: IDataSource): void {
-		const inv = this._invalidationMaskForSource(source);
-		this._invalidate(inv);
+		const inv = this.#invalidationMaskForSource(source);
+		this.#invalidate(inv);
 	}
 
 	public hoveredSource(): HoveredSource | null {
-		return this._hoveredSource;
+		return this.#hoveredSource;
 	}
 
 	public setHoveredSource(source: HoveredSource | null): void {
-		const prevSource = this._hoveredSource;
-		this._hoveredSource = source;
+		const prevSource = this.#hoveredSource;
+		this.#hoveredSource = source;
 		if (prevSource !== null) {
 			this.updateSource(prevSource.source);
 		}
@@ -150,23 +150,23 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public options(): Readonly<ChartOptionsInternal> {
-		return this._options;
+		return this.#options;
 	}
 
 	public applyOptions(options: DeepPartial<ChartOptionsInternal>): void {
 		// TODO: implement this
-		merge(this._options, options);
+		merge(this.#options, options);
 		if (options.priceScale !== undefined) {
 			this.mainPriceScale().applyOptions(options.priceScale);
-			this._mainPriceScaleOptionsChanged.fire();
+			this.#mainPriceScaleOptionsChanged.fire();
 		}
 
 		if (options.timeScale !== undefined) {
-			this._timeScale.applyOptions(options.timeScale);
+			this.#timeScale.applyOptions(options.timeScale);
 		}
 
 		if (options.localization !== undefined) {
-			this._timeScale.applyLocalizationOptions(options.localization);
+			this.#timeScale.applyLocalizationOptions(options.localization);
 			this.mainPriceScale().updateFormatter();
 		}
 
@@ -174,37 +174,37 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public updateAllPaneViews(): void {
-		this._panes.forEach((p: Pane) => p.updateAllViews());
+		this.#panes.forEach((p: Pane) => p.updateAllViews());
 		this.updateCrosshair();
-		this._grid.updateAllViews();
+		this.#grid.updateAllViews();
 	}
 
 	public timeScale(): TimeScale {
-		return this._timeScale;
+		return this.#timeScale;
 	}
 
 	public panes(): ReadonlyArray<Pane> {
-		return this._panes;
+		return this.#panes;
 	}
 
 	public gridSource(): Grid {
-		return this._grid;
+		return this.#grid;
 	}
 
 	public watermarkSource(): Watermark | null {
-		return this._watermark;
+		return this.#watermark;
 	}
 
 	public crosshairSource(): Crosshair {
-		return this._crosshair;
+		return this.#crosshair;
 	}
 
 	public crosshairMoved(): ISubscription<TimePointIndex | null, Point | null> {
-		return this._crosshairMoved;
+		return this.#crosshairMoved;
 	}
 
 	public width(): number {
-		return this._width;
+		return this.#width;
 	}
 
 	public setPaneHeight(pane: Pane, height: number): void {
@@ -214,23 +214,23 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public setWidth(width: number): void {
-		this._width = width;
-		this._timeScale.setWidth(this._width);
-		this._panes.forEach((pane: Pane) => pane.setWidth(width));
+		this.#width = width;
+		this.#timeScale.setWidth(this.#width);
+		this.#panes.forEach((pane: Pane) => pane.setWidth(width));
 		this.recalculateAllPanes();
 	}
 
 	public createPane(index?: number): Pane {
-		const pane = new Pane(this._timeScale, this);
+		const pane = new Pane(this.#timeScale, this);
 
 		if (index !== undefined) {
-			this._panes.splice(index, 0, pane);
+			this.#panes.splice(index, 0, pane);
 		} else {
 			// adding to the end - common case
-			this._panes.push(pane);
+			this.#panes.push(pane);
 		}
 
-		const actualIndex = (index === undefined) ? this._panes.length - 1 : index;
+		const actualIndex = (index === undefined) ? this.#panes.length - 1 : index;
 
 		// we always do autoscaling on the creation
 		// if autoscale option is true, it is ok, just recalculate by invalidation mask
@@ -253,12 +253,12 @@ export class ChartModel implements IDestroyable {
 	public scalePriceTo(pane: Pane, priceScale: PriceScale, x: number): void {
 		pane.scalePriceTo(priceScale, x);
 		this.updateCrosshair();
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public endScalePrice(pane: Pane, priceScale: PriceScale): void {
 		pane.endScalePrice(priceScale);
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public startScrollPrice(pane: Pane, priceScale: PriceScale, x: number): void {
@@ -274,7 +274,7 @@ export class ChartModel implements IDestroyable {
 		}
 		pane.scrollPriceTo(priceScale, x);
 		this.updateCrosshair();
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public endScrollPrice(pane: Pane, priceScale: PriceScale): void {
@@ -282,21 +282,21 @@ export class ChartModel implements IDestroyable {
 			return;
 		}
 		pane.endScrollPrice(priceScale);
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public setPriceAutoScale(pane: Pane, priceScale: PriceScale, autoScale: boolean): void {
 		pane.setPriceAutoScale(priceScale, autoScale);
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public resetPriceScale(pane: Pane, priceScale: PriceScale): void {
 		pane.resetPriceScale(priceScale);
-		this._invalidate(this._paneInvalidationMask(pane, InvalidationLevel.Light));
+		this.#invalidate(this.#paneInvalidationMask(pane, InvalidationLevel.Light));
 	}
 
 	public startScaleTime(position: Coordinate): void {
-		this._timeScale.startScale(position);
+		this.#timeScale.startScale(position);
 	}
 
 	/**
@@ -327,30 +327,30 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public scaleTimeTo(x: Coordinate): void {
-		this._timeScale.scaleTo(x);
+		this.#timeScale.scaleTo(x);
 		this.recalculateAllPanes();
 		this.updateCrosshair();
 		this.lightUpdate();
 	}
 
 	public endScaleTime(): void {
-		this._timeScale.endScale();
+		this.#timeScale.endScale();
 		this.lightUpdate();
 	}
 
 	public startScrollTime(x: Coordinate): void {
-		this._initialTimeScrollPos = x;
-		this._timeScale.startScroll(x);
+		this.#initialTimeScrollPos = x;
+		this.#timeScale.startScroll(x);
 	}
 
 	public scrollTimeTo(x: Coordinate): boolean {
 		let res = false;
-		if (this._initialTimeScrollPos !== null && Math.abs(x - this._initialTimeScrollPos) > 20) {
-			this._initialTimeScrollPos = null;
+		if (this.#initialTimeScrollPos !== null && Math.abs(x - this.#initialTimeScrollPos) > 20) {
+			this.#initialTimeScrollPos = null;
 			res = true;
 		}
 
-		this._timeScale.scrollTo(x);
+		this.#timeScale.scrollTo(x);
 		this.recalculateAllPanes();
 		this.updateCrosshair();
 		this.lightUpdate();
@@ -358,38 +358,38 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public endScrollTime(): void {
-		this._timeScale.endScroll();
+		this.#timeScale.endScroll();
 		this.lightUpdate();
 
-		this._initialTimeScrollPos = null;
+		this.#initialTimeScrollPos = null;
 	}
 
 	public resetTimeScale(): void {
-		this._timeScale.restoreDefault();
+		this.#timeScale.restoreDefault();
 		this.recalculateAllPanes();
 		this.updateCrosshair();
 		this.lightUpdate();
 	}
 
 	public invalidate(mask: InvalidateMask): void {
-		this._invalidate(mask);
+		this.#invalidate(mask);
 		this.lightUpdate();
 	}
 
 	public dataSources(): ReadonlyArray<IDataSource> {
-		return this._panes.reduce((arr: IDataSource[], pane: Pane) => arr.concat(pane.dataSources()), []);
+		return this.#panes.reduce((arr: IDataSource[], pane: Pane) => arr.concat(pane.dataSources()), []);
 	}
 
 	public serieses(): ReadonlyArray<Series> {
-		return this._serieses;
+		return this.#serieses;
 	}
 
 	public setAndSaveCurrentPosition(x: Coordinate, y: Coordinate, pane: Pane): void {
-		this._crosshair.saveOriginCoord(x, y);
+		this.#crosshair.saveOriginCoord(x, y);
 		let price = NaN;
-		let index = this._timeScale.coordinateToIndex(x);
+		let index = this.#timeScale.coordinateToIndex(x);
 
-		const visibleBars = this._timeScale.visibleBars();
+		const visibleBars = this.#timeScale.visibleBars();
 		if (visibleBars !== null) {
 			index = Math.min(Math.max(visibleBars.firstBar(), index), visibleBars.lastBar()) as TimePointIndex;
 		}
@@ -403,24 +403,24 @@ export class ChartModel implements IDestroyable {
 			}
 		}
 
-		this._crosshair.setPosition(index, price, pane);
+		this.#crosshair.setPosition(index, price, pane);
 
-		this._cursorUpdate();
-		this._crosshairMoved.fire(this._crosshair.appliedIndex(), { x, y });
+		this.#cursorUpdate();
+		this.#crosshairMoved.fire(this.#crosshair.appliedIndex(), { x, y });
 	}
 
 	public clearCurrentPosition(): void {
 		const crosshair = this.crosshairSource();
 		crosshair.clearPosition();
-		this._cursorUpdate();
-		this._crosshairMoved.fire(null, null);
+		this.#cursorUpdate();
+		this.#crosshairMoved.fire(null, null);
 	}
 
 	public updateCrosshair(): void {
-		const pane = this._crosshair.pane();
+		const pane = this.#crosshair.pane();
 		if (pane !== null) {
-			const x = this._crosshair.originCoordX();
-			const y = this._crosshair.originCoordY();
+			const x = this.#crosshair.originCoordX();
+			const y = this.#crosshair.originCoordY();
 			this.setAndSaveCurrentPosition(x, y, pane);
 		}
 	}
@@ -428,15 +428,15 @@ export class ChartModel implements IDestroyable {
 	public updateTimeScale(index: TimePointIndex, values: TimePoint[], marks: TickMark[], clearFlag: boolean): void {
 		if (clearFlag) {
 			// refresh timescale
-			this._timeScale.reset();
+			this.#timeScale.reset();
 		}
 
-		this._timeScale.update(index, values, marks);
+		this.#timeScale.update(index, values, marks);
 	}
 
 	public updateTimeScaleBaseIndex(earliestRowIndex?: TimePointIndex): void {
 		// get the latest series bar index
-		const lastSeriesBarIndex = this._serieses.reduce(
+		const lastSeriesBarIndex = this.#serieses.reduce(
 			(currentRes: TimePointIndex | undefined, series: Series) => {
 				const seriesBars = series.bars();
 				if (seriesBars.isEmpty()) {
@@ -448,7 +448,7 @@ export class ChartModel implements IDestroyable {
 			undefined);
 
 		if (lastSeriesBarIndex !== undefined) {
-			const timeScale = this._timeScale;
+			const timeScale = this.#timeScale;
 			const currentBaseIndex = timeScale.baseIndex();
 
 			const visibleBars = timeScale.visibleBars();
@@ -481,27 +481,27 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public paneForSource(source: IDataSource): Pane | null {
-		const pane = this._panes.find((p: Pane) => p.orderedSources().includes(source));
+		const pane = this.#panes.find((p: Pane) => p.orderedSources().includes(source));
 		return pane === undefined ? null : pane;
 	}
 
 	public recalculateAllPanes(): void {
-		this._panes.forEach((p: Pane) => p.recalculate());
+		this.#panes.forEach((p: Pane) => p.recalculate());
 		this.updateAllPaneViews();
 	}
 
 	public destroy(): void {
-		this._grid.destroy();
-		this._panes.forEach((p: Pane) => p.destroy());
-		this._panes.length = 0;
+		this.#grid.destroy();
+		this.#panes.forEach((p: Pane) => p.destroy());
+		this.#panes.length = 0;
 
 		// to avoid memleaks
-		this._options.localization.priceFormatter = undefined;
-		this._options.localization.timeFormatter = undefined;
+		this.#options.localization.priceFormatter = undefined;
+		this.#options.localization.timeFormatter = undefined;
 	}
 
 	public setPriceAutoScaleForAllMainSources(): void {
-		this._panes.map((p: Pane) => p.mainDataSource())
+		this.#panes.map((p: Pane) => p.mainDataSource())
 			.forEach((s: IPriceDataSource | null) => {
 				if (s !== null) {
 					const priceScale = ensureNotNull(s.priceScale());
@@ -513,27 +513,27 @@ export class ChartModel implements IDestroyable {
 	}
 
 	public rendererOptionsProvider(): PriceAxisRendererOptionsProvider {
-		return this._rendererOptionsProvider;
+		return this.#rendererOptionsProvider;
 	}
 
 	public priceAxisRendererOptions(): Readonly<PriceAxisViewRendererOptions> {
-		return this._rendererOptionsProvider.options();
+		return this.#rendererOptionsProvider.options();
 	}
 
 	public mainPriceScaleOptionsChanged(): ISubscription {
-		return this._mainPriceScaleOptionsChanged;
+		return this.#mainPriceScaleOptionsChanged;
 	}
 
 	public mainPriceScale(): PriceScale {
-		return this._panes[0].defaultPriceScale();
+		return this.#panes[0].defaultPriceScale();
 	}
 
 	public createSeries<T extends SeriesType>(seriesType: T, options: SeriesOptionsMap[T]): Series<T> {
-		const pane = this._panes[0];
-		const series = this._createSeries(options, seriesType, pane);
-		this._serieses.push(series);
+		const pane = this.#panes[0];
+		const series = this.#createSeries(options, seriesType, pane);
+		this.#serieses.push(series);
 
-		if (this._serieses.length === 1) {
+		if (this.#serieses.length === 1) {
 			// call fullUpdate to recalculate chart's parts geometry
 			this.fullUpdate();
 		} else {
@@ -546,10 +546,10 @@ export class ChartModel implements IDestroyable {
 	public removeSeries(series: Series): void {
 		const pane = this.paneForSource(series);
 
-		const seriesIndex = this._serieses.indexOf(series);
+		const seriesIndex = this.#serieses.indexOf(series);
 		assert(seriesIndex !== -1, 'Series not found');
 
-		this._serieses.splice(seriesIndex, 1);
+		this.#serieses.splice(seriesIndex, 1);
 		ensureNotNull(pane).removeDataSource(series);
 		if (series.destroy) {
 			series.destroy();
@@ -559,19 +559,19 @@ export class ChartModel implements IDestroyable {
 	public fitContent(): void {
 		const mask = new InvalidateMask(InvalidationLevel.Light);
 		mask.setFitContent();
-		this._invalidate(mask);
+		this.#invalidate(mask);
 	}
 
 	public setTargetTimeRange(range: TimePointsRange): void {
 		const mask = new InvalidateMask(InvalidationLevel.Light);
 		mask.setTargetTimeRange(range);
-		this._invalidate(mask);
+		this.#invalidate(mask);
 	}
 
-	private _paneInvalidationMask(pane: Pane | null, level: InvalidationLevel): InvalidateMask {
+	#paneInvalidationMask(pane: Pane | null, level: InvalidationLevel): InvalidateMask {
 		const inv = new InvalidateMask(level);
 		if (pane !== null) {
-			const index = this._panes.indexOf(pane);
+			const index = this.#panes.indexOf(pane);
 			inv.invalidatePane(index, {
 				level,
 			});
@@ -579,25 +579,23 @@ export class ChartModel implements IDestroyable {
 		return inv;
 	}
 
-	private _invalidationMaskForSource(source: IDataSource, invalidateType?: InvalidationLevel): InvalidateMask {
+	#invalidationMaskForSource(source: IDataSource, invalidateType?: InvalidationLevel): InvalidateMask {
 		if (invalidateType === undefined) {
 			invalidateType = InvalidationLevel.Light;
 		}
 
-		return this._paneInvalidationMask(this.paneForSource(source), invalidateType);
+		return this.#paneInvalidationMask(this.paneForSource(source), invalidateType);
 	}
 
-	private _invalidate(mask: InvalidateMask): void {
-		if (this._invalidateHandler) {
-			this._invalidateHandler(mask);
-		}
+	#invalidate(mask: InvalidateMask): void {
+		this.#invalidateHandler(mask);
 	}
 
-	private _cursorUpdate(): void {
-		this._invalidate(new InvalidateMask(InvalidationLevel.Cursor));
+	#cursorUpdate(): void {
+		this.#invalidate(new InvalidateMask(InvalidationLevel.Cursor));
 	}
 
-	private _createSeries<T extends SeriesType>(options: SeriesOptionsMap[T], seriesType: T, pane: Pane): Series<T> {
+	#createSeries<T extends SeriesType>(options: SeriesOptionsMap[T], seriesType: T, pane: Pane): Series<T> {
 		const series = new Series<T>(this, options, seriesType);
 
 		pane.addDataSource(series, Boolean(options.overlay), false);

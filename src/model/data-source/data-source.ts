@@ -9,14 +9,14 @@ import type { PriceScale } from '../price-scale/price-scale';
 export abstract class DataSource implements IDataSource {
 	protected _priceScale: PriceScale | null = null;
 
-	private _zorder: number = 0;
+	#zorder: number = 0;
 
 	public zorder(): number {
-		return this._zorder;
+		return this.#zorder;
 	}
 
 	public setZorder(zorder: number): void {
-		this._zorder = zorder;
+		this.#zorder = zorder;
 	}
 
 	public priceScale(): PriceScale | null {

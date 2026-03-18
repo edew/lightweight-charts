@@ -29,51 +29,51 @@ export interface MouseEventParamsImpl {
 export type MouseEventParamsImplSupplier = () => MouseEventParamsImpl;
 
 export class ChartWidget implements IDestroyable {
-	private readonly _options: ChartOptionsInternal;
-	private _paneWidgets: PaneWidget[] = [];
-	private _paneSeparators: PaneSeparator[] = [];
-	private readonly _model: ChartModel;
-	private _drawRafId: number = 0;
-	private readonly _priceAxisWidthChanged: Delegate<number> = new Delegate();
-	private _height: number = 0;
-	private _width: number = 0;
-	private _priceAxisWidth: number = 0;
-	private _element: HTMLElement;
-	private readonly _tableElement: HTMLElement;
-	private _timeAxisWidget: TimeAxisWidget;
-	private _invalidateMask: InvalidateMask | null = null;
-	private _drawPlanned: boolean = false;
-	private _clicked: Delegate<MouseEventParamsImplSupplier> = new Delegate();
-	private _crosshairMoved: Delegate<MouseEventParamsImplSupplier> = new Delegate();
-	private _onWheelBound: (event: WheelEvent) => void;
+	readonly #options: ChartOptionsInternal;
+	#paneWidgets: PaneWidget[] = [];
+	#paneSeparators: PaneSeparator[] = [];
+	readonly #model: ChartModel;
+	#drawRafId: number = 0;
+	readonly #priceAxisWidthChanged: Delegate<number> = new Delegate();
+	#height: number = 0;
+	#width: number = 0;
+	#priceAxisWidth: number = 0;
+	#element: HTMLElement;
+	readonly #tableElement: HTMLElement;
+	#timeAxisWidget: TimeAxisWidget;
+	#invalidateMask: InvalidateMask | null = null;
+	#drawPlanned: boolean = false;
+	#clicked: Delegate<MouseEventParamsImplSupplier> = new Delegate();
+	#crosshairMoved: Delegate<MouseEventParamsImplSupplier> = new Delegate();
+	#onWheelBound: (event: WheelEvent) => void;
 
 	public constructor(container: HTMLElement, options: ChartOptionsInternal) {
-		this._options = options;
+		this.#options = options;
 
-		this._element = document.createElement('div');
-		this._element.classList.add('tv-lightweight-charts');
-		this._element.style.overflow = 'hidden';
-		this._element.style.width = '100%';
-		this._element.style.height = '100%';
+		this.#element = document.createElement('div');
+		this.#element.classList.add('tv-lightweight-charts');
+		this.#element.style.overflow = 'hidden';
+		this.#element.style.width = '100%';
+		this.#element.style.height = '100%';
 
-		this._tableElement = document.createElement('table');
-		this._tableElement.setAttribute('cellspacing', '0');
-		this._element.appendChild(this._tableElement);
+		this.#tableElement = document.createElement('table');
+		this.#tableElement.setAttribute('cellspacing', '0');
+		this.#element.appendChild(this.#tableElement);
 
-		this._onWheelBound = this._onMousewheel.bind(this);
-		this._element.addEventListener('wheel', this._onWheelBound, { passive: false });
+		this.#onWheelBound = this.#onMousewheel.bind(this);
+		this.#element.addEventListener('wheel', this.#onWheelBound, { passive: false });
 
-		this._model = new ChartModel(
-			this._invalidateHandler.bind(this),
-			this._options
+		this.#model = new ChartModel(
+			this.#invalidateHandler.bind(this),
+			this.#options
 		);
-		this.model().crosshairMoved().subscribe(this._onPaneWidgetCrosshairMoved.bind(this), this);
+		this.model().crosshairMoved().subscribe(this.#onPaneWidgetCrosshairMoved.bind(this), this);
 
-		this._timeAxisWidget = new TimeAxisWidget(this);
-		this._tableElement.appendChild(this._timeAxisWidget.getElement());
+		this.#timeAxisWidget = new TimeAxisWidget(this);
+		this.#tableElement.appendChild(this.#timeAxisWidget.getElement());
 
-		let width = this._options.width;
-		let height = this._options.height;
+		let width = this.#options.width;
+		let height = this.#options.height;
 
 		if (width === 0 && height === 0) {
 			const containerRect = container.getBoundingClientRect();
@@ -98,13 +98,13 @@ export class ChartWidget implements IDestroyable {
 		// or after but with adjustSize to properly update time scale
 		this.resize(width, height);
 
-		this._syncGuiWithModel();
+		this.#syncGuiWithModel();
 
-		container.appendChild(this._element);
-		this._updateTimeAxisVisibility();
-		this._model.timeScale().optionsApplied().subscribe(
+		container.appendChild(this.#element);
+		this.#updateTimeAxisVisibility();
+		this.#model.timeScale().optionsApplied().subscribe(
 			() => {
-				this._updateTimeAxisVisibility();
+				this.#updateTimeAxisVisibility();
 				this.adjustSize();
 			},
 			this
@@ -112,72 +112,72 @@ export class ChartWidget implements IDestroyable {
 	}
 
 	public model(): ChartModel {
-		return this._model;
+		return this.#model;
 	}
 
 	public options(): Readonly<ChartOptionsInternal> {
-		return this._options;
+		return this.#options;
 	}
 
 	public paneWidgets(): PaneWidget[] {
-		return this._paneWidgets;
+		return this.#paneWidgets;
 	}
 
 	public destroy(): void {
-		this._element.removeEventListener('wheel', this._onWheelBound);
-		if (this._drawRafId !== 0) {
-			window.cancelAnimationFrame(this._drawRafId);
+		this.#element.removeEventListener('wheel', this.#onWheelBound);
+		if (this.#drawRafId !== 0) {
+			window.cancelAnimationFrame(this.#drawRafId);
 		}
 
-		this._model.crosshairMoved().unsubscribeAll(this);
-		this._model.timeScale().optionsApplied().unsubscribeAll(this);
-		this._model.destroy();
+		this.#model.crosshairMoved().unsubscribeAll(this);
+		this.#model.timeScale().optionsApplied().unsubscribeAll(this);
+		this.#model.destroy();
 
-		for (const paneWidget of this._paneWidgets) {
-			this._tableElement.removeChild(paneWidget.getElement());
+		for (const paneWidget of this.#paneWidgets) {
+			this.#tableElement.removeChild(paneWidget.getElement());
 			paneWidget.clicked().unsubscribeAll(this);
 			paneWidget.destroy();
 		}
-		this._paneWidgets = [];
+		this.#paneWidgets = [];
 
-		for (const paneSeparator of this._paneSeparators) {
-			this._destroySeparator(paneSeparator);
+		for (const paneSeparator of this.#paneSeparators) {
+			this.#destroySeparator(paneSeparator);
 		}
-		this._paneSeparators = [];
+		this.#paneSeparators = [];
 
-		ensureNotNull(this._timeAxisWidget).destroy();
+		ensureNotNull(this.#timeAxisWidget).destroy();
 
-		if (this._element.parentElement !== null) {
-			this._element.parentElement.removeChild(this._element);
+		if (this.#element.parentElement !== null) {
+			this.#element.parentElement.removeChild(this.#element);
 		}
 
-		this._crosshairMoved.destroy();
-		this._clicked.destroy();
+		this.#crosshairMoved.destroy();
+		this.#clicked.destroy();
 
-		(this._element as unknown as null) = null;
+		(this.#element as unknown as null) = null;
 	}
 
 	public resize(width: number, height: number, forceRepaint: boolean = false): void {
-		if (this._height === height && this._width === width) {
+		if (this.#height === height && this.#width === width) {
 			return;
 		}
 
-		this._height = height;
-		this._width = width;
+		this.#height = height;
+		this.#width = width;
 
 		const heightStr = height + 'px';
 		const widthStr = width + 'px';
 
-		ensureNotNull(this._element).style.height = heightStr;
-		ensureNotNull(this._element).style.width = widthStr;
+		ensureNotNull(this.#element).style.height = heightStr;
+		ensureNotNull(this.#element).style.width = widthStr;
 
-		this._tableElement.style.height = heightStr;
-		this._tableElement.style.width = widthStr;
+		this.#tableElement.style.height = heightStr;
+		this.#tableElement.style.width = widthStr;
 
 		if (forceRepaint) {
-			this._drawImpl(new InvalidateMask(InvalidationLevel.Full));
+			this.#drawImpl(new InvalidateMask(InvalidationLevel.Full));
 		} else {
-			this._model.fullUpdate();
+			this.#model.fullUpdate();
 		}
 	}
 
@@ -186,44 +186,44 @@ export class ChartWidget implements IDestroyable {
 			invalidateMask = new InvalidateMask(InvalidationLevel.Full);
 		}
 
-		for (let i = 0; i < this._paneWidgets.length; i++) {
-			this._paneWidgets[i].paint(invalidateMask.invalidateForPane(i).level);
+		for (let i = 0; i < this.#paneWidgets.length; i++) {
+			this.#paneWidgets[i].paint(invalidateMask.invalidateForPane(i).level);
 		}
 
-		this._timeAxisWidget.paint(invalidateMask.fullInvalidation());
+		this.#timeAxisWidget.paint(invalidateMask.fullInvalidation());
 	}
 
 	public adjustSize(): void {
-		this._adjustSizeImpl();
-		this._model.fullUpdate();
+		this.#adjustSizeImpl();
+		this.#model.fullUpdate();
 	}
 
 	public applyOptions(options: DeepPartial<ChartOptionsInternal>): void {
-		this._model.applyOptions(options);
-		this._updateTimeAxisVisibility();
+		this.#model.applyOptions(options);
+		this.#updateTimeAxisVisibility();
 
-		const width = options.width || this._width;
-		const height = options.height || this._height;
+		const width = options.width || this.#width;
+		const height = options.height || this.#height;
 
 		this.resize(width, height);
 	}
 
 	public clicked(): ISubscription<MouseEventParamsImplSupplier> {
-		return this._clicked;
+		return this.#clicked;
 	}
 
 	public crosshairMoved(): ISubscription<MouseEventParamsImplSupplier> {
-		return this._crosshairMoved;
+		return this.#crosshairMoved;
 	}
 
 	public takeScreenshot(): HTMLCanvasElement {
-		if (this._invalidateMask !== null) {
-			this._drawImpl(this._invalidateMask);
-			this._invalidateMask = null;
+		if (this.#invalidateMask !== null) {
+			this.#drawImpl(this.#invalidateMask);
+			this.#invalidateMask = null;
 		}
 		// calculate target size
-		const firstPane = this._paneWidgets[0];
-		const targetCanvas = createPreconfiguredCanvas(document, new Size(this._width, this._height));
+		const firstPane = this.#paneWidgets[0];
+		const targetCanvas = createPreconfiguredCanvas(document, new Size(this.#width, this.#height));
 		const ctx = getContext2D(targetCanvas);
 		const pixelRatio = getCanvasDevicePixelRatio(targetCanvas);
 		drawScaled(ctx, pixelRatio, () => {
@@ -231,32 +231,32 @@ export class ChartWidget implements IDestroyable {
 			let targetY = 0;
 
 			const drawPriceAxises = () => {
-				for (let paneIndex = 0; paneIndex < this._paneWidgets.length; paneIndex++) {
-					const paneWidget = this._paneWidgets[paneIndex];
+				for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; paneIndex++) {
+					const paneWidget = this.#paneWidgets[paneIndex];
 					const paneWidgetHeight = paneWidget.getSize().h;
 					const priceAxisWidget = ensureNotNull(paneWidget.priceAxisWidget());
 					const image = priceAxisWidget.getImage();
 					ctx.drawImage(image, targetX, targetY, priceAxisWidget.getWidth(), paneWidgetHeight);
 					targetY += paneWidgetHeight;
-					if (paneIndex < this._paneWidgets.length - 1) {
+					if (paneIndex < this.#paneWidgets.length - 1) {
 						targetY += SEPARATOR_HEIGHT;
 					}
 				}
 			};
 			// draw left price scale if exists
-			if (this._options.priceScale.position === 'left') {
+			if (this.#options.priceScale.position === 'left') {
 				drawPriceAxises();
 				targetX = ensureNotNull(firstPane.priceAxisWidget()).getWidth();
 			}
 			targetY = 0;
-			for (let paneIndex = 0; paneIndex < this._paneWidgets.length; paneIndex++) {
-				const paneWidget = this._paneWidgets[paneIndex];
+			for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; paneIndex++) {
+				const paneWidget = this.#paneWidgets[paneIndex];
 				const paneWidgetSize = paneWidget.getSize();
 				const image = paneWidget.getImage();
 				ctx.drawImage(image, targetX, targetY, paneWidgetSize.w, paneWidgetSize.h);
 				targetY += paneWidgetSize.h;
-				if (paneIndex < this._paneWidgets.length - 1) {
-					const separator = this._paneSeparators[paneIndex];
+				if (paneIndex < this.#paneWidgets.length - 1) {
+					const separator = this.#paneSeparators[paneIndex];
 					const separatorSize = separator.getSize();
 					const separatorImage = separator.getImage();
 					ctx.drawImage(separatorImage, targetX, targetY, separatorSize.w, separatorSize.h);
@@ -264,27 +264,27 @@ export class ChartWidget implements IDestroyable {
 				}
 			}
 			targetX += firstPane.getSize().w;
-			if (this._options.priceScale.position === 'right') {
+			if (this.#options.priceScale.position === 'right') {
 				targetY = 0;
 				drawPriceAxises();
 			}
 			const drawStub = () => {
-				const stub = ensureNotNull(this._timeAxisWidget.stub());
+				const stub = ensureNotNull(this.#timeAxisWidget.stub());
 				const size = stub.getSize();
 				const image = stub.getImage();
 				ctx.drawImage(image, targetX, targetY, size.w, size.h);
 			};
 			// draw time scale
-			if (this._options.timeScale.visible) {
+			if (this.#options.timeScale.visible) {
 				targetX = 0;
-				if (this._options.priceScale.position === 'left') {
+				if (this.#options.priceScale.position === 'left') {
 					drawStub();
 					targetX = ensureNotNull(firstPane.priceAxisWidget()).getWidth();
 				}
-				const size = this._timeAxisWidget.getSize();
-				const image = this._timeAxisWidget.getImage();
+				const size = this.#timeAxisWidget.getSize();
+				const image = this.#timeAxisWidget.getImage();
 				ctx.drawImage(image, targetX, targetY, size.w, size.h);
-				if (this._options.priceScale.position === 'right') {
+				if (this.#options.priceScale.position === 'right') {
 					targetX = firstPane.getSize().w;
 					drawStub();
 					ctx.restore();
@@ -294,27 +294,27 @@ export class ChartWidget implements IDestroyable {
 		return targetCanvas;
 	}
 
-	private _adjustSizeImpl(): void {
+	#adjustSizeImpl(): void {
 		let totalStretch = 0;
 		let priceAxisWidth = 0;
 
-		for (const paneWidget of this._paneWidgets) {
-			if (this._options.priceScale.position !== 'none') {
+		for (const paneWidget of this.#paneWidgets) {
+			if (this.#options.priceScale.position !== 'none') {
 				priceAxisWidth = Math.max(priceAxisWidth, ensureNotNull(paneWidget.priceAxisWidget()).optimalWidth());
 			}
 
 			totalStretch += paneWidget.stretchFactor();
 		}
 
-		const width = this._width;
-		const height = this._height;
+		const width = this.#width;
+		const height = this.#height;
 
 		const paneWidth = Math.max(width - priceAxisWidth, 0);
 
-		const separatorCount = this._paneSeparators.length;
+		const separatorCount = this.#paneSeparators.length;
 		const separatorHeight = SEPARATOR_HEIGHT;
 		const separatorsHeight = separatorHeight * separatorCount;
-		let timeAxisHeight = this._options.timeScale.visible ? this._timeAxisWidget.optimalHeight() : 0;
+		let timeAxisHeight = this.#options.timeScale.visible ? this.#timeAxisWidget.optimalHeight() : 0;
 		// TODO: Fix it better
 		// on Hi-DPI CSS size * Device Pixel Ratio should be integer to avoid smoothing
 		if (timeAxisHeight % 2) {
@@ -325,14 +325,14 @@ export class ChartWidget implements IDestroyable {
 		const stretchPixels = totalPaneHeight / totalStretch;
 
 		let accumulatedHeight = 0;
-		for (let paneIndex = 0; paneIndex < this._paneWidgets.length; ++paneIndex) {
-			const paneWidget = this._paneWidgets[paneIndex];
-			paneWidget.setState(this._model.panes()[paneIndex]);
+		for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; ++paneIndex) {
+			const paneWidget = this.#paneWidgets[paneIndex];
+			paneWidget.setState(this.#model.panes()[paneIndex]);
 
 			let paneHeight = 0;
 			let calculatePaneHeight = 0;
 
-			if (paneIndex === this._paneWidgets.length - 1) {
+			if (paneIndex === this.#paneWidgets.length - 1) {
 				calculatePaneHeight = totalPaneHeight - accumulatedHeight;
 			} else {
 				calculatePaneHeight = Math.round(paneWidget.stretchFactor() * stretchPixels);
@@ -343,33 +343,33 @@ export class ChartWidget implements IDestroyable {
 			accumulatedHeight += paneHeight;
 
 			paneWidget.setSize(new Size(paneWidth, paneHeight));
-			if (this._options.priceScale.position !== 'none') {
+			if (this.#options.priceScale.position !== 'none') {
 				paneWidget.setPriceAxisSize(priceAxisWidth);
 			}
 
 			if (paneWidget.state()) {
-				this._model.setPaneHeight(paneWidget.state(), paneHeight);
+				this.#model.setPaneHeight(paneWidget.state(), paneHeight);
 			}
 		}
 
-		this._timeAxisWidget.setSizes(
+		this.#timeAxisWidget.setSizes(
 			new Size(paneWidth, timeAxisHeight),
 			priceAxisWidth
 		);
 
-		this._model.setWidth(paneWidth);
-		if (this._priceAxisWidth !== priceAxisWidth) {
-			this._priceAxisWidth = priceAxisWidth;
-			this._priceAxisWidthChanged.fire(priceAxisWidth);
+		this.#model.setWidth(paneWidth);
+		if (this.#priceAxisWidth !== priceAxisWidth) {
+			this.#priceAxisWidth = priceAxisWidth;
+			this.#priceAxisWidthChanged.fire(priceAxisWidth);
 		}
 	}
 
-	private _onMousewheel(event: WheelEvent): void {
+	#onMousewheel(event: WheelEvent): void {
 		let deltaX = event.deltaX / 100;
 		let deltaY = -(event.deltaY / 100);
 
-		if ((deltaX === 0 || !this._options.handleScroll.mouseWheel) &&
-			(deltaY === 0 || !this._options.handleScale.mouseWheel)) {
+		if ((deltaX === 0 || !this.#options.handleScroll.mouseWheel) &&
+			(deltaY === 0 || !this.#options.handleScale.mouseWheel)) {
 			return;
 		}
 
@@ -391,23 +391,23 @@ export class ChartWidget implements IDestroyable {
 				break;
 		}
 
-		if (deltaY !== 0 && this._options.handleScale.mouseWheel) {
+		if (deltaY !== 0 && this.#options.handleScale.mouseWheel) {
 			const zoomScale = Math.sign(deltaY) * Math.min(1, Math.abs(deltaY));
-			const scrollPosition = event.clientX - this._element.getBoundingClientRect().left;
+			const scrollPosition = event.clientX - this.#element.getBoundingClientRect().left;
 			this.model().zoomTime(scrollPosition as Coordinate, zoomScale);
 		}
 
-		if (deltaX !== 0 && this._options.handleScroll.mouseWheel) {
+		if (deltaX !== 0 && this.#options.handleScroll.mouseWheel) {
 			this.model().scrollChart(deltaX * -80 as Coordinate); // 80 is a made up coefficient, and minus is for the "natural" scroll
 		}
 	}
 
-	private _drawImpl(invalidateMask: InvalidateMask): void {
+	#drawImpl(invalidateMask: InvalidateMask): void {
 		const invalidationType = invalidateMask.fullInvalidation();
 
 		// actions for full invalidation ONLY (not shared with light)
 		if (invalidationType === InvalidationLevel.Full) {
-			this._syncGuiWithModel();
+			this.#syncGuiWithModel();
 		}
 
 		// light or full invalidate actions
@@ -415,7 +415,7 @@ export class ChartWidget implements IDestroyable {
 			invalidationType === InvalidationLevel.Full ||
 			invalidationType === InvalidationLevel.Light
 		) {
-			const panes = this._model.panes();
+			const panes = this.#model.panes();
 			for (let i = 0; i < panes.length; i++) {
 				if (invalidateMask.invalidateForPane(i).autoScale) {
 					panes[i].momentaryAutoScale();
@@ -423,85 +423,85 @@ export class ChartWidget implements IDestroyable {
 			}
 
 			if (invalidateMask.getFitContent()) {
-				this._model.timeScale().fitContent();
+				this.#model.timeScale().fitContent();
 			}
 
 			const targetTimeRange = invalidateMask.getTargetTimeRange();
 			if (targetTimeRange !== null) {
-				this._model.timeScale().setTimePointsRange(targetTimeRange);
+				this.#model.timeScale().setTimePointsRange(targetTimeRange);
 			}
 
-			this._timeAxisWidget.update();
+			this.#timeAxisWidget.update();
 		}
 
 		this.paint(invalidateMask);
 	}
 
-	private _invalidateHandler(invalidateMask: InvalidateMask): void {
-		if (this._invalidateMask !== null) {
-			this._invalidateMask.merge(invalidateMask);
+	#invalidateHandler(invalidateMask: InvalidateMask): void {
+		if (this.#invalidateMask !== null) {
+			this.#invalidateMask.merge(invalidateMask);
 		} else {
-			this._invalidateMask = invalidateMask;
+			this.#invalidateMask = invalidateMask;
 		}
 
-		if (!this._drawPlanned) {
-			this._drawPlanned = true;
-			this._drawRafId = window.requestAnimationFrame(() => {
-				this._drawPlanned = false;
-				this._drawRafId = 0;
+		if (!this.#drawPlanned) {
+			this.#drawPlanned = true;
+			this.#drawRafId = window.requestAnimationFrame(() => {
+				this.#drawPlanned = false;
+				this.#drawRafId = 0;
 
-				if (this._invalidateMask !== null) {
-					this._drawImpl(this._invalidateMask);
-					this._invalidateMask = null;
+				if (this.#invalidateMask !== null) {
+					this.#drawImpl(this.#invalidateMask);
+					this.#invalidateMask = null;
 				}
 			});
 		}
 	}
 
-	private _destroySeparator(separator: PaneSeparator): void {
-		this._tableElement.removeChild(separator.getElement());
+	#destroySeparator(separator: PaneSeparator): void {
+		this.#tableElement.removeChild(separator.getElement());
 		separator.destroy();
 	}
 
-	private _syncGuiWithModel(): void {
-		const panes = this._model.panes();
+	#syncGuiWithModel(): void {
+		const panes = this.#model.panes();
 		const targetPaneWidgetsCount = panes.length;
-		const actualPaneWidgetsCount = this._paneWidgets.length;
+		const actualPaneWidgetsCount = this.#paneWidgets.length;
 
 		// Remove (if needed) pane widgets and separators
 		for (let i = targetPaneWidgetsCount; i < actualPaneWidgetsCount; i++) {
-			const paneWidget = ensureDefined(this._paneWidgets.pop());
-			this._tableElement.removeChild(paneWidget.getElement());
+			const paneWidget = ensureDefined(this.#paneWidgets.pop());
+			this.#tableElement.removeChild(paneWidget.getElement());
 			paneWidget.clicked().unsubscribeAll(this);
 			paneWidget.destroy();
 
-			const paneSeparator = this._paneSeparators.pop();
+			const paneSeparator = this.#paneSeparators.pop();
 			if (paneSeparator !== undefined) {
-				this._destroySeparator(paneSeparator);
+				this.#destroySeparator(paneSeparator);
 			}
 		}
 
 		// Create (if needed) new pane widgets and separators
 		for (let i = actualPaneWidgetsCount; i < targetPaneWidgetsCount; i++) {
 			const paneWidget = new PaneWidget(this, panes[i]);
-			paneWidget.clicked().subscribe(this._onPaneWidgetClicked.bind(this), this);
+			paneWidget.clicked().subscribe(this.#onPaneWidgetClicked.bind(this), this);
 
-			this._paneWidgets.push(paneWidget);
+			this.#paneWidgets.push(paneWidget);
 
 			// create and insert separator
 			if (i > 1) {
 				const paneSeparator = new PaneSeparator(this, i - 1, i, true);
-				this._paneSeparators.push(paneSeparator);
-				this._tableElement.insertBefore(paneSeparator.getElement(), this._timeAxisWidget.getElement());
+				this.#paneSeparators.push(paneSeparator);
+				this.#tableElement.insertBefore(paneSeparator.getElement(), this.#timeAxisWidget.getElement());
 			}
 
 			// insert paneWidget
-			this._tableElement.insertBefore(paneWidget.getElement(), this._timeAxisWidget.getElement());
+			this.#tableElement.insertBefore(paneWidget.getElement(), this.#timeAxisWidget.getElement());
 		}
 
 		for (let i = 0; i < targetPaneWidgetsCount; i++) {
 			const state = panes[i];
-			const paneWidget = this._paneWidgets[i];
+			const paneWidget = this.#paneWidgets[i];
 			if (paneWidget.state() !== state) {
 				paneWidget.setState(state);
 			} else {
@@ -509,14 +509,14 @@ export class ChartWidget implements IDestroyable {
 			}
 		}
 
-		this._updateTimeAxisVisibility();
-		this._adjustSizeImpl();
+		this.#updateTimeAxisVisibility();
+		this.#adjustSizeImpl();
 	}
 
-	private _getMouseEventParamsImpl(time: TimePointIndex | null, point: Point | null): MouseEventParamsImpl {
+	#getMouseEventParamsImpl(time: TimePointIndex | null, point: Point | null): MouseEventParamsImpl {
 		const seriesPrices = new Map<Series, BarPrice | BarPrices>();
 		if (time !== null) {
-			const serieses = this._model.serieses();
+			const serieses = this.#model.serieses();
 			serieses.forEach((s: Series) => {
 				// TODO: replace with search left
 				const prices = s.dataAt(time);
@@ -527,7 +527,7 @@ export class ChartWidget implements IDestroyable {
 		}
 		let clientTime: TimePoint | undefined;
 		if (time !== null) {
-			const timePoint = this._model.timeScale().indexToUserTime(time);
+			const timePoint = this.#model.timeScale().indexToUserTime(time);
 			if (timePoint !== null) {
 				clientTime = timePoint;
 			}
@@ -552,16 +552,16 @@ export class ChartWidget implements IDestroyable {
 		};
 	}
 
-	private _onPaneWidgetClicked(time: TimePointIndex | null, point: Point): void {
-		this._clicked.fire(() => this._getMouseEventParamsImpl(time, point));
+	#onPaneWidgetClicked(time: TimePointIndex | null, point: Point): void {
+		this.#clicked.fire(() => this.#getMouseEventParamsImpl(time, point));
 	}
 
-	private _onPaneWidgetCrosshairMoved(time: TimePointIndex | null, point: Point | null): void {
-		this._crosshairMoved.fire(() => this._getMouseEventParamsImpl(time, point));
+	#onPaneWidgetCrosshairMoved(time: TimePointIndex | null, point: Point | null): void {
+		this.#crosshairMoved.fire(() => this.#getMouseEventParamsImpl(time, point));
 	}
 
-	private _updateTimeAxisVisibility(): void {
-		const display = this._options.timeScale.visible ? '' : 'none';
-		this._timeAxisWidget.getElement().style.display = display;
+	#updateTimeAxisVisibility(): void {
+		const display = this.#options.timeScale.visible ? '' : 'none';
+		this.#timeAxisWidget.getElement().style.display = display;
 	}
 }

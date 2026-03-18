@@ -72,38 +72,38 @@ export function barFunction(priceSource: SeriesPriceSource): BarFunction {
 }
 
 export class SeriesData {
-	private _bars: PlotList<TimePoint, Bar['value']>;
+	#bars: PlotList<TimePoint, Bar['value']>;
 
 	public constructor() {
-		this._bars = new PlotList<TimePoint, Bar['value']>(seriesPlotFunctionMap());
+		this.#bars = new PlotList<TimePoint, Bar['value']>(seriesPlotFunctionMap());
 	}
 
 	public bars(): PlotList<TimePoint, Bar['value']> {
-		return this._bars;
+		return this.#bars;
 	}
 
 	public size(): number {
-		return this._bars.size();
+		return this.#bars.size();
 	}
 
 	public each(fun: EnumeratingFunction<TimePoint, Bar['value']>): void {
-		this._bars.each(fun);
+		this.#bars.each(fun);
 	}
 
 	public clear(): void {
-		this._bars.clear();
+		this.#bars.clear();
 	}
 
 	public isEmpty(): boolean {
-		return this._bars.isEmpty();
+		return this.#bars.isEmpty();
 	}
 
 	public first(): PlotRow<TimePoint, Bar['value']> | null {
-		return this._bars.first();
+		return this.#bars.first();
 	}
 
 	public last(): PlotRow<TimePoint, Bar['value']> | null {
-		return this._bars.last();
+		return this.#bars.last();
 	}
 
 	public search(index: TimePointIndex, options?: PlotRowSearchMode): PlotRow<TimePoint, Bar['value']> | null {

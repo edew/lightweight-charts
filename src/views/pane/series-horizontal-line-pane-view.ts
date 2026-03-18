@@ -21,7 +21,7 @@ export abstract class SeriesHorizontalLinePaneView implements IPaneView {
 	protected readonly _series: Series;
 	protected readonly _model: ChartModel;
 	protected readonly _lineRenderer: HorizontalLineRenderer = new HorizontalLineRenderer();
-	private _invalidated: boolean = true;
+	#invalidated: boolean = true;
 
 	protected constructor(series: Series) {
 		this._series = series;
@@ -30,13 +30,13 @@ export abstract class SeriesHorizontalLinePaneView implements IPaneView {
 	}
 
 	public update(): void {
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(height: number, width: number): IPaneRenderer {
-		if (this._invalidated) {
+		if (this.#invalidated) {
 			this._updateImpl(height, width);
-			this._invalidated = false;
+			this.#invalidated = false;
 		}
 
 		return this._lineRenderer;

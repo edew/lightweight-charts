@@ -3,31 +3,31 @@ import { equal, greaterOrEqual, isBaseDecimal, log10 } from '../../helpers/mathe
 const TICK_SPAN_EPSILON = 1e-9;
 
 export class PriceTickSpanCalculator {
-	private readonly _base: number;
-	private readonly _integralDividers: number[];
-	private readonly _fractionalDividers: number[];
+	readonly #base: number;
+	readonly #integralDividers: number[];
+	readonly #fractionalDividers: number[];
 
 	public constructor(base: number, integralDividers: number[]) {
-		this._base = base;
-		this._integralDividers = integralDividers;
+		this.#base = base;
+		this.#integralDividers = integralDividers;
 
-		if (isBaseDecimal(this._base)) {
-			this._fractionalDividers = [2, 2.5, 2];
+		if (isBaseDecimal(this.#base)) {
+			this.#fractionalDividers = [2, 2.5, 2];
 		} else {
-			this._fractionalDividers = [];
-			for (let baseRest = this._base; baseRest !== 1;) {
+			this.#fractionalDividers = [];
+			for (let baseRest = this.#base; baseRest !== 1;) {
 				if ((baseRest % 2) === 0) {
-					this._fractionalDividers.push(2);
+					this.#fractionalDividers.push(2);
 					baseRest /= 2;
 				} else if ((baseRest % 5) === 0) {
-					this._fractionalDividers.push(2);
-					this._fractionalDividers.push(2.5);
+					this.#fractionalDividers.push(2);
+					this.#fractionalDividers.push(2.5);
 					baseRest /= 5;
 				} else {
 					throw new Error('unexpected base');
 				}
 
-				if (this._fractionalDividers.length > 100) {
+				if (this.#fractionalDividers.length > 100) {
 					throw new Error('something wrong with base');
 				}
 			}
@@ -35,13 +35,13 @@ export class PriceTickSpanCalculator {
 	}
 
 	public tickSpan(high: number, low: number, maxTickSpan: number): number {
-		const minMovement = (this._base === 0) ? (0) : (1 / this._base);
+		const minMovement = (this.#base === 0) ? (0) : (1 / this.#base);
 		const tickSpanEpsilon = TICK_SPAN_EPSILON;
 
 		let resultTickSpan = Math.pow(10, Math.max(0, Math.ceil(log10(high - low))));
 
 		let index = 0;
-		let c = this._integralDividers[0];
+		let c = this.#integralDividers[0];
 
 		while (true) {
 			// the second part is actual for small with very small values like 1e-10
@@ -54,7 +54,7 @@ export class PriceTickSpanCalculator {
 				break;
 			}
 			resultTickSpan /= c;
-			c = this._integralDividers[++index % this._integralDividers.length];
+			c = this.#integralDividers[++index % this.#integralDividers.length];
 		}
 
 		if (resultTickSpan <= (minMovement + tickSpanEpsilon)) {
@@ -63,12 +63,12 @@ export class PriceTickSpanCalculator {
 
 		resultTickSpan = Math.max(1, resultTickSpan);
 
-		if ((this._fractionalDividers.length > 0) && equal(resultTickSpan, 1, tickSpanEpsilon)) {
+		if ((this.#fractionalDividers.length > 0) && equal(resultTickSpan, 1, tickSpanEpsilon)) {
 			index = 0;
-			c = this._fractionalDividers[0];
+			c = this.#fractionalDividers[0];
 			while (greaterOrEqual(resultTickSpan, maxTickSpan * c, tickSpanEpsilon) && resultTickSpan > (minMovement + tickSpanEpsilon)) {
 				resultTickSpan /= c;
-				c = this._fractionalDividers[++index % this._fractionalDividers.length];
+				c = this.#fractionalDividers[++index % this.#fractionalDividers.length];
 			}
 		}
 

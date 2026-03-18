@@ -34,71 +34,71 @@ function markWithGreaterSpan(a: TimeMark, b: TimeMark): TimeMark {
 }
 
 export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
-	private readonly _chart: ChartWidget;
-	private readonly _options: LayoutOptions;
-	private readonly _element: HTMLElement;
-	private readonly _leftStubCell: HTMLElement;
-	private readonly _rightStubCell: HTMLElement;
-	private readonly _cell: HTMLElement;
-	private readonly _dv: HTMLElement;
-	private readonly _canvasBinding: CanvasCoordinateSpaceBinding;
-	private readonly _topCanvasBinding: CanvasCoordinateSpaceBinding;
-	private _stub: PriceAxisStub | null = null;
-	private _minVisibleSpan: number = MarkSpanBorder.Year;
-	private readonly _mouseEventHandler: MouseEventHandler;
-	private _rendererOptions: TimeAxisViewRendererOptions | null = null;
-	private _mouseDown: boolean = false;
-	private _size: Size = new Size(0, 0);
-	private _priceAxisPosition: PriceAxisPosition = 'none';
+	readonly #chart: ChartWidget;
+	readonly #options: LayoutOptions;
+	readonly #element: HTMLElement;
+	readonly #leftStubCell: HTMLElement;
+	readonly #rightStubCell: HTMLElement;
+	readonly #cell: HTMLElement;
+	readonly #dv: HTMLElement;
+	readonly #canvasBinding: CanvasCoordinateSpaceBinding;
+	readonly #topCanvasBinding: CanvasCoordinateSpaceBinding;
+	#stub: PriceAxisStub | null = null;
+	#minVisibleSpan: number = MarkSpanBorder.Year;
+	readonly #mouseEventHandler: MouseEventHandler;
+	#rendererOptions: TimeAxisViewRendererOptions | null = null;
+	#mouseDown: boolean = false;
+	#size: Size = new Size(0, 0);
+	#priceAxisPosition: PriceAxisPosition = 'none';
 
 	public constructor(chartWidget: ChartWidget) {
-		this._chart = chartWidget;
-		this._options = chartWidget.options().layout;
+		this.#chart = chartWidget;
+		this.#options = chartWidget.options().layout;
 
-		this._element = document.createElement('tr');
+		this.#element = document.createElement('tr');
 
-		this._leftStubCell = document.createElement('td');
-		this._leftStubCell.style.padding = '0';
+		this.#leftStubCell = document.createElement('td');
+		this.#leftStubCell.style.padding = '0';
 
-		this._rightStubCell = document.createElement('td');
-		this._rightStubCell.style.padding = '0';
+		this.#rightStubCell = document.createElement('td');
+		this.#rightStubCell.style.padding = '0';
 
-		this._cell = document.createElement('td');
-		this._cell.style.height = '25px';
-		this._cell.style.padding = '0';
+		this.#cell = document.createElement('td');
+		this.#cell.style.height = '25px';
+		this.#cell.style.padding = '0';
 
-		this._dv = document.createElement('div');
-		this._dv.style.width = '100%';
-		this._dv.style.height = '100%';
-		this._dv.style.position = 'relative';
-		this._dv.style.overflow = 'hidden';
-		this._cell.appendChild(this._dv);
+		this.#dv = document.createElement('div');
+		this.#dv.style.width = '100%';
+		this.#dv.style.height = '100%';
+		this.#dv.style.position = 'relative';
+		this.#dv.style.overflow = 'hidden';
+		this.#cell.appendChild(this.#dv);
 
-		this._canvasBinding = createBoundCanvas(this._dv, new Size(16, 16));
-		this._canvasBinding.subscribeCanvasConfigured(this._canvasConfiguredHandler);
-		const canvas = this._canvasBinding.canvas;
+		this.#canvasBinding = createBoundCanvas(this.#dv, new Size(16, 16));
+		this.#canvasBinding.subscribeCanvasConfigured(this.#canvasConfiguredHandler);
+		const canvas = this.#canvasBinding.canvas;
 		canvas.style.position = 'absolute';
 		canvas.style.zIndex = '1';
 		canvas.style.left = '0';
 		canvas.style.top = '0';
 
-		this._topCanvasBinding = createBoundCanvas(this._dv, new Size(16, 16));
-		this._topCanvasBinding.subscribeCanvasConfigured(this._topCanvasConfiguredHandler);
-		const topCanvas = this._topCanvasBinding.canvas;
+		this.#topCanvasBinding = createBoundCanvas(this.#dv, new Size(16, 16));
+		this.#topCanvasBinding.subscribeCanvasConfigured(this.#topCanvasConfiguredHandler);
+		const topCanvas = this.#topCanvasBinding.canvas;
 		topCanvas.style.position = 'absolute';
 		topCanvas.style.zIndex = '2';
 		topCanvas.style.left = '0';
 		topCanvas.style.top = '0';
 
-		this._element.appendChild(this._leftStubCell);
-		this._element.appendChild(this._cell);
-		this._element.appendChild(this._rightStubCell);
+		this.#element.appendChild(this.#leftStubCell);
+		this.#element.appendChild(this.#cell);
+		this.#element.appendChild(this.#rightStubCell);
 
-		this._recreateStub();
-		this._chart.model().mainPriceScaleOptionsChanged().subscribe(this._recreateStub.bind(this), this);
+		this.#recreateStub();
+		this.#chart.model().mainPriceScaleOptionsChanged().subscribe(this.#recreateStub.bind(this), this);
 
-		this._mouseEventHandler = new MouseEventHandler(
-			this._topCanvasBinding.canvas,
+		this.#mouseEventHandler = new MouseEventHandler(
+			this.#topCanvasBinding.canvas,
 			this,
 			{
 				treatVertTouchDragAsPageScroll: true,
@@ -108,34 +108,34 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public destroy(): void {
-		this._mouseEventHandler.destroy();
-		if (this._stub !== null) {
-			this._stub.destroy();
+		this.#mouseEventHandler.destroy();
+		if (this.#stub !== null) {
+			this.#stub.destroy();
 		}
 
-		this._topCanvasBinding.unsubscribeCanvasConfigured(this._topCanvasConfiguredHandler);
-		this._topCanvasBinding.destroy();
+		this.#topCanvasBinding.unsubscribeCanvasConfigured(this.#topCanvasConfiguredHandler);
+		this.#topCanvasBinding.destroy();
 
-		this._canvasBinding.unsubscribeCanvasConfigured(this._canvasConfiguredHandler);
-		this._canvasBinding.destroy();
+		this.#canvasBinding.unsubscribeCanvasConfigured(this.#canvasConfiguredHandler);
+		this.#canvasBinding.destroy();
 	}
 
 	public getElement(): HTMLElement {
-		return this._element;
+		return this.#element;
 	}
 
 	public stub(): PriceAxisStub | null {
-		return this._stub;
+		return this.#stub;
 	}
 
 	public mouseDownEvent(event: TouchMouseEvent): void {
-		if (this._mouseDown) {
+		if (this.#mouseDown) {
 			return;
 		}
 
-		this._mouseDown = true;
-		const model = this._chart.model();
-		if (model.timeScale().isEmpty() || !this._chart.options().handleScale.axisPressedMouseMove) {
+		this.#mouseDown = true;
+		const model = this.#chart.model();
+		if (model.timeScale().isEmpty() || !this.#chart.options().handleScale.axisPressedMouseMove) {
 			return;
 		}
 
@@ -143,18 +143,18 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public mouseDownOutsideEvent(): void {
-		const model = this._chart.model();
-		if (!model.timeScale().isEmpty() && this._mouseDown) {
-			this._mouseDown = false;
-			if (this._chart.options().handleScale.axisPressedMouseMove) {
+		const model = this.#chart.model();
+		if (!model.timeScale().isEmpty() && this.#mouseDown) {
+			this.#mouseDown = false;
+			if (this.#chart.options().handleScale.axisPressedMouseMove) {
 				model.endScaleTime();
 			}
 		}
 	}
 
 	public pressedMouseMoveEvent(event: TouchMouseEvent): void {
-		const model = this._chart.model();
-		if (model.timeScale().isEmpty() || !this._chart.options().handleScale.axisPressedMouseMove) {
+		const model = this.#chart.model();
+		if (model.timeScale().isEmpty() || !this.#chart.options().handleScale.axisPressedMouseMove) {
 			return;
 		}
 
@@ -162,9 +162,9 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public mouseUpEvent(event: TouchMouseEvent): void {
-		this._mouseDown = false;
-		const model = this._chart.model();
-		if (model.timeScale().isEmpty() && !this._chart.options().handleScale.axisPressedMouseMove) {
+		this.#mouseDown = false;
+		const model = this.#chart.model();
+		if (model.timeScale().isEmpty() && !this.#chart.options().handleScale.axisPressedMouseMove) {
 			return;
 		}
 
@@ -172,51 +172,51 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public mouseDoubleClickEvent(): void {
-		if (this._chart.options().handleScale.axisDoubleClickReset) {
-			this._chart.model().resetTimeScale();
+		if (this.#chart.options().handleScale.axisDoubleClickReset) {
+			this.#chart.model().resetTimeScale();
 		}
 	}
 
 	public mouseEnterEvent(e: TouchMouseEvent): void {
-		if (this._chart.model().options().handleScale.axisPressedMouseMove) {
-			this._setCursor(CursorType.EwResize);
+		if (this.#chart.model().options().handleScale.axisPressedMouseMove) {
+			this.#setCursor(CursorType.EwResize);
 		}
 	}
 
 	public mouseLeaveEvent(e: TouchMouseEvent): void {
-		this._setCursor(CursorType.Default);
+		this.#setCursor(CursorType.Default);
 	}
 
 	public getSize(): Readonly<Size> {
-		return this._size;
+		return this.#size;
 	}
 
 	public setSizes(timeAxisSize: Size, stubWidth: number): void {
-		if (!this._size || !this._size.equals(timeAxisSize)) {
-			this._size = timeAxisSize;
+		if (!this.#size || !this.#size.equals(timeAxisSize)) {
+			this.#size = timeAxisSize;
 
-			this._canvasBinding.resizeCanvas({ width: timeAxisSize.w, height: timeAxisSize.h });
-			this._topCanvasBinding.resizeCanvas({ width: timeAxisSize.w, height: timeAxisSize.h });
+			this.#canvasBinding.resizeCanvas({ width: timeAxisSize.w, height: timeAxisSize.h });
+			this.#topCanvasBinding.resizeCanvas({ width: timeAxisSize.w, height: timeAxisSize.h });
 
-			this._cell.style.width = timeAxisSize.w + 'px';
-			this._cell.style.height = timeAxisSize.h + 'px';
+			this.#cell.style.width = timeAxisSize.w + 'px';
+			this.#cell.style.height = timeAxisSize.h + 'px';
 		}
 
-		if (this._stub !== null) {
-			this._stub.setSize(new Size(stubWidth, timeAxisSize.h));
+		if (this.#stub !== null) {
+			this.#stub.setSize(new Size(stubWidth, timeAxisSize.h));
 		}
 	}
 
 	public width(): number {
-		return this._size.w;
+		return this.#size.w;
 	}
 
 	public height(): number {
-		return this._size.h;
+		return this.#size.h;
 	}
 
 	public optimalHeight(): number {
-		const rendererOptions = this._getRendererOptions();
+		const rendererOptions = this.#getRendererOptions();
 		return Math.ceil(
 			// rendererOptions.offsetSize +
 			rendererOptions.borderSize +
@@ -228,21 +228,21 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public update(): void {
-		const tickMarks = this._chart.model().timeScale().marks();
+		const tickMarks = this.#chart.model().timeScale().marks();
 
 		if (!tickMarks) {
 			return;
 		}
 
-		this._minVisibleSpan = MarkSpanBorder.Year;
+		this.#minVisibleSpan = MarkSpanBorder.Year;
 
 		tickMarks.forEach((tickMark: TimeMark) => {
-			this._minVisibleSpan = Math.min(tickMark.span, this._minVisibleSpan);
+			this.#minVisibleSpan = Math.min(tickMark.span, this.#minVisibleSpan);
 		});
 	}
 
 	public getImage(): HTMLCanvasElement {
-		return this._canvasBinding.canvas;
+		return this.#canvasBinding.canvas;
 	}
 
 	public paint(type: InvalidationLevel): void {
@@ -251,43 +251,43 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 		}
 
 		if (type !== InvalidationLevel.Cursor) {
-			const ctx = getContext2D(this._canvasBinding.canvas);
-			this._drawBackground(ctx, this._canvasBinding.pixelRatio);
-			this._drawBorder(ctx, this._canvasBinding.pixelRatio);
+			const ctx = getContext2D(this.#canvasBinding.canvas);
+			this.#drawBackground(ctx, this.#canvasBinding.pixelRatio);
+			this.#drawBorder(ctx, this.#canvasBinding.pixelRatio);
 
-			this._drawTickMarks(ctx, this._canvasBinding.pixelRatio);
-			this._drawBackLabels(ctx, this._canvasBinding.pixelRatio);
+			this.#drawTickMarks(ctx, this.#canvasBinding.pixelRatio);
+			this.#drawBackLabels(ctx, this.#canvasBinding.pixelRatio);
 
-			if (this._stub !== null) {
-				this._stub.paint(type);
+			if (this.#stub !== null) {
+				this.#stub.paint(type);
 			}
 		}
 
-		const topCtx = getContext2D(this._topCanvasBinding.canvas);
-		this._drawCrosshairLabel(topCtx, this._topCanvasBinding.pixelRatio);
+		const topCtx = getContext2D(this.#topCanvasBinding.canvas);
+		this.#drawCrosshairLabel(topCtx, this.#topCanvasBinding.pixelRatio);
 	}
 
-	private _drawBackground(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
+	#drawBackground(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		drawScaled(ctx, pixelRatio, () => {
-			clearRect(ctx, 0, 0, this._size.w, this._size.h, this._backgroundColor());
+			clearRect(ctx, 0, 0, this.#size.w, this.#size.h, this.#backgroundColor());
 		});
 	}
 
-	private _drawBorder(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
-		if (this._chart.options().timeScale.borderVisible) {
+	#drawBorder(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
+		if (this.#chart.options().timeScale.borderVisible) {
 			ctx.save();
 
-			ctx.fillStyle = this._lineColor();
+			ctx.fillStyle = this.#lineColor();
 
-			const borderSize = Math.max(1, Math.floor(this._getRendererOptions().borderSize * pixelRatio));
+			const borderSize = Math.max(1, Math.floor(this.#getRendererOptions().borderSize * pixelRatio));
 
-			ctx.fillRect(0, 0, Math.ceil(this._size.w * pixelRatio), borderSize);
+			ctx.fillRect(0, 0, Math.ceil(this.#size.w * pixelRatio), borderSize);
 			ctx.restore();
 		}
 	}
 
-	private _drawTickMarks(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
-		const tickMarks = this._chart.model().timeScale().marks();
+	#drawTickMarks(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
+		const tickMarks = this.#chart.model().timeScale().marks();
 
 		if (!tickMarks || tickMarks.length === 0) {
 			return;
@@ -322,9 +322,9 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 
 		ctx.save();
 
-		ctx.strokeStyle = this._lineColor();
+		ctx.strokeStyle = this.#lineColor();
 
-		const rendererOptions = this._getRendererOptions();
+		const rendererOptions = this.#getRendererOptions();
 		const yText = (
 			rendererOptions.borderSize +
 			rendererOptions.tickLength +
@@ -334,13 +334,13 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 		);
 
 		ctx.textAlign = 'center';
-		ctx.fillStyle = this._lineColor();
+		ctx.fillStyle = this.#lineColor();
 
-		const borderSize = Math.floor(this._getRendererOptions().borderSize * pixelRatio);
+		const borderSize = Math.floor(this.#getRendererOptions().borderSize * pixelRatio);
 		const tickWidth = Math.max(1, Math.floor(pixelRatio));
 		const tickOffset = Math.floor(pixelRatio * 0.5);
 
-		if (this._chart.model().timeScale().options().borderVisible) {
+		if (this.#chart.model().timeScale().options().borderVisible) {
 			ctx.beginPath();
 			const tickLen = Math.round(rendererOptions.tickLength * pixelRatio);
 			for (let index = tickMarks.length; index--;) {
@@ -351,17 +351,17 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 			ctx.fill();
 		}
 
-		ctx.fillStyle = this._textColor();
+		ctx.fillStyle = this.#textColor();
 
 		drawScaled(ctx, pixelRatio, () => {
 			// draw base marks
-			ctx.font = this._baseFont();
+			ctx.font = this.#baseFont();
 			for (const tickMark of tickMarks) {
 				if (tickMark.span < maxSpan) {
 					ctx.fillText(tickMark.label, tickMark.coord, yText);
 				}
 			}
-			ctx.font = this._baseBoldFont();
+			ctx.font = this.#baseBoldFont();
 			for (const tickMark of tickMarks) {
 				if (tickMark.span >= maxSpan) {
 					ctx.fillText(tickMark.label, tickMark.coord, yText);
@@ -370,15 +370,15 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 		});
 	}
 
-	private _drawBackLabels(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
+	#drawBackLabels(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		ctx.save();
 		const topLevelSources: Set<IDataSource> = new Set();
 
-		const model = this._chart.model();
+		const model = this.#chart.model();
 		const sources = model.dataSources();
 		topLevelSources.add(model.crosshairSource());
 
-		const rendererOptions = this._getRendererOptions();
+		const rendererOptions = this.#getRendererOptions();
 		for (const source of sources) {
 			if (topLevelSources.has(source)) {
 				continue;
@@ -393,18 +393,18 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 		ctx.restore();
 	}
 
-	private _drawCrosshairLabel(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
+	#drawCrosshairLabel(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		ctx.save();
 
-		ctx.clearRect(0, 0, Math.ceil(this._size.w * pixelRatio), Math.ceil(this._size.h * pixelRatio));
-		const model = this._chart.model();
+		ctx.clearRect(0, 0, Math.ceil(this.#size.w * pixelRatio), Math.ceil(this.#size.h * pixelRatio));
+		const model = this.#chart.model();
 
 		const views: ReadonlyArray<TimeAxisView>[] = []; // array of arrays
 
 		const timeAxisViews = model.crosshairSource().timeAxisViews();
 		views.push(timeAxisViews);
 
-		const renderingOptions = this._getRendererOptions();
+		const renderingOptions = this.#getRendererOptions();
 
 		views.forEach((arr: ReadonlyArray<TimeAxisView>) => {
 			arr.forEach((view: TimeAxisView) => {
@@ -417,33 +417,33 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 		ctx.restore();
 	}
 
-	private _backgroundColor(): string {
-		return this._options.backgroundColor;
+	#backgroundColor(): string {
+		return this.#options.backgroundColor;
 	}
 
-	private _lineColor(): string {
-		return this._chart.options().timeScale.borderColor;
+	#lineColor(): string {
+		return this.#chart.options().timeScale.borderColor;
 	}
 
-	private _textColor(): string {
-		return this._options.textColor;
+	#textColor(): string {
+		return this.#options.textColor;
 	}
 
-	private _fontSize(): number {
-		return this._options.fontSize;
+	#fontSize(): number {
+		return this.#options.fontSize;
 	}
 
-	private _baseFont(): string {
-		return makeFont(this._fontSize(), this._options.fontFamily);
+	#baseFont(): string {
+		return makeFont(this.#fontSize(), this.#options.fontFamily);
 	}
 
-	private _baseBoldFont(): string {
-		return makeFont(this._fontSize(), this._options.fontFamily, 'bold');
+	#baseBoldFont(): string {
+		return makeFont(this.#fontSize(), this.#options.fontFamily, 'bold');
 	}
 
-	private _getRendererOptions(): Readonly<TimeAxisViewRendererOptions> {
-		if (this._rendererOptions === null) {
-			this._rendererOptions = {
+	#getRendererOptions(): Readonly<TimeAxisViewRendererOptions> {
+		if (this.#rendererOptions === null) {
+			this.#rendererOptions = {
 				borderSize: Constants.BorderSize,
 				baselineOffset: NaN,
 				paddingTop: NaN,
@@ -456,62 +456,62 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 			};
 		}
 
-		const rendererOptions = this._rendererOptions;
-		const newFont = this._baseFont();
+		const rendererOptions = this.#rendererOptions;
+		const newFont = this.#baseFont();
 
 		if (rendererOptions.font !== newFont) {
-			const fontSize = this._fontSize();
+			const fontSize = this.#fontSize();
 			rendererOptions.fontSize = fontSize;
 			rendererOptions.font = newFont;
 			rendererOptions.paddingTop = Math.ceil(fontSize / 2.5);
 			rendererOptions.paddingBottom = rendererOptions.paddingTop;
 			rendererOptions.paddingHorizontal = Math.ceil(fontSize / 2);
-			rendererOptions.baselineOffset = Math.round(this._fontSize() / 5);
+			rendererOptions.baselineOffset = Math.round(this.#fontSize() / 5);
 			rendererOptions.widthCache.reset();
 		}
 
-		return this._rendererOptions;
+		return this.#rendererOptions;
 	}
 
-	private _setCursor(type: CursorType): void {
-		this._cell.style.cursor = type === CursorType.EwResize ? 'ew-resize' : 'default';
+	#setCursor(type: CursorType): void {
+		this.#cell.style.cursor = type === CursorType.EwResize ? 'ew-resize' : 'default';
 	}
 
-	private _recreateStub(): void {
-		const priceAxisPosition = this._chart.model().mainPriceScale().options().position;
-		if (priceAxisPosition === this._priceAxisPosition) {
+	#recreateStub(): void {
+		const priceAxisPosition = this.#chart.model().mainPriceScale().options().position;
+		if (priceAxisPosition === this.#priceAxisPosition) {
 			return;
 		}
-		if (this._stub !== null) {
-			if (this._stub.isLeft()) {
-				this._leftStubCell.removeChild(this._stub.getElement());
+		if (this.#stub !== null) {
+			if (this.#stub.isLeft()) {
+				this.#leftStubCell.removeChild(this.#stub.getElement());
 			} else {
-				this._rightStubCell.removeChild(this._stub.getElement());
+				this.#rightStubCell.removeChild(this.#stub.getElement());
 			}
 
-			this._stub.destroy();
-			this._stub = null;
+			this.#stub.destroy();
+			this.#stub = null;
 		}
 
 		if (priceAxisPosition !== 'none') {
-			const rendererOptionsProvider = this._chart.model().rendererOptionsProvider();
+			const rendererOptionsProvider = this.#chart.model().rendererOptionsProvider();
 			const params: PriceAxisStubParams = {
 				rendererOptionsProvider: rendererOptionsProvider,
 			};
 
-			const model = this._chart.model();
+			const model = this.#chart.model();
 			const borderVisibleGetter = () => {
 				return model.mainPriceScale().options().borderVisible && model.timeScale().options().borderVisible;
 			};
 
-			this._stub = new PriceAxisStub(priceAxisPosition, this._chart.options(), params, borderVisibleGetter);
-			const stubCell = priceAxisPosition === 'left' ? this._leftStubCell : this._rightStubCell;
-			stubCell.appendChild(this._stub.getElement());
+			this.#stub = new PriceAxisStub(priceAxisPosition, this.#chart.options(), params, borderVisibleGetter);
+			const stubCell = priceAxisPosition === 'left' ? this.#leftStubCell : this.#rightStubCell;
+			stubCell.appendChild(this.#stub.getElement());
 		}
 
-		this._priceAxisPosition = priceAxisPosition;
+		this.#priceAxisPosition = priceAxisPosition;
 	}
 
-	private readonly _canvasConfiguredHandler = () => this._chart.model().lightUpdate();
-	private readonly _topCanvasConfiguredHandler = () => this._chart.model().lightUpdate();
+	readonly #canvasConfiguredHandler = () => this.#chart.model().lightUpdate();
+	readonly #topCanvasConfiguredHandler = () => this.#chart.model().lightUpdate();
 }

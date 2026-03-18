@@ -7,10 +7,10 @@ import { WatermarkRenderer, type WatermarkRendererData } from '../../renderers/w
 import type { IUpdatablePaneView } from './iupdatable-pane-view';
 
 export class WatermarkPaneView implements IUpdatablePaneView {
-	private _source: Watermark;
-	private _invalidated: boolean = true;
+	#source: Watermark;
+	#invalidated: boolean = true;
 
-	private readonly _rendererData: WatermarkRendererData = {
+	readonly #rendererData: WatermarkRendererData = {
 		visible: false,
 		color: '',
 		height: 0,
@@ -19,28 +19,28 @@ export class WatermarkPaneView implements IUpdatablePaneView {
 		vertAlign: 'center',
 		horzAlign: 'center',
 	};
-	private readonly _renderer: WatermarkRenderer = new WatermarkRenderer(this._rendererData);
+	readonly #renderer: WatermarkRenderer = new WatermarkRenderer(this.#rendererData);
 
 	public constructor(source: Watermark) {
-		this._source = source;
+		this.#source = source;
 	}
 
 	public update(): void {
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(height: number, width: number): IPaneRenderer {
-		if (this._invalidated) {
-			this._updateImpl(height, width);
-			this._invalidated = false;
+		if (this.#invalidated) {
+			this.#updateImpl(height, width);
+			this.#invalidated = false;
 		}
 
-		return this._renderer;
+		return this.#renderer;
 	}
 
-	private _updateImpl(height: number, width: number): void {
-		const options = this._source.options();
-		const data = this._rendererData;
+	#updateImpl(height: number, width: number): void {
+		const options = this.#source.options();
+		const data = this.#rendererData;
 		data.visible = options.visible;
 
 		if (!data.visible) {

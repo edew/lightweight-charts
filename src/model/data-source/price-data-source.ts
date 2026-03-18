@@ -7,15 +7,15 @@ import type { FirstValue, IPriceDataSource } from './iprice-data-source';
 import type { TimePointIndex } from '../time-scale/time-data';
 
 export abstract class PriceDataSource extends DataSource implements IPriceDataSource {
-	private readonly _model: ChartModel;
+	readonly #model: ChartModel;
 
 	public constructor(model: ChartModel) {
 		super();
-		this._model = model;
+		this.#model = model;
 	}
 
 	public model(): ChartModel {
-		return this._model;
+		return this.#model;
 	}
 
 	public minMove(): number {

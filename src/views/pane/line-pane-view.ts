@@ -8,7 +8,7 @@ import { type LineItem, PaneRendererLine, type PaneRendererLineData } from '../.
 import { LinePaneViewBase } from './line-pane-view-base';
 
 export class SeriesLinePaneView extends LinePaneViewBase<'Line', LineItem> {
-	private readonly _lineRenderer: PaneRendererLine = new PaneRendererLine();
+	readonly #lineRenderer: PaneRendererLine = new PaneRendererLine();
 
 	public constructor(series: Series<'Line'>, model: ChartModel) {
 		super(series, model);
@@ -28,9 +28,9 @@ export class SeriesLinePaneView extends LinePaneViewBase<'Line', LineItem> {
 			visibleRange: this._itemsVisibleRange,
 		};
 
-		this._lineRenderer.setData(data);
+		this.#lineRenderer.setData(data);
 
-		return this._lineRenderer;
+		return this.#lineRenderer;
 	}
 
 	protected _createRawItem(time: TimePointIndex, price: BarPrice): LineItem {

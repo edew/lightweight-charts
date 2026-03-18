@@ -1,39 +1,39 @@
 const defaultReplacementRe = /[2-9]/g;
 
 export class TextWidthCache {
-	private readonly _maxSize: number;
-	private _actualSize: number = 0;
-	private _usageTick: number = 1;
-	private _oldestTick: number = 1;
-	private _tick2Labels: Record<number, string> = {};
-	private _cache: Record<string, { width: number; tick: number }> = {};
+	readonly #maxSize: number;
+	#actualSize: number = 0;
+	#usageTick: number = 1;
+	#oldestTick: number = 1;
+	#tick2Labels: Record<number, string> = {};
+	#cache: Record<string, { width: number; tick: number }> = {};
 
 	public constructor(size: number = 50) {
-		this._maxSize = size;
+		this.#maxSize = size;
 	}
 
 	public reset(): void {
-		this._actualSize = 0;
-		this._cache = {};
-		this._usageTick = 1;
-		this._oldestTick = 1;
-		this._tick2Labels = {};
+		this.#actualSize = 0;
+		this.#cache = {};
+		this.#usageTick = 1;
+		this.#oldestTick = 1;
+		this.#tick2Labels = {};
 	}
 
 	public measureText(ctx: CanvasRenderingContext2D, text: string, optimizationReplacementRe?: RegExp): number {
 		const re = optimizationReplacementRe || defaultReplacementRe;
 		const cacheString = String(text).replace(re, '0');
 
-		if (this._cache[cacheString]) {
-			return this._cache[cacheString].width;
+		if (this.#cache[cacheString]) {
+			return this.#cache[cacheString].width;
 		}
 
-		if (this._actualSize === this._maxSize) {
-			const oldestValue = this._tick2Labels[this._oldestTick];
-			delete this._tick2Labels[this._oldestTick];
-			delete this._cache[oldestValue];
-			this._oldestTick++;
-			this._actualSize--;
+		if (this.#actualSize === this.#maxSize) {
+			const oldestValue = this.#tick2Labels[this.#oldestTick];
+			delete this.#tick2Labels[this.#oldestTick];
+			delete this.#cache[oldestValue];
+			this.#oldestTick++;
+			this.#actualSize--;
 		}
 
 		const width = ctx.measureText(cacheString).width;
@@ -43,10 +43,10 @@ export class TextWidthCache {
 			return 0;
 		}
 
-		this._cache[cacheString] = { width: width, tick: this._usageTick };
-		this._tick2Labels[this._usageTick] = cacheString;
-		this._actualSize++;
-		this._usageTick++;
+		this.#cache[cacheString] = { width: width, tick: this.#usageTick };
+		this.#tick2Labels[this.#usageTick] = cacheString;
+		this.#actualSize++;
+		this.#usageTick++;
 		return width;
 	}
 }

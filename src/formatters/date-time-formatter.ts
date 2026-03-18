@@ -18,18 +18,18 @@ const defaultParams: DateTimeFormatterParams = {
 };
 
 export class DateTimeFormatter implements IDateTimeFormatter {
-	private readonly _dateFormatter: DateFormatter;
-	private readonly _timeFormatter: TimeFormatter;
-	private readonly _separator: string;
+	readonly #dateFormatter: DateFormatter;
+	readonly #timeFormatter: TimeFormatter;
+	readonly #separator: string;
 
 	public constructor(params: Partial<DateTimeFormatterParams> = {}) {
 		const formatterParams = { ...defaultParams, ...params };
-		this._dateFormatter = new DateFormatter(formatterParams.dateFormat, formatterParams.locale);
-		this._timeFormatter = new TimeFormatter(formatterParams.timeFormat);
-		this._separator = formatterParams.dateTimeSeparator;
+		this.#dateFormatter = new DateFormatter(formatterParams.dateFormat, formatterParams.locale);
+		this.#timeFormatter = new TimeFormatter(formatterParams.timeFormat);
+		this.#separator = formatterParams.dateTimeSeparator;
 	}
 
 	public format(dateTime: Date): string {
-		return `${this._dateFormatter.format(dateTime)}${this._separator}${this._timeFormatter.format(dateTime)}`;
+		return `${this.#dateFormatter.format(dateTime)}${this.#separator}${this.#timeFormatter.format(dateTime)}`;
 	}
 }

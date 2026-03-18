@@ -5,21 +5,21 @@ import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import type { IUpdatablePaneView } from './iupdatable-pane-view';
 
 export class GridPaneView implements IUpdatablePaneView {
-	private readonly _pane: Pane;
-	private readonly _renderer: GridRenderer = new GridRenderer();
-	private _invalidated: boolean = true;
+	readonly #pane: Pane;
+	readonly #renderer: GridRenderer = new GridRenderer();
+	#invalidated: boolean = true;
 
 	public constructor(pane: Pane) {
-		this._pane = pane;
+		this.#pane = pane;
 	}
 
 	public update(): void {
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(height: number, width: number): IPaneRenderer | null {
-		if (this._invalidated) {
-			const gridOptions = this._pane.model().options().grid;
+		if (this.#invalidated) {
+			const gridOptions = this.#pane.model().options().grid;
 
 			const data: GridRendererData = {
 				h: height,
@@ -30,15 +30,15 @@ export class GridPaneView implements IUpdatablePaneView {
 				vertLinesColor: gridOptions.vertLines.color,
 				horzLineStyle: gridOptions.horzLines.style,
 				vertLineStyle: gridOptions.vertLines.style,
-				priceMarks: this._pane.defaultPriceScale().marks(),
-				timeMarks: this._pane.model().timeScale().marks() || [],
+				priceMarks: this.#pane.defaultPriceScale().marks(),
+				timeMarks: this.#pane.model().timeScale().marks() || [],
 			};
 
-			this._renderer.setData(data);
-			this._invalidated = false;
+			this.#renderer.setData(data);
+			this.#invalidated = false;
 		}
 
-		return this._renderer;
+		return this.#renderer;
 	}
 
 }

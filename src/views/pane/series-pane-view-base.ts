@@ -15,12 +15,12 @@ export abstract class SeriesPaneViewBase<TSeriesType extends SeriesType, ItemTyp
 	protected _dataInvalidated: boolean = true;
 	protected _items: ItemType[] = [];
 	protected _itemsVisibleRange: SeriesItemsIndexesRange | null = null;
-	private readonly _extendedVisibleRange: boolean;
+	readonly #extendedVisibleRange: boolean;
 
 	public constructor(series: Series<TSeriesType>, model: ChartModel, extendedVisibleRange: boolean) {
 		this._series = series;
 		this._model = model;
-		this._extendedVisibleRange = extendedVisibleRange;
+		this.#extendedVisibleRange = extendedVisibleRange;
 	}
 
 	public update(updateType?: UpdateType): void {
@@ -76,7 +76,7 @@ export abstract class SeriesPaneViewBase<TSeriesType extends SeriesType, ItemTyp
 			return;
 		}
 
-		this._itemsVisibleRange = visibleTimedValues(this._items, visibleBars, this._extendedVisibleRange);
+		this._itemsVisibleRange = visibleTimedValues(this._items, visibleBars, this.#extendedVisibleRange);
 		this._convertToCoordinates(priceScale, timeScale, firstValue.value);
 	}
 }

@@ -76,33 +76,33 @@ export interface SeriesDataAtTypeMap {
 }
 
 export class Series<T extends SeriesType = SeriesType> extends PriceDataSource implements IDestroyable {
-	private readonly _seriesType: T;
-	private _data: SeriesData = new SeriesData();
-	private readonly _priceAxisViews: IPriceAxisView[];
-	private readonly _panePriceAxisView: PanePriceAxisView;
-	private _formatter!: IPriceFormatter;
-	private readonly _baseHorizontalLineView: SeriesHorizontalBaseLinePaneView = new SeriesHorizontalBaseLinePaneView(this);
-	private _paneView!: IUpdatablePaneView;
-	private _barColorerCache: SeriesBarColorer | null = null;
-	private readonly _options: SeriesOptionsMap[T];
-	private _barFunction: BarFunction;
-	private readonly _palette: Palette = new Palette();
+	readonly #seriesType: T;
+	#data: SeriesData = new SeriesData();
+	readonly #priceAxisViews: IPriceAxisView[];
+	readonly #panePriceAxisView: PanePriceAxisView;
+	#formatter!: IPriceFormatter;
+	readonly #baseHorizontalLineView: SeriesHorizontalBaseLinePaneView = new SeriesHorizontalBaseLinePaneView(this);
+	#paneView!: IUpdatablePaneView;
+	#barColorerCache: SeriesBarColorer | null = null;
+	readonly #options: SeriesOptionsMap[T];
+	#barFunction: BarFunction;
+	readonly #palette: Palette = new Palette();
 
 	public constructor(model: ChartModel, options: SeriesOptionsMap[T], seriesType: T) {
 		super(model);
-		this._options = options;
-		this._seriesType = seriesType;
+		this.#options = options;
+		this.#seriesType = seriesType;
 
 		const priceAxisView = new SeriesPriceAxisView(this, { model: model });
-		this._priceAxisViews = [priceAxisView];
+		this.#priceAxisViews = [priceAxisView];
 
-		this._panePriceAxisView = new PanePriceAxisView(priceAxisView, this, model);
+		this.#panePriceAxisView = new PanePriceAxisView(priceAxisView, this, model);
 
-		this._recreateFormatter();
-		this._updateBarFunction();
-		this._barFunction = this.barFunction(); // redundant
+		this.#recreateFormatter();
+		this.#updateBarFunction();
+		this.#barFunction = this.barFunction(); // redundant
 
-		this._recreatePaneViews();
+		this.#recreatePaneViews();
 	}
 
 	public destroy(): void {
@@ -166,7 +166,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			lastIndex = endBar.index;
 		}
 
-		const price = plot !== undefined ? bar.value[plot] as number : this._barFunction(bar.value);
+		const price = plot !== undefined ? bar.value[plot] as number : this.#barFunction(bar.value);
 		const barColorer = this.barColorer();
 		const style = barColorer.barStyle(lastIndex, { value: bar });
 		const coordinate = priceScale.priceToCoordinate(price, firstValue.value);
@@ -184,58 +184,58 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public data(): SeriesData {
-		return this._data;
+		return this.#data;
 	}
 
 	public barColorer(): SeriesBarColorer {
-		if (this._barColorerCache !== null) {
-			return this._barColorerCache;
+		if (this.#barColorerCache !== null) {
+			return this.#barColorerCache;
 		}
 
-		this._barColorerCache = new SeriesBarColorer(this);
-		return this._barColorerCache;
+		this.#barColorerCache = new SeriesBarColorer(this);
+		return this.#barColorerCache;
 	}
 
 	public options(): Readonly<SeriesOptionsMap[T]> {
-		return this._options;
+		return this.#options;
 	}
 
 	public applyOptions(options: SeriesPartialOptionsMap[T]): void {
-		const overlay = this._options.overlay;
-		merge(this._options, options);
-		this._options.overlay = overlay;
+		const overlay = this.#options.overlay;
+		merge(this.#options, options);
+		this.#options.overlay = overlay;
 
 		if (overlay && this._priceScale !== null && options.scaleMargins !== undefined) {
 			this._priceScale.applyOptions({
-				scaleMargins: this._options.scaleMargins,
+				scaleMargins: this.#options.scaleMargins,
 			});
 		}
 
 		if (options.priceFormat !== undefined) {
-			this._recreateFormatter();
+			this.#recreateFormatter();
 		}
 
 		this.model().updateSource(this);
 	}
 
 	public clearData(): void {
-		this._data.clear();
-		this._palette.clear();
+		this.#data.clear();
+		this.#palette.clear();
 
 		// we must either re-create pane view on clear data
 		// or clear all caches inside pane views
 		// but currently we can't separate update/append last bar and full data replacement (update vs setData) in pane views invalidation
 		// so let's just re-create all views
-		this._recreatePaneViews();
+		this.#recreatePaneViews();
 	}
 
 	public updateData(data: ReadonlyArray<PlotRow<Bar['time'], Bar['value']>>, clearData: boolean = false): void {
 		if (clearData) {
-			this._data.clear();
+			this.#data.clear();
 		}
-		this._data.bars().merge(data);
+		this.#data.bars().merge(data);
 
-		this._paneView.update('data');
+		this.#paneView.update('data');
 
 		const sourcePane = this.model().paneForSource(this);
 		this.model().recalculatePane(sourcePane);
@@ -245,11 +245,11 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public palette(): Palette {
-		return this._palette;
+		return this.#palette;
 	}
 
 	public seriesType(): T {
-		return this._seriesType;
+		return this.#seriesType;
 	}
 
 	public firstValue(): FirstValue | null {
@@ -259,7 +259,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		}
 
 		return {
-			value: this._barFunction(bar.value),
+			value: this.#barFunction(bar.value),
 			timePoint: bar.time,
 		};
 	}
@@ -275,7 +275,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public bars(): PlotList<Bar['time'], Bar['value']> {
-		return this._data.bars();
+		return this.#data.bars();
 	}
 
 	public nearestIndex(index: TimePointIndex, options?: PlotRowSearchMode): TimePointIndex | null {
@@ -296,7 +296,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		if (prices === null) {
 			return null;
 		}
-		if (this._seriesType === 'Candlestick') {
+		if (this.#seriesType === 'Candlestick') {
 			return {
 				open: prices.value[SeriesPlotIndex.Open] as BarPrice,
 				high: prices.value[SeriesPlotIndex.High] as BarPrice,
@@ -312,18 +312,18 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		const res: IPaneView[] = [];
 
 		if (this.priceScale() === this.model().mainPriceScale()) {
-			res.push(this._baseHorizontalLineView);
+			res.push(this.#baseHorizontalLineView);
 		}
 
-		res.push(this._paneView);
+		res.push(this.#paneView);
 
-		res.push(this._panePriceAxisView);
+		res.push(this.#panePriceAxisView);
 
 		return res;
 	}
 
 	public priceAxisViews(pane: Pane, priceScale: PriceScale): ReadonlyArray<IPriceAxisView> {
-		const result = [...this._priceAxisViews];
+		const result = [...this.#priceAxisViews];
 
 		return result;
 	}
@@ -335,7 +335,7 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 		// TODO: refactor this
 		// series data is strongly hardcoded to keep bars
-		const priceSource = (this._seriesType === 'Line') ? 'close' : null;
+		const priceSource = (this.#seriesType === 'Line') ? 'close' : null;
 		let barsMinMax: MinMax | null;
 		if (priceSource !== null) {
 			barsMinMax = this.data().bars().minMaxOnRangeCached(startTimePoint, endTimePoint, [{ name: priceSource, offset: 0 }]);
@@ -352,25 +352,25 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public minMove(): number {
-		return this._options.priceFormat.minMove;
+		return this.#options.priceFormat.minMove;
 	}
 
 	public formatter(): IPriceFormatter {
-		return this._formatter;
+		return this.#formatter;
 	}
 
 	public barFunction(): BarFunction {
-		return this._barFunction;
+		return this.#barFunction;
 	}
 
 	public updateAllViews(): void {
-		this._paneView.update();
+		this.#paneView.update();
 
-		for (const priceAxisView of this._priceAxisViews) {
+		for (const priceAxisView of this.#priceAxisViews) {
 			priceAxisView.update();
 		}
 
-		this._baseHorizontalLineView.update();
+		this.#baseHorizontalLineView.update();
 	}
 
 	public setPriceScale(priceScale: PriceScale): void {
@@ -386,53 +386,53 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public markerDataAtIndex(index: TimePointIndex): MarkerData | null {
-		const getValue = (this._seriesType === 'Line') &&
-			(this._options as LineStyleOptions).crosshairMarkerVisible;
+		const getValue = (this.#seriesType === 'Line') &&
+			(this.#options as LineStyleOptions).crosshairMarkerVisible;
 
 		if (!getValue) {
 			return null;
 		}
-		const bar = this._data.valueAt(index);
+		const bar = this.#data.valueAt(index);
 		if (bar === null) {
 			return null;
 		}
-		const price = this._barFunction(bar.value);
-		const radius = this._markerRadius();
+		const price = this.#barFunction(bar.value);
+		const radius = this.#markerRadius();
 		return { price, radius };
 	}
 
 	public title(): string {
-		return this._options.title;
+		return this.#options.title;
 	}
 
-	private _markerRadius(): number {
-		switch (this._seriesType) {
+	#markerRadius(): number {
+		switch (this.#seriesType) {
 			case 'Line':
-				return (this._options as LineStyleOptions).crosshairMarkerRadius;
+				return (this.#options as LineStyleOptions).crosshairMarkerRadius;
 		}
 
 		return 0;
 	}
 
-	private _recreateFormatter(): void {
-		switch (this._options.priceFormat.type) {
+	#recreateFormatter(): void {
+		switch (this.#options.priceFormat.type) {
 			case 'custom': {
-				this._formatter = { format: this._options.priceFormat.formatter };
+				this.#formatter = { format: this.#options.priceFormat.formatter };
 				break;
 			}
 			case 'volume': {
-				this._formatter = new VolumeFormatter(this._options.priceFormat.precision);
+				this.#formatter = new VolumeFormatter(this.#options.priceFormat.precision);
 				break;
 			}
 			case 'percent': {
-				this._formatter = new PercentageFormatter(this._options.priceFormat.precision);
+				this.#formatter = new PercentageFormatter(this.#options.priceFormat.precision);
 				break;
 			}
 			default: {
-				const priceScale = Math.pow(10, this._options.priceFormat.precision);
-				this._formatter = new PriceFormatter(
+				const priceScale = Math.pow(10, this.#options.priceFormat.precision);
+				this.#formatter = new PriceFormatter(
 					priceScale,
-					this._options.priceFormat.minMove * priceScale,
+					this.#options.priceFormat.minMove * priceScale,
 					false,
 					undefined
 				);
@@ -444,24 +444,24 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		}
 	}
 
-	private _updateBarFunction(): void {
+	#updateBarFunction(): void {
 		const priceSource = 'close';
-		this._barFunction = barFunction(priceSource);
+		this.#barFunction = barFunction(priceSource);
 	}
 
-	private _recreatePaneViews(): void {
-		switch (this._seriesType) {
+	#recreatePaneViews(): void {
+		switch (this.#seriesType) {
 			case 'Candlestick': {
-				this._paneView = new SeriesCandlesticksPaneView(this as Series<'Candlestick'>, this.model());
+				this.#paneView = new SeriesCandlesticksPaneView(this as Series<'Candlestick'>, this.model());
 				break;
 			}
 
 			case 'Line': {
-				this._paneView = new SeriesLinePaneView(this as Series<'Line'>, this.model());
+				this.#paneView = new SeriesLinePaneView(this as Series<'Line'>, this.model());
 				break;
 			}
 
-			default: throw Error('Unknown chart style assigned: ' + this._seriesType);
+			default: throw Error('Unknown chart style assigned: ' + this.#seriesType);
 		}
 	}
 }

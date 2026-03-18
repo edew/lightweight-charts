@@ -27,30 +27,30 @@ const emptyResult: BarColorerStyle = {
 };
 
 export class SeriesBarColorer {
-	private _series: Series;
+	#series: Series;
 
 	public constructor(series: Series) {
-		this._series = series;
+		this.#series = series;
 	}
 
 	public barStyle(barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
 		// precomputedBars: {value: [Array BarValues], previousValue: [Array BarValues] | undefined}
 		// Used to avoid binary search if bars are already known
 
-		const targetType = this._series.seriesType();
-		const seriesOptions = this._series.options();
+		const targetType = this.#series.seriesType();
+		const seriesOptions = this.#series.options();
 		switch (targetType) {
 			case 'Line':
-				return this._lineStyle(seriesOptions as LineStyleOptions);
+				return this.#lineStyle(seriesOptions as LineStyleOptions);
 
 			case 'Candlestick':
-				return this._candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
+				return this.#candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
 		}
 
 		throw new Error('Unknown chart style');
 	}
 
-	private _candleStyle(candlestickStyle: CandlestickStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
+	#candleStyle(candlestickStyle: CandlestickStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
 		const result = { ...emptyResult };
 
 		const upColor = candlestickStyle.upColor;
@@ -61,7 +61,7 @@ export class SeriesBarColorer {
 		const wickUpColor = candlestickStyle.wickUpColor;
 		const wickDownColor = candlestickStyle.wickDownColor;
 
-		const currentBar = ensureNotNull(this._findBar(barIndex, precomputedBars));
+		const currentBar = ensureNotNull(this.#findBar(barIndex, precomputedBars));
 		const isUp = ensure(currentBar.value[SeriesPlotIndex.Open]) <= ensure(currentBar.value[SeriesPlotIndex.Close]);
 
 		result.barColor = isUp ? upColor : downColor;
@@ -71,22 +71,22 @@ export class SeriesBarColorer {
 		return result;
 	}
 
-	private _lineStyle(lineStyle: LineStyleOptions): BarColorerStyle {
+	#lineStyle(lineStyle: LineStyleOptions): BarColorerStyle {
 		return {
 			...emptyResult,
 			barColor: lineStyle.color,
 		};
 	}
 
-	private _getSeriesBars(): PlotList<TimePoint, Bar['value']> {
-		return this._series.bars();
+	#getSeriesBars(): PlotList<TimePoint, Bar['value']> {
+		return this.#series.bars();
 	}
 
-	private _findBar(barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): Bar | null {
+	#findBar(barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): Bar | null {
 		if (precomputedBars !== undefined) {
 			return precomputedBars.value;
 		}
 
-		return this._getSeriesBars().valueAt(barIndex);
+		return this.#getSeriesBars().valueAt(barIndex);
 	}
 }

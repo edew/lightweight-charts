@@ -7,25 +7,25 @@ import { PriceScale, type PriceScaleOptions } from '../model/price-scale/price-s
 import type { IPriceScaleApi } from './iprice-scale-api';
 
 export class PriceScaleApi implements IPriceScaleApi, IDestroyable {
-	private _chartModel: ChartModel;
+	#chartModel: ChartModel;
 
 	public constructor(model: ChartModel) {
-		this._chartModel = model;
+		this.#chartModel = model;
 	}
 
 	public destroy(): void {
-		(this._chartModel as unknown as null) = null;
+		(this.#chartModel as unknown as null) = null;
 	}
 
 	public applyOptions(options: DeepPartial<PriceScaleOptions>): void {
-		this._chartModel.applyOptions({ priceScale: options });
+		this.#chartModel.applyOptions({ priceScale: options });
 	}
 
 	public options(): Readonly<PriceScaleOptions> {
-		return this._priceScale().options();
+		return this.#priceScale().options();
 	}
 
-	private _priceScale(): PriceScale {
-		return this._chartModel.mainPriceScale();
+	#priceScale(): PriceScale {
+		return this.#chartModel.mainPriceScale();
 	}
 }

@@ -18,19 +18,19 @@ export interface CrosshairRendererData {
 }
 
 export class CrosshairRenderer implements IPaneRenderer {
-	private readonly _data: CrosshairRendererData | null;
+	readonly #data: CrosshairRendererData | null;
 
 	public constructor(data: CrosshairRendererData | null) {
-		this._data = data;
+		this.#data = data;
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void {
-		if (this._data === null) {
+		if (this.#data === null) {
 			return;
 		}
 
-		const vertLinesVisible = this._data.vertLine.visible;
-		const horzLinesVisible = this._data.horzLine.visible;
+		const vertLinesVisible = this.#data.vertLine.visible;
+		const horzLinesVisible = this.#data.horzLine.visible;
 
 		if (!vertLinesVisible && !horzLinesVisible) {
 			return;
@@ -38,26 +38,26 @@ export class CrosshairRenderer implements IPaneRenderer {
 
 		ctx.save();
 
-		const x = Math.round(this._data.x * pixelRatio);
-		const y = Math.round(this._data.y * pixelRatio);
-		const w = Math.ceil(this._data.w * pixelRatio);
-		const h = Math.ceil(this._data.h * pixelRatio);
+		const x = Math.round(this.#data.x * pixelRatio);
+		const y = Math.round(this.#data.y * pixelRatio);
+		const w = Math.ceil(this.#data.w * pixelRatio);
+		const h = Math.ceil(this.#data.h * pixelRatio);
 
 		ctx.lineCap = 'butt';
 
 		if (vertLinesVisible && x >= 0) {
-			ctx.lineWidth = Math.floor(this._data.vertLine.lineWidth * pixelRatio);
-			ctx.strokeStyle = this._data.vertLine.color;
-			ctx.fillStyle = this._data.vertLine.color;
-			setLineStyle(ctx, this._data.vertLine.lineStyle);
+			ctx.lineWidth = Math.floor(this.#data.vertLine.lineWidth * pixelRatio);
+			ctx.strokeStyle = this.#data.vertLine.color;
+			ctx.fillStyle = this.#data.vertLine.color;
+			setLineStyle(ctx, this.#data.vertLine.lineStyle);
 			drawVerticalLine(ctx, x, 0, h);
 		}
 
 		if (horzLinesVisible && y >= 0) {
-			ctx.lineWidth = Math.floor(this._data.horzLine.lineWidth * pixelRatio);
-			ctx.strokeStyle = this._data.horzLine.color;
-			ctx.fillStyle = this._data.horzLine.color;
-			setLineStyle(ctx, this._data.horzLine.lineStyle);
+			ctx.lineWidth = Math.floor(this.#data.horzLine.lineWidth * pixelRatio);
+			ctx.strokeStyle = this.#data.horzLine.color;
+			ctx.fillStyle = this.#data.horzLine.color;
+			setLineStyle(ctx, this.#data.horzLine.lineStyle);
 			drawHorizontalLine(ctx, y, 0, w);
 		}
 

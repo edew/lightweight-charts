@@ -22,24 +22,24 @@ export interface WatermarkOptions {
 }
 
 export class Watermark extends DataSource {
-	private readonly _paneView: WatermarkPaneView;
-	private readonly _options: WatermarkOptions;
+	readonly #paneView: WatermarkPaneView;
+	readonly #options: WatermarkOptions;
 
 	public constructor(model: ChartModel, options: WatermarkOptions) {
 		super();
-		this._options = options;
-		this._paneView = new WatermarkPaneView(this);
+		this.#options = options;
+		this.#paneView = new WatermarkPaneView(this);
 	}
 
 	public paneViews(): ReadonlyArray<IPaneView> {
-		return [this._paneView];
+		return [this.#paneView];
 	}
 
 	public options(): Readonly<WatermarkOptions> {
-		return this._options;
+		return this.#options;
 	}
 
 	public updateAllViews(): void {
-		this._paneView.update();
+		this.#paneView.update();
 	}
 }

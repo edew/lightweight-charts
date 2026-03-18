@@ -12,21 +12,21 @@ export interface SeriesPriceAxisViewData {
 }
 
 export class SeriesPriceAxisView extends PriceAxisView {
-	private readonly _source: Series;
-	private readonly _data: SeriesPriceAxisViewData;
+	readonly #source: Series;
+	readonly #data: SeriesPriceAxisViewData;
 
 	public constructor(source: Series, data: SeriesPriceAxisViewData) {
 		super();
-		this._source = source;
-		this._data = data;
+		this.#source = source;
+		this.#data = data;
 	}
 
 	protected _getSource(): Series {
-		return this._source;
+		return this.#source;
 	}
 
 	protected _getData(): SeriesPriceAxisViewData {
-		return this._data;
+		return this.#data;
 	}
 
 	protected _updateRendererData(
@@ -37,13 +37,13 @@ export class SeriesPriceAxisView extends PriceAxisView {
 		axisRendererData.visible = false;
 		paneRendererData.visible = false;
 
-		const seriesOptions = this._source.options();
+		const seriesOptions = this.#source.options();
 		const showSeriesLastValue = seriesOptions.lastValueVisible;
 
-		const showSymbolLabel = this._source.title() !== '';
+		const showSymbolLabel = this.#source.title() !== '';
 		const showPriceAndPercentage = seriesOptions.seriesLastValueMode === PriceAxisLastValueMode.LastPriceAndPercentageValue;
 
-		const lastValueData = this._source.lastValueData(undefined, false);
+		const lastValueData = this.#source.lastValueData(undefined, false);
 		if (lastValueData.noData) {
 			return;
 		}
@@ -58,10 +58,10 @@ export class SeriesPriceAxisView extends PriceAxisView {
 			paneRendererData.visible = paneRendererData.text.length > 0;
 		}
 
-		commonRendererData.background = this._source.priceLineColor(lastValueData.color);
+		commonRendererData.background = this.#source.priceLineColor(lastValueData.color);
 		commonRendererData.color = generateTextColor(commonRendererData.background);
 		commonRendererData.coordinate = lastValueData.coordinate;
-		paneRendererData.borderColor = this._source.model().options().layout.backgroundColor;
+		paneRendererData.borderColor = this.#source.model().options().layout.backgroundColor;
 		axisRendererData.borderColor = commonRendererData.background;
 	}
 
@@ -73,14 +73,14 @@ export class SeriesPriceAxisView extends PriceAxisView {
 	): string {
 		let result = '';
 
-		const title = this._source.title();
+		const title = this.#source.title();
 
 		if (showSymbolLabel && title.length !== 0) {
 			result += `${title} `;
 		}
 
 		if (showSeriesLastValue && showPriceAndPercentage) {
-			result += this._source.priceScale().isPercentage() ?
+			result += this.#source.priceScale().isPercentage() ?
 				lastValue.formattedPriceAbsolute : lastValue.formattedPricePercentage;
 		}
 
@@ -96,7 +96,7 @@ export class SeriesPriceAxisView extends PriceAxisView {
 			return lastValueData.text;
 		}
 
-		return this._source.priceScale().isPercentage() ?
+		return this.#source.priceScale().isPercentage() ?
 			lastValueData.formattedPricePercentage : lastValueData.formattedPriceAbsolute;
 	}
 }

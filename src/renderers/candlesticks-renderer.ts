@@ -28,59 +28,59 @@ const enum Constants {
 }
 
 export class PaneRendererCandlesticks implements IPaneRenderer {
-	private _data: PaneRendererCandlesticksData | null = null;
+	#data: PaneRendererCandlesticksData | null = null;
 
 	// scaled with pixelRatio
-	private _barWidth: number = 0;
+	#barWidth: number = 0;
 
 	public setData(data: PaneRendererCandlesticksData): void {
-		this._data = data;
+		this.#data = data;
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void {
-		if (this._data === null || this._data.bars.length === 0 || this._data.visibleRange === null) {
+		if (this.#data === null || this.#data.bars.length === 0 || this.#data.visibleRange === null) {
 			return;
 		}
 
 		// now we know pixelRatio and we could calculate barWidth effectively
-		this._barWidth = optimalCandlestickWidth(this._data.barSpacing, pixelRatio);
+		this.#barWidth = optimalCandlestickWidth(this.#data.barSpacing, pixelRatio);
 
 		// grid and crosshair have line width = Math.floor(pixelRatio)
 		// if this value is odd, we have to make candlesticks' width odd
 		// if this value is even, we have to make candlesticks' width even
 		// in order of keeping crosshair-over-candlesticks drawing symmetric
-		if (this._barWidth >= 2) {
+		if (this.#barWidth >= 2) {
 			const wickWidth = Math.floor(pixelRatio);
-			if ((wickWidth % 2) !== (this._barWidth % 2)) {
-				this._barWidth--;
+			if ((wickWidth % 2) !== (this.#barWidth % 2)) {
+				this.#barWidth--;
 			}
 		}
 
-		const bars = this._data.bars;
-		if (this._data.wickVisible) {
-			this._drawWicks(ctx, bars, this._data.visibleRange, pixelRatio);
+		const bars = this.#data.bars;
+		if (this.#data.wickVisible) {
+			this.#drawWicks(ctx, bars, this.#data.visibleRange, pixelRatio);
 		}
 
-		if (this._data.borderVisible) {
-			this._drawBorder(ctx, bars, this._data.visibleRange, this._data.barSpacing, pixelRatio);
+		if (this.#data.borderVisible) {
+			this.#drawBorder(ctx, bars, this.#data.visibleRange, this.#data.barSpacing, pixelRatio);
 		}
 
-		const borderWidth = this._calculateBorderWidth(pixelRatio);
+		const borderWidth = this.#calculateBorderWidth(pixelRatio);
 
-		if (!this._data.borderVisible || this._barWidth > borderWidth * 2) {
-			this._drawCandles(ctx, bars, this._data.visibleRange, pixelRatio);
+		if (!this.#data.borderVisible || this.#barWidth > borderWidth * 2) {
+			this.#drawCandles(ctx, bars, this.#data.visibleRange, pixelRatio);
 		}
 
 	}
 
-	private _drawWicks(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, pixelRatio: number): void {
-		if (this._data === null) {
+	#drawWicks(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, pixelRatio: number): void {
+		if (this.#data === null) {
 			return;
 		}
 		let prevWickColor = '';
 
-		let wickWidth = Math.min(Math.floor(pixelRatio), Math.floor(this._data.barSpacing * pixelRatio));
-		wickWidth = Math.min(wickWidth, this._barWidth);
+		let wickWidth = Math.min(Math.floor(pixelRatio), Math.floor(this.#data.barSpacing * pixelRatio));
+		wickWidth = Math.min(wickWidth, this.#barWidth);
 		const wickOffset = Math.floor(wickWidth * 0.5);
 
 		for (let i = visibleRange.from; i < visibleRange.to; i++) {
@@ -103,22 +103,22 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 		}
 	}
 
-	private _calculateBorderWidth(pixelRatio: number): number {
+	#calculateBorderWidth(pixelRatio: number): number {
 		let borderWidth = Math.floor(Constants.BarBorderWidth * pixelRatio);
-		if (this._barWidth <= 2 * borderWidth) {
-			borderWidth = Math.floor((this._barWidth  - 1) * 0.5);
+		if (this.#barWidth <= 2 * borderWidth) {
+			borderWidth = Math.floor((this.#barWidth  - 1) * 0.5);
 		}
 		const res = Math.max(1, borderWidth);
-		if (this._barWidth <= res * 2) {
+		if (this.#barWidth <= res * 2) {
 			// do not draw bodies, restore original value
 			return Math.floor(Constants.BarBorderWidth * pixelRatio);
 		}
 		return res;
 	}
 
-	private _drawBorder(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, barSpacing: number, pixelRatio: number): void {
+	#drawBorder(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, barSpacing: number, pixelRatio: number): void {
 		let prevBorderColor = '';
-		const borderWidth = this._calculateBorderWidth(pixelRatio);
+		const borderWidth = this.#calculateBorderWidth(pixelRatio);
 
 		for (let i = visibleRange.from; i < visibleRange.to; i++) {
 			const bar = bars[i];
@@ -127,8 +127,8 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 				prevBorderColor = bar.borderColor;
 			}
 
-			const left = Math.round(bar.x * pixelRatio) - Math.floor(this._barWidth * 0.5);
-			const right = left + this._barWidth - 1;
+			const left = Math.round(bar.x * pixelRatio) - Math.floor(this.#barWidth * 0.5);
+			const right = left + this.#barWidth - 1;
 
 			const top = Math.round(Math.min(bar.openY, bar.closeY) * pixelRatio);
 			const bottom = Math.round(Math.max(bar.openY, bar.closeY) * pixelRatio);
@@ -141,24 +141,24 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 		}
 	}
 
-	private _drawCandles(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, pixelRatio: number): void {
-		if (this._data === null) {
+	#drawCandles(ctx: CanvasRenderingContext2D, bars: ReadonlyArray<CandlestickItem>, visibleRange: SeriesItemsIndexesRange, pixelRatio: number): void {
+		if (this.#data === null) {
 			return;
 		}
 
 		let prevBarColor = '';
 
-		const borderWidth = this._calculateBorderWidth(pixelRatio);
+		const borderWidth = this.#calculateBorderWidth(pixelRatio);
 
 		for (let i = visibleRange.from; i < visibleRange.to; i++) {
 			const bar = bars[i];
 			let top = Math.round(Math.min(bar.openY, bar.closeY) * pixelRatio);
 			let bottom = Math.round(Math.max(bar.openY, bar.closeY) * pixelRatio);
 
-			let left = Math.round(bar.x * pixelRatio) - Math.floor(this._barWidth * 0.5);
-			let right = left + this._barWidth - 1;
+			let left = Math.round(bar.x * pixelRatio) - Math.floor(this.#barWidth * 0.5);
+			let right = left + this.#barWidth - 1;
 
-			if (this._data.borderVisible) {
+			if (this.#data.borderVisible) {
 				left += borderWidth;
 				top += borderWidth;
 				right -= borderWidth;

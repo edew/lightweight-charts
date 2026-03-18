@@ -8,12 +8,12 @@ import { TimeAxisViewRenderer, type TimeAxisViewRendererData } from '../../rende
 import { TimeAxisView } from './time-axis-view';
 
 export class CrosshairTimeAxisView extends TimeAxisView {
-	private _invalidated: boolean = true;
-	private readonly _crosshair: Crosshair;
-	private readonly _model: ChartModel;
-	private readonly _valueProvider: TimeAndCoordinateProvider;
-	private readonly _renderer: TimeAxisViewRenderer = new TimeAxisViewRenderer();
-	private readonly _rendererData: TimeAxisViewRendererData = {
+	#invalidated: boolean = true;
+	readonly #crosshair: Crosshair;
+	readonly #model: ChartModel;
+	readonly #valueProvider: TimeAndCoordinateProvider;
+	readonly #renderer: TimeAxisViewRenderer = new TimeAxisViewRenderer();
+	readonly #rendererData: TimeAxisViewRendererData = {
 		visible: false,
 		background: '#4c525e',
 		color: 'white',
@@ -25,45 +25,45 @@ export class CrosshairTimeAxisView extends TimeAxisView {
 	public constructor(crosshair: Crosshair, model: ChartModel, valueProvider: TimeAndCoordinateProvider) {
 		super();
 
-		this._crosshair = crosshair;
-		this._model = model;
-		this._valueProvider = valueProvider;
+		this.#crosshair = crosshair;
+		this.#model = model;
+		this.#valueProvider = valueProvider;
 	}
 
 	public update(): void {
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(): TimeAxisViewRenderer {
-		if (this._invalidated) {
-			this._updateImpl();
-			this._invalidated = false;
+		if (this.#invalidated) {
+			this.#updateImpl();
+			this.#invalidated = false;
 		}
 
-		this._renderer.setData(this._rendererData);
+		this.#renderer.setData(this.#rendererData);
 
-		return this._renderer;
+		return this.#renderer;
 	}
 
-	private _updateImpl(): void {
-		const data = this._rendererData;
+	#updateImpl(): void {
+		const data = this.#rendererData;
 		data.visible = false;
 
-		const options = this._crosshair.options().vertLine;
+		const options = this.#crosshair.options().vertLine;
 
 		if (!options.labelVisible) {
 			return;
 		}
 
-		const timeScale = this._model.timeScale();
+		const timeScale = this.#model.timeScale();
 		if (timeScale.isEmpty()) {
 			return;
 		}
 
-		const currentTime = timeScale.indexToUserTime(this._crosshair.appliedIndex());
+		const currentTime = timeScale.indexToUserTime(this.#crosshair.appliedIndex());
 		data.width = timeScale.width();
 
-		const value = this._valueProvider();
+		const value = this.#valueProvider();
 		if (!value.time) {
 			return;
 		}

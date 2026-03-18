@@ -31,10 +31,10 @@ export function numberToStringWithLeadingZero(value: number, length: number): st
 
 export class PriceFormatter implements IPriceFormatter {
 	protected _fractionalLength: number | undefined;
-	private readonly _priceScale: number;
-	private readonly _minMove: number;
-	private readonly _minMove2: number | undefined;
-	private readonly _fractional: boolean | undefined;
+	readonly #priceScale: number;
+	readonly #minMove: number;
+	readonly #minMove2: number | undefined;
+	readonly #fractional: boolean | undefined;
 
 	public constructor(priceScale?: number, minMove?: number, fractional?: boolean, minMove2?: number) {
 		if (!minMove) {
@@ -49,15 +49,15 @@ export class PriceFormatter implements IPriceFormatter {
 			throw new TypeError('invalid base');
 		}
 
-		this._priceScale = priceScale;
-		this._minMove = minMove;
-		this._minMove2 = minMove2;
+		this.#priceScale = priceScale;
+		this.#minMove = minMove;
+		this.#minMove2 = minMove2;
 		if (fractional && minMove2 !== undefined && minMove2 > 0 && minMove2 !== 2 && minMove2 !== 4 && minMove2 !== 8) {
 			return;
 		}
 
-		this._fractional = fractional;
-		this._calculateDecimal();
+		this.#fractional = fractional;
+		this.#calculateDecimal();
 	}
 
 	public format(price: number): string {
@@ -66,21 +66,21 @@ export class PriceFormatter implements IPriceFormatter {
 		const sign = price < 0 ? '\u2212' : '';
 		price = Math.abs(price);
 
-		if (this._fractional) {
-			return sign + this._formatAsFractional(price);
+		if (this.#fractional) {
+			return sign + this.#formatAsFractional(price);
 		}
 
-		return sign + this._formatAsDecimal(price);
+		return sign + this.#formatAsDecimal(price);
 	}
 
-	private _calculateDecimal(): void {
+	#calculateDecimal(): void {
 		// check if this._base is power of 10
 		// for double fractional _fractionalLength if for the main fractional only
 		this._fractionalLength = 0;
-		if (this._priceScale > 0 && this._minMove > 0) {
-			let base = this._priceScale;
-			if (this._fractional && this._minMove2) {
-				base /= this._minMove2;
+		if (this.#priceScale > 0 && this.#minMove > 0) {
+			let base = this.#priceScale;
+			if (this.#fractional && this.#minMove2) {
+				base /= this.#minMove2;
 			}
 
 			while (base > 1) {
@@ -90,13 +90,13 @@ export class PriceFormatter implements IPriceFormatter {
 		}
 	}
 
-	private _formatAsDecimal(price: number): string {
+	#formatAsDecimal(price: number): string {
 		let base: number;
-		if (this._fractional) {
+		if (this.#fractional) {
 			// if you really want to format fractional as decimal
 			base = Math.pow(10, (this._fractionalLength || 0));
 		} else {
-			base = this._priceScale / this._minMove;
+			base = this.#priceScale / this.#minMove;
 		}
 
 		let intPart = Math.floor(price);
@@ -110,7 +110,7 @@ export class PriceFormatter implements IPriceFormatter {
 				intPart += 1;
 			}
 
-			fracString = formatterOptions.decimalSign + numberToStringWithLeadingZero(+fracPart.toFixed(this._fractionalLength) * this._minMove, fracLength);
+			fracString = formatterOptions.decimalSign + numberToStringWithLeadingZero(+fracPart.toFixed(this._fractionalLength) * this.#minMove, fracLength);
 		} else {
 			// should round int part to min move
 			intPart = Math.round(intPart * base) / base;
@@ -123,9 +123,9 @@ export class PriceFormatter implements IPriceFormatter {
 		return intPart.toFixed(0) + fracString;
 	}
 
-	private _formatAsFractional(price: number): string {
+	#formatAsFractional(price: number): string {
 		// temporary solution - use decimal format with 2 digits
-		const base = this._priceScale / this._minMove;
+		const base = this.#priceScale / this.#minMove;
 		let intPart = Math.floor(price);
 		let fracPart = Math.round(price * base) - intPart * base;
 
@@ -139,25 +139,25 @@ export class PriceFormatter implements IPriceFormatter {
 		}
 
 		let fracString = '';
-		if (this._minMove2) {
+		if (this.#minMove2) {
 			const minmove2 = ['0', '5'];
 			const minmove4 = ['0', '2', '5', '7'];
 			const minmove8 = ['0', '1', '2', '3', '4', '5', '6', '7'];
 
 			// format double fractional
-			const secondFract = fracPart % this._minMove2;
+			const secondFract = fracPart % this.#minMove2;
 
-			fracPart = (fracPart - secondFract) / this._minMove2;
+			fracPart = (fracPart - secondFract) / this.#minMove2;
 
 			const part1 = numberToStringWithLeadingZero(fracPart, this._fractionalLength);
-			const part2 = this._minMove2 === 2 ?
+			const part2 = this.#minMove2 === 2 ?
 				minmove2[secondFract] :
-				this._minMove2 === 8 ?
+				this.#minMove2 === 8 ?
 					minmove8[secondFract] :
 					minmove4[secondFract];
 			fracString = part1 + formatterOptions.decimalSignFractional + part2;
 		} else {
-			fracString = numberToStringWithLeadingZero(fracPart * this._minMove, this._fractionalLength);
+			fracString = numberToStringWithLeadingZero(fracPart * this.#minMove, this._fractionalLength);
 		}
 
 		return intPart.toString() + formatterOptions.decimalSignFractional + fracString;

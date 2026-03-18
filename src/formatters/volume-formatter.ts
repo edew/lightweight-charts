@@ -1,10 +1,10 @@
 import type { IPriceFormatter } from './iformatter';
 
 export class VolumeFormatter implements IPriceFormatter {
-	private readonly _precision: number;
+	readonly #precision: number;
 
 	public constructor(precision: number) {
-		this._precision = precision;
+		this.#precision = precision;
 	}
 
 	public format(vol: number): string {
@@ -15,24 +15,24 @@ export class VolumeFormatter implements IPriceFormatter {
 		}
 
 		if (vol < 995) {
-			return sign + this._formatNumber(vol);
+			return sign + this.#formatNumber(vol);
 		} else if (vol < 999995) {
-			return sign + this._formatNumber(vol / 1000) + 'K';
+			return sign + this.#formatNumber(vol / 1000) + 'K';
 		} else if (vol < 999999995) {
 			vol = 1000 * Math.round(vol / 1000);
-			return sign + this._formatNumber(vol / 1000000) + 'M';
+			return sign + this.#formatNumber(vol / 1000000) + 'M';
 		} else {
 			vol = 1000000 * Math.round(vol / 1000000);
-			return sign + this._formatNumber(vol / 1000000000) + 'B';
+			return sign + this.#formatNumber(vol / 1000000000) + 'B';
 		}
 	}
 
-	private _formatNumber(value: number): string {
+	#formatNumber(value: number): string {
 		let res: string;
-		const priceScale = Math.pow(10, this._precision);
+		const priceScale = Math.pow(10, this.#precision);
 		value = Math.round(value * priceScale) / priceScale;
 		if (value >= 1e-15 && value < 1) {
-			res = value.toFixed(this._precision).replace(/\.?0+$/, ''); // regex removes trailing zeroes
+			res = value.toFixed(this.#precision).replace(/\.?0+$/, ''); // regex removes trailing zeroes
 		} else {
 			res = String(value);
 

@@ -30,50 +30,50 @@ function createEmptyMarkerData(chartOptions: ChartOptionsInternal): MarksRendere
 const rangeForSinglePoint: SeriesItemsIndexesRange = { from: 0, to: 1 };
 
 export class CrosshairMarksPaneView implements IUpdatablePaneView {
-	private readonly _chartModel: ChartModel;
-	private readonly _crosshair: Crosshair;
-	private readonly _compositeRenderer: CompositeRenderer = new CompositeRenderer();
-	private _markersRenderers: PaneRendererMarks[] = [];
-	private _markersData: MarksRendererData[] = [];
-	private _invalidated: boolean = true;
+	readonly #chartModel: ChartModel;
+	readonly #crosshair: Crosshair;
+	readonly #compositeRenderer: CompositeRenderer = new CompositeRenderer();
+	#markersRenderers: PaneRendererMarks[] = [];
+	#markersData: MarksRendererData[] = [];
+	#invalidated: boolean = true;
 
 	public constructor(chartModel: ChartModel, crosshair: Crosshair) {
-		this._chartModel = chartModel;
-		this._crosshair = crosshair;
-		this._compositeRenderer.setRenderers(this._markersRenderers);
+		this.#chartModel = chartModel;
+		this.#crosshair = crosshair;
+		this.#compositeRenderer.setRenderers(this.#markersRenderers);
 	}
 
 	public update(updateType?: UpdateType): void {
-		const serieses = this._chartModel.serieses();
-		if (serieses.length !== this._markersRenderers.length) {
-			this._markersData = serieses.map(() => createEmptyMarkerData(this._chartModel.options()));
-			this._markersRenderers = this._markersData.map((data: MarksRendererData) => {
+		const serieses = this.#chartModel.serieses();
+		if (serieses.length !== this.#markersRenderers.length) {
+			this.#markersData = serieses.map(() => createEmptyMarkerData(this.#chartModel.options()));
+			this.#markersRenderers = this.#markersData.map((data: MarksRendererData) => {
 				const res = new PaneRendererMarks();
 				res.setData(data);
 				return res;
 			});
-			this._compositeRenderer.setRenderers(this._markersRenderers);
+			this.#compositeRenderer.setRenderers(this.#markersRenderers);
 		}
 
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(height: number, width: number, addAnchors?: boolean): IPaneRenderer | null {
-		if (this._invalidated) {
-			this._updateImpl();
-			this._invalidated = false;
+		if (this.#invalidated) {
+			this.#updateImpl();
+			this.#invalidated = false;
 		}
 
-		return this._compositeRenderer;
+		return this.#compositeRenderer;
 	}
 
-	private _updateImpl(): void {
-		const serieses = this._chartModel.serieses();
-		const timePointIndex = this._crosshair.appliedIndex();
-		const timeScale = this._chartModel.timeScale();
+	#updateImpl(): void {
+		const serieses = this.#chartModel.serieses();
+		const timePointIndex = this.#crosshair.appliedIndex();
+		const timeScale = this.#chartModel.timeScale();
 
 		serieses.forEach((s: Series, index: number) => {
-			const data = this._markersData[index];
+			const data = this.#markersData[index];
 			const seriesData = s.markerDataAtIndex(timePointIndex);
 
 			if (seriesData === null) {
@@ -83,7 +83,7 @@ export class CrosshairMarksPaneView implements IUpdatablePaneView {
 
 			const firstValue = ensureNotNull(s.firstValue());
 			data.lineColor = s.barColorer().barStyle(timePointIndex).barColor;
-			data.backColor = this._chartModel.options().layout.backgroundColor;
+			data.backColor = this.#chartModel.options().layout.backgroundColor;
 			data.radius = seriesData.radius;
 			data.items[0].price = seriesData.price;
 			data.items[0].y = s.priceScale().priceToCoordinate(seriesData.price, firstValue.value);

@@ -22,71 +22,71 @@ function mergePaneInvalidation(beforeValue: PaneInvalidation | undefined, newVal
 }
 
 export class InvalidateMask {
-	private _invalidatedPanes: Map<number, PaneInvalidation> = new Map();
-	private _globalLevel: InvalidationLevel;
-	private _force: boolean = false;
-	private _fitContent: boolean = false;
-	private _targetTimeRange: TimePointsRange | null = null;
+	#invalidatedPanes: Map<number, PaneInvalidation> = new Map();
+	#globalLevel: InvalidationLevel;
+	#force: boolean = false;
+	#fitContent: boolean = false;
+	#targetTimeRange: TimePointsRange | null = null;
 
 	public constructor(globalLevel: InvalidationLevel) {
-		this._globalLevel = globalLevel;
+		this.#globalLevel = globalLevel;
 	}
 
 	public invalidatePane(paneIndex: number, invalidation: PaneInvalidation): void {
-		const prevValue = this._invalidatedPanes.get(paneIndex);
+		const prevValue = this.#invalidatedPanes.get(paneIndex);
 		const newValue = mergePaneInvalidation(prevValue, invalidation);
-		this._invalidatedPanes.set(paneIndex, newValue);
+		this.#invalidatedPanes.set(paneIndex, newValue);
 	}
 
 	public invalidateAll(level: InvalidationLevel): void {
-		this._globalLevel = Math.max(this._globalLevel, level);
+		this.#globalLevel = Math.max(this.#globalLevel, level);
 	}
 
 	public fullInvalidation(): InvalidationLevel {
-		return this._globalLevel;
+		return this.#globalLevel;
 	}
 
 	public invalidateForPane(paneIndex: number): PaneInvalidation {
-		const paneInvalidation = this._invalidatedPanes.get(paneIndex);
+		const paneInvalidation = this.#invalidatedPanes.get(paneIndex);
 		if (paneInvalidation === undefined) {
 			return {
-				level: this._globalLevel,
+				level: this.#globalLevel,
 			};
 		}
 		return {
-			level: Math.max(this._globalLevel, paneInvalidation.level),
+			level: Math.max(this.#globalLevel, paneInvalidation.level),
 			autoScale: paneInvalidation.autoScale,
 		};
 	}
 
 	public setFitContent(): void {
-		this._fitContent = true;
-		this._targetTimeRange = null;
+		this.#fitContent = true;
+		this.#targetTimeRange = null;
 	}
 
 	public getFitContent(): boolean {
-		return this._fitContent;
+		return this.#fitContent;
 	}
 
 	public setTargetTimeRange(range: TimePointsRange): void {
-		this._targetTimeRange = range;
-		this._fitContent = false;
+		this.#targetTimeRange = range;
+		this.#fitContent = false;
 	}
 
 	public getTargetTimeRange(): TimePointsRange | null {
-		return this._targetTimeRange;
+		return this.#targetTimeRange;
 	}
 
 	public merge(other: InvalidateMask): void {
-		this._force = this._force || other._force;
-		if (other._fitContent) {
+		this.#force = this.#force || other.#force;
+		if (other.#fitContent) {
 			this.setFitContent();
 		}
-		if (other._targetTimeRange) {
-			this.setTargetTimeRange(other._targetTimeRange);
+		if (other.#targetTimeRange) {
+			this.setTargetTimeRange(other.#targetTimeRange);
 		}
-		this._globalLevel = Math.max(this._globalLevel, other._globalLevel);
-		other._invalidatedPanes.forEach((invalidation: PaneInvalidation, index: number) => {
+		this.#globalLevel = Math.max(this.#globalLevel, other.#globalLevel);
+		other.#invalidatedPanes.forEach((invalidation: PaneInvalidation, index: number) => {
 			this.invalidatePane(index, invalidation);
 		});
 	}

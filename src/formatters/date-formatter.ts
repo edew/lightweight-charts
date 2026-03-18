@@ -2,15 +2,15 @@ import { type DateFormat, type DateFormatFn, dateFormatFunctions } from './date-
 import type { IDateTimeFormatter } from './iformatter';
 
 export class DateFormatter implements IDateTimeFormatter {
-	private readonly _locale: string;
-	private readonly _dateFormatFunc: DateFormatFn;
+	readonly #locale: string;
+	readonly #dateFormatFunc: DateFormatFn;
 
 	public constructor(dateFormat: DateFormat = 'yyyy-MM-dd', locale: string = 'default') {
-		this._dateFormatFunc = dateFormatFunctions[dateFormat];
-		this._locale = locale;
+		this.#dateFormatFunc = dateFormatFunctions[dateFormat];
+		this.#locale = locale;
 	}
 
 	public format(date: Date): string {
-		return this._dateFormatFunc(date, this._locale);
+		return this.#dateFormatFunc(date, this.#locale);
 	}
 }

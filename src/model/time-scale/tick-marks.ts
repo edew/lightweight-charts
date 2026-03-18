@@ -7,33 +7,33 @@ function sortByIndexAsc(a: TickMark, b: TickMark): number {
 }
 
 export class TickMarks {
-	private _minIndex: number = Infinity;
-	private _maxIndex: number = -Infinity;
+	#minIndex: number = Infinity;
+	#maxIndex: number = -Infinity;
 
 	// Hash of tick marks
-	private _marksByIndex: Map<number, TickMark> = new Map();
+	#marksByIndex: Map<number, TickMark> = new Map();
 	// Sparse array with ordered arrays of tick marks
-	private _marksBySpan: Map<number, TickMark[]> = new Map();
-	private _cache: TickMark[] | null = null;
-	private _minIndexesBetweenMarksCount: number = NaN;
+	#marksBySpan: Map<number, TickMark[]> = new Map();
+	#cache: TickMark[] | null = null;
+	#minIndexesBetweenMarksCount: number = NaN;
 
 	public reset(): void {
-		this._marksByIndex.clear();
-		this._marksBySpan.clear();
-		this._minIndex = Infinity;
-		this._maxIndex = -Infinity;
-		this._cache = null;
+		this.#marksByIndex.clear();
+		this.#marksBySpan.clear();
+		this.#minIndex = Infinity;
+		this.#maxIndex = -Infinity;
+		this.#cache = null;
 	}
 
 	public merge(tickMarks: TickMark[]): void {
-		const marksBySpan = this._marksBySpan;
+		const marksBySpan = this.#marksBySpan;
 		const unsortedSpans: Record<number, boolean> = {};
 
 		for (const tickMark of tickMarks) {
 			const index = tickMark.index;
 			const span = tickMark.span;
 
-			const existingTickMark = this._marksByIndex.get(tickMark.index);
+			const existingTickMark = this.#marksByIndex.get(tickMark.index);
 			if (existingTickMark) {
 				if (existingTickMark.index === tickMark.index && existingTickMark.span === tickMark.span) {
 					// We don't need to do anything, just update time (if it differs)
@@ -42,17 +42,17 @@ export class TickMarks {
 				}
 
 				// TickMark exists, but it differs. We need to remove it first
-				this._removeTickMark(existingTickMark);
+				this.#removeTickMark(existingTickMark);
 			}
 
 			// Set into hash
-			this._marksByIndex.set(index, tickMark);
-			if (this._minIndex > index) { // It's not the same as `this.minIndex > index`, mind the NaN
-				this._minIndex = index;
+			this.#marksByIndex.set(index, tickMark);
+			if (this.#minIndex > index) { // It's not the same as `this.minIndex > index`, mind the NaN
+				this.#minIndex = index;
 			}
 
-			if (this._maxIndex < index) {
-				this._maxIndex = index;
+			if (this.#maxIndex < index) {
+				this.#maxIndex = index;
 			}
 
 			// Store it in span arrays
@@ -81,11 +81,11 @@ export class TickMarks {
 			}
 		}
 
-		this._cache = null;
+		this.#cache = null;
 	}
 
 	public indexToTime(index: number): TimePoint | null {
-		const tickMark = this._marksByIndex.get(index);
+		const tickMark = this.#marksByIndex.get(index);
 		if (tickMark === undefined) {
 			return null;
 		}
@@ -99,17 +99,17 @@ export class TickMarks {
 		// one label spans on screen. Two marks must be at least this far apart (in indices)
 		// or their labels will overlap.
 		const minIndexesBetweenMarksCount = Math.ceil(maxWidth / spacing);
-		if (this._minIndexesBetweenMarksCount === minIndexesBetweenMarksCount && this._cache) {
-			return this._cache;
+		if (this.#minIndexesBetweenMarksCount === minIndexesBetweenMarksCount && this.#cache) {
+			return this.#cache;
 		}
 
-		this._minIndexesBetweenMarksCount = minIndexesBetweenMarksCount;
+		this.#minIndexesBetweenMarksCount = minIndexesBetweenMarksCount;
 
 		// Multi-pass filtering across span levels (e.g., daily -> 12-hourly -> hourly).
 		// Each pass tries to fill in smaller marks between already-accepted bigger marks,
 		// keeping only candidates that satisfy the minimum spacing on both sides.
 		let acceptedMarks: TickMark[] = [];
-		for (const currentSpanMarks of this._marksBySpan.values()) {
+		for (const currentSpanMarks of this.#marksBySpan.values()) {
 			const previouslyAccepted = acceptedMarks;
 			acceptedMarks = [];
 
@@ -157,31 +157,31 @@ export class TickMarks {
 			}
 		}
 
-		this._cache = acceptedMarks;
-		return this._cache;
+		this.#cache = acceptedMarks;
+		return this.#cache;
 	}
 
-	private _removeTickMark(tickMark: TickMark): void {
+	#removeTickMark(tickMark: TickMark): void {
 		const index = tickMark.index;
-		if (this._marksByIndex.get(index) !== tickMark) {
+		if (this.#marksByIndex.get(index) !== tickMark) {
 			return;
 		}
 
-		this._marksByIndex.delete(index);
-		if (index <= this._minIndex) {
-			this._minIndex++;
+		this.#marksByIndex.delete(index);
+		if (index <= this.#minIndex) {
+			this.#minIndex++;
 		}
 
-		if (index >= this._maxIndex) {
-			this._maxIndex--;
+		if (index >= this.#maxIndex) {
+			this.#maxIndex--;
 		}
 
-		if (this._maxIndex < this._minIndex) {
-			this._minIndex = Infinity;
-			this._maxIndex = -Infinity;
+		if (this.#maxIndex < this.#minIndex) {
+			this.#minIndex = Infinity;
+			this.#maxIndex = -Infinity;
 		}
 
-		const spanArray = ensureDefined(this._marksBySpan.get(tickMark.span));
+		const spanArray = ensureDefined(this.#marksBySpan.get(tickMark.span));
 		const position = spanArray.indexOf(tickMark);
 		if (position !== -1) {
 			// Keeps array sorted

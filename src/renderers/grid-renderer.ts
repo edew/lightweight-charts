@@ -24,25 +24,25 @@ export interface GridRendererData {
 }
 
 export class GridRenderer implements IPaneRenderer {
-	private _data: GridRendererData | null = null;
+	#data: GridRendererData | null = null;
 
 	public setData(data: GridRendererData | null): void {
-		this._data = data;
+		this.#data = data;
 	}
 
 	public draw(ctx: CanvasRenderingContext2D, pixelRatio: number, isHovered: boolean, hitTestData?: unknown): void {
-		if (this._data === null) {
+		if (this.#data === null) {
 			return;
 		}
 
 		const lineWidth = Math.floor(pixelRatio);
 		ctx.lineWidth = lineWidth;
 
-		const height = Math.ceil(this._data.h * pixelRatio);
-		const width = Math.ceil(this._data.w * pixelRatio);
+		const height = Math.ceil(this.#data.h * pixelRatio);
+		const width = Math.ceil(this.#data.w * pixelRatio);
 
 		strokeInPixel(ctx, () => {
-			const data = ensureNotNull(this._data);
+			const data = ensureNotNull(this.#data);
 			if (data.vertLinesVisible) {
 				ctx.strokeStyle = data.vertLinesColor;
 				setLineStyle(ctx, data.vertLineStyle);

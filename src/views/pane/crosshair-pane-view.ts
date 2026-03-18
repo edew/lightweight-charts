@@ -7,9 +7,9 @@ import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import type { IPaneView } from './ipane-view';
 
 export class CrosshairPaneView implements IPaneView {
-	private _invalidated: boolean = true;
-	private readonly _source: Crosshair;
-	private readonly _rendererData: CrosshairRendererData = {
+	#invalidated: boolean = true;
+	readonly #source: Crosshair;
+	readonly #rendererData: CrosshairRendererData = {
 		vertLine: {
 			lineWidth: 1,
 			lineStyle: 0,
@@ -27,33 +27,33 @@ export class CrosshairPaneView implements IPaneView {
 		x: 0,
 		y: 0,
 	};
-	private _renderer: CrosshairRenderer = new CrosshairRenderer(this._rendererData);
+	#renderer: CrosshairRenderer = new CrosshairRenderer(this.#rendererData);
 
 	public constructor(source: Crosshair) {
-		this._source = source;
+		this.#source = source;
 	}
 
 	public update(): void {
-		this._invalidated = true;
+		this.#invalidated = true;
 	}
 
 	public renderer(height: number, width: number): IPaneRenderer {
-		if (this._invalidated) {
-			this._updateImpl();
+		if (this.#invalidated) {
+			this.#updateImpl();
 		}
 
-		return this._renderer;
+		return this.#renderer;
 	}
 
-	private _updateImpl(): void {
-		const visible = this._source.visible();
-		const pane = ensureNotNull(this._source.pane());
+	#updateImpl(): void {
+		const visible = this.#source.visible();
+		const pane = ensureNotNull(this.#source.pane());
 		const crosshairOptions = pane.model().options().crosshair;
 
-		const data = this._rendererData;
+		const data = this.#rendererData;
 
-		data.horzLine.visible = visible && this._source.horzLineVisible(pane);
-		data.vertLine.visible = visible && this._source.vertLineVisible();
+		data.horzLine.visible = visible && this.#source.horzLineVisible(pane);
+		data.vertLine.visible = visible && this.#source.vertLineVisible();
 
 		data.horzLine.lineWidth = crosshairOptions.horzLine.width;
 		data.horzLine.lineStyle = crosshairOptions.horzLine.style;
@@ -66,7 +66,7 @@ export class CrosshairPaneView implements IPaneView {
 		data.w = pane.width();
 		data.h = pane.height();
 
-		data.x = this._source.appliedX();
-		data.y = this._source.appliedY();
+		data.x = this.#source.appliedX();
+		data.y = this.#source.appliedY();
 	}
 }

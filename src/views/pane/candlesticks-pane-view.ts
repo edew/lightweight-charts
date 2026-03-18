@@ -13,7 +13,7 @@ import type { IPaneRenderer } from '../../renderers/ipane-renderer';
 import { BarsPaneViewBase } from './bars-pane-view-base';
 
 export class SeriesCandlesticksPaneView extends BarsPaneViewBase<'Candlestick', CandlestickItem> {
-	private readonly _renderer: PaneRendererCandlesticks = new PaneRendererCandlesticks();
+	readonly #renderer: PaneRendererCandlesticks = new PaneRendererCandlesticks();
 
 	public constructor(series: Series<'Candlestick'>, model: ChartModel) {
 		super(series, model);
@@ -31,9 +31,9 @@ export class SeriesCandlesticksPaneView extends BarsPaneViewBase<'Candlestick', 
 			visibleRange: this._itemsVisibleRange,
 		};
 
-		this._renderer.setData(data);
+		this.#renderer.setData(data);
 
-		return this._renderer;
+		return this.#renderer;
 	}
 
 	protected _createRawItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): CandlestickItem {

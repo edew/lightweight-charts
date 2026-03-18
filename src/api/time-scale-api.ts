@@ -15,40 +15,40 @@ const enum Constants {
 }
 
 export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
-	private _model: ChartModel;
+	#model: ChartModel;
 
 	public constructor(model: ChartModel) {
-		this._model = model;
+		this.#model = model;
 	}
 
 	public destroy(): void {
-		(this._model as unknown as null) = null;
+		(this.#model as unknown as null) = null;
 	}
 
 	public scrollPosition(): number {
-		return this._timeScale().rightOffset();
+		return this.#timeScale().rightOffset();
 	}
 
 	public scrollToPosition(position: number, animated: boolean): void {
 		if (!animated) {
-			this._timeScale().setRightOffset(position);
+			this.#timeScale().setRightOffset(position);
 			return;
 		}
 
-		this._timeScale().scrollToOffsetAnimated(position, Constants.AnimationDurationMs);
+		this.#timeScale().scrollToOffsetAnimated(position, Constants.AnimationDurationMs);
 	}
 
 	public scrollToRealTime(): void {
-		this._timeScale().scrollToRealTime();
+		this.#timeScale().scrollToRealTime();
 	}
 
 	public getVisibleRange(): TimeRange | null {
-		const visibleBars = this._timeScale().visibleBars();
+		const visibleBars = this.#timeScale().visibleBars();
 		if (visibleBars === null) {
 			return null;
 		}
 
-		const points = this._model.timeScale().points();
+		const points = this.#model.timeScale().points();
 		const firstIndex = ensureNotNull(points.firstIndex());
 		const lastIndex = ensureNotNull(points.lastIndex());
 
@@ -63,27 +63,27 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 			from: convertTime(range.from),
 			to: convertTime(range.to),
 		};
-		this._model.setTargetTimeRange(convertedRange);
+		this.#model.setTargetTimeRange(convertedRange);
 	}
 
 	public resetTimeScale(): void {
-		this._model.resetTimeScale();
+		this.#model.resetTimeScale();
 	}
 
 	public fitContent(): void {
-		this._model.fitContent();
+		this.#model.fitContent();
 	}
 
 	public applyOptions(options: DeepPartial<TimeScaleOptions>): void {
-		this._timeScale().applyOptions(options);
+		this.#timeScale().applyOptions(options);
 	}
 
 	public options(): Readonly<TimeScaleOptions> {
-		return clone(this._timeScale().options());
+		return clone(this.#timeScale().options());
 	}
 
-	private _timeScale(): TimeScale {
-		return this._model.timeScale();
+	#timeScale(): TimeScale {
+		return this.#model.timeScale();
 	}
 }
 

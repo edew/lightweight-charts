@@ -10,9 +10,9 @@ const enum RendererConstants {
 }
 
 export class PriceAxisRendererOptionsProvider {
-	private readonly _chartModel: ChartModel;
+	readonly #chartModel: ChartModel;
 
-	private readonly _rendererOptions: PriceAxisViewRendererOptions = {
+	readonly #rendererOptions: PriceAxisViewRendererOptions = {
 		borderSize: RendererConstants.BorderSize,
 		tickLength: RendererConstants.TickLength,
 		fontSize: NaN,
@@ -27,14 +27,14 @@ export class PriceAxisRendererOptionsProvider {
 	};
 
 	public constructor(chartModel: ChartModel) {
-		this._chartModel = chartModel;
+		this.#chartModel = chartModel;
 	}
 
 	public options(): Readonly<PriceAxisViewRendererOptions> {
-		const rendererOptions = this._rendererOptions;
+		const rendererOptions = this.#rendererOptions;
 
-		const currentFontSize = this._fontSize();
-		const currentFontFamily = this._fontFamily();
+		const currentFontSize = this.#fontSize();
+		const currentFontFamily = this.#fontFamily();
 
 		if (rendererOptions.fontSize !== currentFontSize || rendererOptions.fontFamily !== currentFontFamily) {
 			rendererOptions.fontSize = currentFontSize;
@@ -50,20 +50,20 @@ export class PriceAxisRendererOptionsProvider {
 			rendererOptions.baselineOffset = Math.round(currentFontSize / 10);
 		}
 
-		rendererOptions.color = this._textColor();
+		rendererOptions.color = this.#textColor();
 
-		return this._rendererOptions;
+		return this.#rendererOptions;
 	}
 
-	private _textColor(): string {
-		return this._chartModel.options().layout.textColor;
+	#textColor(): string {
+		return this.#chartModel.options().layout.textColor;
 	}
 
-	private _fontSize(): number {
-		return this._chartModel.options().layout.fontSize;
+	#fontSize(): number {
+		return this.#chartModel.options().layout.fontSize;
 	}
 
-	private _fontFamily(): string {
-		return this._chartModel.options().layout.fontFamily;
+	#fontFamily(): string {
+		return this.#chartModel.options().layout.fontFamily;
 	}
 }

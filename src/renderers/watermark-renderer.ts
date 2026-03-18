@@ -22,33 +22,33 @@ export interface WatermarkRendererData {
 }
 
 export class WatermarkRenderer extends ScaledRenderer {
-	private readonly _data: WatermarkRendererData;
-	private _metricsCache: Map<string, Map<string, number>> = new Map();
+	readonly #data: WatermarkRendererData;
+	#metricsCache: Map<string, Map<string, number>> = new Map();
 
 	public constructor(data: WatermarkRendererData) {
 		super();
-		this._data = data;
+		this.#data = data;
 	}
 
 	protected _drawImpl(ctx: CanvasRenderingContext2D): void {
 	}
 
 	protected _drawBackgroundImpl(ctx: CanvasRenderingContext2D): void {
-		if (!this._data.visible) {
+		if (!this.#data.visible) {
 			return;
 		}
 		ctx.save();
 
 		let textHeight = 0;
-		for (const line of this._data.lines) {
+		for (const line of this.#data.lines) {
 			if (line.text.length === 0) {
 				continue;
 			}
 
 			ctx.font = line.font;
-			const textWidth = this._metrics(ctx, line.text);
-			if (textWidth > this._data.width) {
-				line.zoom = this._data.width / textWidth;
+			const textWidth = this.#metrics(ctx, line.text);
+			if (textWidth > this.#data.width) {
+				line.zoom = this.#data.width / textWidth;
 			} else {
 				line.zoom = 1;
 			}
@@ -57,27 +57,27 @@ export class WatermarkRenderer extends ScaledRenderer {
 		}
 
 		let vertOffset = 0;
-		switch (this._data.vertAlign) {
+		switch (this.#data.vertAlign) {
 			case 'top':
 				vertOffset = 0;
 				break;
 
 			case 'center':
-				vertOffset = Math.max((this._data.height - textHeight) / 2, 0);
+				vertOffset = Math.max((this.#data.height - textHeight) / 2, 0);
 				break;
 
 			case 'bottom':
-				vertOffset = Math.max((this._data.height - textHeight), 0);
+				vertOffset = Math.max((this.#data.height - textHeight), 0);
 				break;
 		}
 
-		ctx.fillStyle = this._data.color;
+		ctx.fillStyle = this.#data.color;
 
-		for (const line of this._data.lines) {
+		for (const line of this.#data.lines) {
 			ctx.save();
 
 			let horzOffset = 0;
-			switch (this._data.horzAlign) {
+			switch (this.#data.horzAlign) {
 				case 'left':
 					ctx.textAlign = 'left';
 					horzOffset = line.lineHeight / 2;
@@ -85,12 +85,12 @@ export class WatermarkRenderer extends ScaledRenderer {
 
 				case 'center':
 					ctx.textAlign = 'center';
-					horzOffset = this._data.width / 2;
+					horzOffset = this.#data.width / 2;
 					break;
 
 				case 'right':
 					ctx.textAlign = 'right';
-					horzOffset = this._data.width - 1 - line.lineHeight / 2;
+					horzOffset = this.#data.width - 1 - line.lineHeight / 2;
 					break;
 			}
 
@@ -106,8 +106,8 @@ export class WatermarkRenderer extends ScaledRenderer {
 		ctx.restore();
 	}
 
-	private _metrics(ctx: CanvasRenderingContext2D, text: string): number {
-		const fontCache = this._fontCache(ctx.font);
+	#metrics(ctx: CanvasRenderingContext2D, text: string): number {
+		const fontCache = this.#fontCache(ctx.font);
 		let result = fontCache.get(text);
 		if (result === undefined) {
 			result = ctx.measureText(text).width;
@@ -117,11 +117,11 @@ export class WatermarkRenderer extends ScaledRenderer {
 		return result;
 	}
 
-	private _fontCache(font: string): Map<string, number> {
-		let fontCache = this._metricsCache.get(font);
+	#fontCache(font: string): Map<string, number> {
+		let fontCache = this.#metricsCache.get(font);
 		if (fontCache === undefined) {
 			fontCache = new Map();
-			this._metricsCache.set(font, fontCache);
+			this.#metricsCache.set(font, fontCache);
 		}
 
 		return fontCache;

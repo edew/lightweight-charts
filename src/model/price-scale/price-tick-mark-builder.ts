@@ -10,11 +10,11 @@ export type LogicalToCoordinateConverter = (x: number, firstValue: number, keepI
 const TICK_DENSITY = 2.5;
 
 export class PriceTickMarkBuilder {
-	private _marks: PriceMark[] = [];
-	private _base: number;
-	private readonly _priceScale: PriceScale;
-	private readonly _coordinateToLogicalFunc: CoordinateToLogicalConverter;
-	private readonly _logicalToCoordinateFunc: LogicalToCoordinateConverter;
+	#marks: PriceMark[] = [];
+	#base: number;
+	readonly #priceScale: PriceScale;
+	readonly #coordinateToLogicalFunc: CoordinateToLogicalConverter;
+	readonly #logicalToCoordinateFunc: LogicalToCoordinateConverter;
 
 	public constructor(
 		priceScale: PriceScale,
@@ -22,39 +22,39 @@ export class PriceTickMarkBuilder {
 		coordinateToLogicalFunc: CoordinateToLogicalConverter,
 		logicalToCoordinateFunc: LogicalToCoordinateConverter
 	) {
-		this._priceScale = priceScale;
-		this._base = base;
-		this._coordinateToLogicalFunc = coordinateToLogicalFunc;
-		this._logicalToCoordinateFunc = logicalToCoordinateFunc;
+		this.#priceScale = priceScale;
+		this.#base = base;
+		this.#coordinateToLogicalFunc = coordinateToLogicalFunc;
+		this.#logicalToCoordinateFunc = logicalToCoordinateFunc;
 	}
 
 	public rebuildTickMarks(): void {
-		const priceScale = this._priceScale;
+		const priceScale = this.#priceScale;
 
 		const firstValue = priceScale.firstValue();
 
 		if (firstValue === null) {
-			this._marks = [];
+			this.#marks = [];
 			return;
 		}
 
 		const scaleHeight = priceScale.height();
 
-		const bottom = this._coordinateToLogicalFunc(scaleHeight - 1, firstValue);
-		const top = this._coordinateToLogicalFunc(0, firstValue);
+		const bottom = this.#coordinateToLogicalFunc(scaleHeight - 1, firstValue);
+		const top = this.#coordinateToLogicalFunc(0, firstValue);
 
-		const extraTopBottomMargin = this._priceScale.options().entireTextOnly ? this._fontHeight() / 2 : 0;
+		const extraTopBottomMargin = this.#priceScale.options().entireTextOnly ? this.#fontHeight() / 2 : 0;
 		const minCoord = extraTopBottomMargin;
 		const maxCoord = scaleHeight - 1 - extraTopBottomMargin;
 
 		const high = Math.max(bottom, top);
 		const low = Math.min(bottom, top);
 		if (high === low) {
-			this._marks = [];
+			this.#marks = [];
 			return;
 		}
 
-		let span = this._tickSpan(high, low);
+		let span = this.#tickSpan(high, low);
 		let mod = high % span;
 		mod += mod < 0 ? span : 0;
 
@@ -64,11 +64,11 @@ export class PriceTickMarkBuilder {
 		let targetIndex = 0;
 
 		for (let logical = high - mod; logical > low; logical -= span) {
-			const coord = this._logicalToCoordinateFunc(logical, firstValue, true);
+			const coord = this.#logicalToCoordinateFunc(logical, firstValue, true);
 
 			// check if there is place for it
 			// this is required for log scale
-			if (prevCoord !== null && Math.abs(coord - prevCoord) < this._tickMarkHeight()) {
+			if (prevCoord !== null && Math.abs(coord - prevCoord) < this.#tickMarkHeight()) {
 				continue;
 			}
 
@@ -77,11 +77,11 @@ export class PriceTickMarkBuilder {
 				continue;
 			}
 
-			if (targetIndex < this._marks.length) {
-				this._marks[targetIndex].coord = coord as Coordinate;
-				this._marks[targetIndex].label = priceScale.formatLogical(logical);
+			if (targetIndex < this.#marks.length) {
+				this.#marks[targetIndex].coord = coord as Coordinate;
+				this.#marks[targetIndex].label = priceScale.formatLogical(logical);
 			} else {
-				this._marks.push({
+				this.#marks.push({
 					coord: coord as Coordinate,
 					label: priceScale.formatLogical(logical),
 				});
@@ -92,29 +92,29 @@ export class PriceTickMarkBuilder {
 			prevCoord = coord;
 			if (priceScale.isLog()) {
 				// recalc span
-				span = this._tickSpan(logical * sign, low);
+				span = this.#tickSpan(logical * sign, low);
 			}
 		}
-		this._marks.length = targetIndex;
+		this.#marks.length = targetIndex;
 	}
 
 	public marks(): PriceMark[] {
-		return this._marks;
+		return this.#marks;
 	}
 
-	private _tickSpan(high: number, low: number): number {
+	#tickSpan(high: number, low: number): number {
 		if (high < low) {
 			throw new Error('high < low');
 		}
 
-		const scaleHeight = this._priceScale.height();
-		const markHeight = this._tickMarkHeight();
+		const scaleHeight = this.#priceScale.height();
+		const markHeight = this.#tickMarkHeight();
 
 		const maxTickSpan = (high - low) * markHeight / scaleHeight;
 
-		const spanCalculator1 = new PriceTickSpanCalculator(this._base, [2, 2.5, 2]);
-		const spanCalculator2 = new PriceTickSpanCalculator(this._base, [2, 2, 2.5]);
-		const spanCalculator3 = new PriceTickSpanCalculator(this._base, [2.5, 2, 2]);
+		const spanCalculator1 = new PriceTickSpanCalculator(this.#base, [2, 2.5, 2]);
+		const spanCalculator2 = new PriceTickSpanCalculator(this.#base, [2, 2, 2.5]);
+		const spanCalculator3 = new PriceTickSpanCalculator(this.#base, [2.5, 2, 2]);
 
 		const spans: number[] = [];
 
@@ -125,11 +125,11 @@ export class PriceTickMarkBuilder {
 		return min(spans);
 	}
 
-	private _fontHeight(): number {
-		return this._priceScale.fontSize();
+	#fontHeight(): number {
+		return this.#priceScale.fontSize();
 	}
 
-	private _tickMarkHeight(): number {
-		return Math.ceil(this._fontHeight() * TICK_DENSITY);
+	#tickMarkHeight(): number {
+		return Math.ceil(this.#fontHeight() * TICK_DENSITY);
 	}
 }
