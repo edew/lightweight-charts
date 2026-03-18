@@ -82,7 +82,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	private readonly _panePriceAxisView: PanePriceAxisView;
 	private _formatter!: IPriceFormatter;
 	private readonly _baseHorizontalLineView: SeriesHorizontalBaseLinePaneView = new SeriesHorizontalBaseLinePaneView(this);
-	private _endOfData: boolean = false;
 	private _paneView!: IUpdatablePaneView;
 	private _barColorerCache: SeriesBarColorer | null = null;
 	private readonly _options: SeriesOptionsMap[T];
@@ -107,10 +106,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public destroy(): void {
-	}
-
-	public endOfData(): boolean {
-		return this._endOfData;
 	}
 
 	public priceLineColor(lastBarColor: string): string {
