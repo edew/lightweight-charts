@@ -152,7 +152,7 @@ export class PaneWidget implements IDestroyable {
 		this.#state = pane;
 
 		if (this.#state !== null) {
-			this.#state.onDestroyed().subscribe(PaneWidget.prototype.#onStateDestroyed.bind(this), this, true);
+			this.#state.onDestroyed().subscribe(this.#onStateDestroyed.bind(this), this, true);
 		}
 
 		this.updatePriceAxisWidget();
