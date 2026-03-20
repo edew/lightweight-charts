@@ -1,6 +1,6 @@
 // this file contains build-time constants
-// which will be replaced (injected) by rollup while bundling
-// see rollup.config.js for the reference
+// which will be replaced (injected) by Vite while bundling
+// see vite.config.ts for the reference
 
 declare namespace NodeJS {
 	interface ProcessEnv {
