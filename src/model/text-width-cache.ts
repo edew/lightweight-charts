@@ -6,7 +6,7 @@ export class TextWidthCache {
 	#usageTick: number = 1;
 	#oldestTick: number = 1;
 	#tick2Labels: Record<number, string> = {};
-	#cache: Record<string, { width: number; tick: number }> = {};
+	#cache: Record<string, number> = {};
 
 	public constructor(size: number = 50) {
 		this.#maxSize = size;
@@ -25,7 +25,7 @@ export class TextWidthCache {
 		const cacheString = String(text).replace(re, '0');
 
 		if (this.#cache[cacheString]) {
-			return this.#cache[cacheString].width;
+			return this.#cache[cacheString];
 		}
 
 		if (this.#actualSize === this.#maxSize) {
@@ -43,7 +43,7 @@ export class TextWidthCache {
 			return 0;
 		}
 
-		this.#cache[cacheString] = { width: width, tick: this.#usageTick };
+		this.#cache[cacheString] = width;
 		this.#tick2Labels[this.#usageTick] = cacheString;
 		this.#actualSize++;
 		this.#usageTick++;
