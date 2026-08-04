@@ -1,3 +1,5 @@
+.DS_Store
+
 # Node.js & npm
 node_modules/
 npm-debug.log*
