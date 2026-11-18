@@ -34,17 +34,22 @@
     "test": "vitest run tests/**/**.spec.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src",
-    "knip": "knip"
+    "knip": "knip",
+    "test:visual": "vitest run tests/visual",
+    "bench": "node bench/run.mjs"
   },
   "dependencies": {
     "fancy-canvas": "0.2.1"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "1.1.1",
     "@types/chai": "5.2.2",
     "@types/node": "24.5.2",
     "chai": "5.2.1",
+    "dejavu-fonts-ttf": "2.37.3",
     "eslint": "^10.8.0",
     "knip": "^6.31.0",
+    "pixelmatch": "8.0.0",
     "typescript": "5.8.3",
     "typescript-eslint": "^8.66.0",
     "vite": "8.3.8",

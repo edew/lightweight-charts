@@ -26,3 +26,6 @@ npm-debug.log*
 /website/versions.d.ts
 
 !/src/typings/**/*.d.ts
+
+# Visual test output
+/tests/visual/out/

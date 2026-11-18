@@ -44,6 +44,20 @@ Measured 2026-11-18 with esbuild + Node on the real source (candlestick series, 
 | Classes / interfaces in `src` | 75 / 118 | report only |
 | Canvas elements for one chart | 7 for one pane | 2 for any number of panes |
 
+### Benchmark log (`npm run bench`)
+
+The numbers in the table above came from a partial script. `npm run bench` drives the full model through `tests/helpers/headless-chart.ts` with a context that does nothing, at 200 visible bars, device pixel ratio 2. Add one block for each phase.
+
+**Phase 0 (baseline, 2026-11-18):**
+
+| Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs |
+|---|---|---|---|---|---|---|
+| 10,000 | 9.4 | 1,160 | 8.0 | 1,137 | 66 | 1,147 |
+| 100,000 | 94.6 | 965 | 4.2 | 20,906 | 714 | 21,640 |
+| 1,000,000 | 749.3 | 950 | 2.5 | 306,705 | 8,151 | 311,423 |
+
+One draw with 1,000,000 visible bars: 429 ms. The retained figure is higher than in the first table because it includes the view item arrays. A tick with a draw costs 21 ms at 100,000 bars: the view rebuilds one item for each bar, with a binary search for each candle color.
+
 Largest modules now (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8,459; `price-axis-widget.ts` 7,989; `time-scale.ts` 7,028; `chart-widget.ts` 6,245; `time-axis-widget.ts` 6,031; `chart-model.ts` 5,833; `plot-list.ts` 4,923; `mouse-event-handler.ts` 4,757. By directory: model 47.8 kB, gui 38.5 kB, api 10.9 kB, views 10.4 kB, renderers 9.2 kB.
 
 ## Phase 0: environment and safety net (do first)
@@ -54,9 +68,11 @@ Done 2026-11-18. `package-lock.json` is committed and `.npmrc` (`package-lock=fa
 
 ### 0.2 Benchmark script
 
-Add `npm run bench` (a Node script, no browser). It must print the metrics in the table above for 10,000, 100,000 and 1,000,000 bars. Use `node --expose-gc` for the memory figure.
+Done: `bench/bench.ts`, `bench/run.mjs`. Original task: add `npm run bench` (a Node script, no browser). It must print the metrics in the table above for 10,000, 100,000 and 1,000,000 bars. Use `node --expose-gc` for the memory figure.
 
 ### 0.3 Pixel tests (no browser)
+
+Done: `tests/visual/harness.ts`, `tests/visual/pane.spec.ts` (16 cases at 4 pixel ratios), `tests/visual/pane-text.spec.ts`, `tests/helpers/headless-chart.ts`. The cases draw a full pane through the real model, not single renderers, so they also cover the scales and the grid. The font comes from the `dejavu-fonts-ttf` dev dependency. The task list below is kept for reference.
 
 A renderer takes only a canvas context and plain data. Thus a native canvas in Node is sufficient. Do not add Playwright, Puppeteer, jsdom or Vitest browser mode.
 
