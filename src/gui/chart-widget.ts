@@ -11,7 +11,7 @@ import type { Coordinate } from '../model/coordinate';
 import { InvalidateMask, InvalidationLevel } from '../model/invalidate-mask';
 import type { Point } from '../model/point';
 import { Series } from '../model/series';
-import type { TimePoint, TimePointIndex } from '../model/time-scale/time-data';
+import type { TimePointIndex } from '../model/time-scale/time-data';
 
 import { createPreconfiguredCanvas, getCanvasDevicePixelRatio, getContext2D, Size } from './canvas-utils';
 import { PaneSeparator, SEPARATOR_HEIGHT } from './pane-separator';
@@ -19,7 +19,8 @@ import { PaneWidget } from './pane-widget';
 import { TimeAxisWidget } from './time-axis-widget';
 
 export interface MouseEventParamsImpl {
-	time?: TimePoint;
+	/** UTC seconds */
+	time?: number;
 	point?: Point;
 	seriesPrices: Map<Series, BarPrice | BarPrices>;
 	hoveredSeries?: Series;
@@ -427,7 +428,7 @@ export class ChartWidget implements IDestroyable {
 
 			const targetTimeRange = invalidateMask.getTargetTimeRange();
 			if (targetTimeRange !== null) {
-				this.#model.timeScale().setTimePointsRange(targetTimeRange);
+				this.#model.timeScale().setTimeRange(targetTimeRange);
 			}
 
 			this.#timeAxisWidget.update();
@@ -524,11 +525,11 @@ export class ChartWidget implements IDestroyable {
 				}
 			});
 		}
-		let clientTime: TimePoint | undefined;
+		let clientTime: number | undefined;
 		if (time !== null) {
-			const timePoint = this.#model.timeScale().indexToUserTime(time);
-			if (timePoint !== null) {
-				clientTime = timePoint;
+			const seconds = this.#model.timeScale().indexToTime(time);
+			if (seconds !== null) {
+				clientTime = seconds;
 			}
 		}
 

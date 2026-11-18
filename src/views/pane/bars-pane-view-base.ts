@@ -6,7 +6,6 @@ import type { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import { type Bar, SeriesPlotIndex } from '../../model/series-data';
 import type { TimePointIndex, TimedValue } from '../../model/time-scale/time-data';
 import { TimeScale } from '../../model/time-scale/time-scale';
 import { SeriesPaneViewBase } from './series-pane-view-base';
@@ -21,15 +20,17 @@ export abstract class BarsPaneViewBase<TSeriesType extends 'Candlestick', ItemTy
 		priceScale.barPricesToCoordinates(this._items, firstValue, undefinedIfNull(this._itemsVisibleRange));
 	}
 
-	protected abstract _createRawItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): ItemType;
+	protected abstract _createRawItem(time: TimePointIndex, row: number, colorer: SeriesBarColorer): ItemType;
 
-	protected _createDefaultItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): TimedValue & BarPrices & BarCoordinates {
+	protected _createDefaultItem(time: TimePointIndex, row: number): TimedValue & BarPrices & BarCoordinates {
+		const values = this._series.store().values;
+		const offset = row * 4;
 		return {
 			time: time,
-			open: bar.value[SeriesPlotIndex.Open] as BarPrice,
-			high: bar.value[SeriesPlotIndex.High] as BarPrice,
-			low: bar.value[SeriesPlotIndex.Low] as BarPrice,
-			close: bar.value[SeriesPlotIndex.Close] as BarPrice,
+			open: values[offset] as BarPrice,
+			high: values[offset + 1] as BarPrice,
+			low: values[offset + 2] as BarPrice,
+			close: values[offset + 3] as BarPrice,
 			x: NaN as Coordinate,
 			openY: NaN as Coordinate,
 			highY: NaN as Coordinate,
@@ -39,16 +40,12 @@ export abstract class BarsPaneViewBase<TSeriesType extends 'Candlestick', ItemTy
 	}
 
 	protected _fillRawPoints(): void {
-		const newItems: ItemType[] = [];
+		const store = this._series.store();
 		const colorer = this._series.barColorer();
-
-		this._series.bars().each((index: TimePointIndex, bar: Bar) => {
-			const item = this._createRawItem(index, bar, colorer);
-			newItems.push(item);
-			return false;
-		});
-
+		const newItems: ItemType[] = new Array(store.length);
+		for (let row = 0; row < store.length; row++) {
+			newItems[row] = this._createRawItem(store.timeIndexAt(row) as TimePointIndex, row, colorer);
+		}
 		this._items = newItems;
 	}
-
 }

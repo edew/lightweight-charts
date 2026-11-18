@@ -1,30 +1,14 @@
-import { ensure, ensureNotNull } from '../helpers/assertions';
-
-import { PlotList } from './plot-list';
 import { Series } from './series';
-import { type Bar, SeriesPlotIndex } from './series-data';
 import type {
 	CandlestickStyleOptions,
 	LineStyleOptions,
 } from './series-options';
-import type { TimePoint, TimePointIndex } from './time-scale/time-data';
-
-export interface PrecomputedBars {
-	value: Bar;
-	previousValue?: Bar;
-}
 
 export interface BarColorerStyle {
 	barColor: string;
 	barBorderColor: string; // Used in Candlesticks
 	barWickColor: string; // Used in Candlesticks
 }
-
-const emptyResult: BarColorerStyle = {
-	barColor: '',
-	barBorderColor: '',
-	barWickColor: '',
-};
 
 export class SeriesBarColorer {
 	#series: Series;
@@ -33,60 +17,25 @@ export class SeriesBarColorer {
 		this.#series = series;
 	}
 
-	public barStyle(barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
-		// precomputedBars: {value: [Array BarValues], previousValue: [Array BarValues] | undefined}
-		// Used to avoid binary search if bars are already known
-
-		const targetType = this.#series.seriesType();
+	/** Colors of the bar in the given row of the series store. */
+	public barStyle(row: number): BarColorerStyle {
 		const seriesOptions = this.#series.options();
-		switch (targetType) {
-			case 'Line':
-				return this.#lineStyle(seriesOptions as LineStyleOptions);
-
-			case 'Candlestick':
-				return this.#candleStyle(seriesOptions as CandlestickStyleOptions, barIndex, precomputedBars);
+		if (this.#series.seriesType() === 'Line') {
+			return {
+				barColor: (seriesOptions as LineStyleOptions).color,
+				barBorderColor: '',
+				barWickColor: '',
+			};
 		}
 
-		throw new Error('Unknown chart style');
-	}
+		const style = seriesOptions as CandlestickStyleOptions;
+		const values = this.#series.store().values;
+		const isUp = values[row * 4] <= values[row * 4 + 3];
 
-	#candleStyle(candlestickStyle: CandlestickStyleOptions, barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): BarColorerStyle {
-		const result = { ...emptyResult };
-
-		const upColor = candlestickStyle.upColor;
-		const downColor = candlestickStyle.downColor;
-		const borderUpColor = candlestickStyle.borderUpColor;
-		const borderDownColor = candlestickStyle.borderDownColor;
-
-		const wickUpColor = candlestickStyle.wickUpColor;
-		const wickDownColor = candlestickStyle.wickDownColor;
-
-		const currentBar = ensureNotNull(this.#findBar(barIndex, precomputedBars));
-		const isUp = ensure(currentBar.value[SeriesPlotIndex.Open]) <= ensure(currentBar.value[SeriesPlotIndex.Close]);
-
-		result.barColor = isUp ? upColor : downColor;
-		result.barBorderColor = isUp ? borderUpColor : borderDownColor;
-		result.barWickColor = isUp ? wickUpColor : wickDownColor;
-
-		return result;
-	}
-
-	#lineStyle(lineStyle: LineStyleOptions): BarColorerStyle {
 		return {
-			...emptyResult,
-			barColor: lineStyle.color,
+			barColor: isUp ? style.upColor : style.downColor,
+			barBorderColor: isUp ? style.borderUpColor : style.borderDownColor,
+			barWickColor: isUp ? style.wickUpColor : style.wickDownColor,
 		};
-	}
-
-	#getSeriesBars(): PlotList<TimePoint, Bar['value']> {
-		return this.#series.bars();
-	}
-
-	#findBar(barIndex: TimePointIndex, precomputedBars?: PrecomputedBars): Bar | null {
-		if (precomputedBars !== undefined) {
-			return precomputedBars.value;
-		}
-
-		return this.#getSeriesBars().valueAt(barIndex);
 	}
 }

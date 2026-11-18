@@ -13,8 +13,8 @@ import type { Coordinate } from '../coordinate';
 import { FormattedLabelsCache } from './formatted-labels-cache';
 import type { LocalizationOptions } from '../localization-options';
 import { TickMarks } from './tick-marks';
-import type { SeriesItemsIndexesRange, TickMark, TimedValue, TimePoint, TimePointIndex, TimePointsRange, UTCTimestamp } from './time-data';
-import { TimePoints } from './time-points';
+import { secondsToBusinessDay, type SeriesItemsIndexesRange, type TimedValue, type TimePointIndex, type TimeSecondsRange, type UTCTimestamp } from './time-data';
+import type { DataStore } from '../data-store';
 
 const enum Constants {
 	DefaultAnimationDuration = 400,
@@ -67,7 +67,7 @@ export class TimeScale {
 	#width: number = 0;
 	#baseIndexOrNull: TimePointIndex | null = null;
 	#rightOffset: number;
-	#points: TimePoints = new TimePoints();
+	readonly #store: DataStore;
 	#barSpacing: number;
 	#scrollStartPoint: Coordinate | null = null;
 	#scaleStartPoint: Coordinate | null = null;
@@ -89,6 +89,7 @@ export class TimeScale {
 		this.#rightOffset = options.rightOffset;
 		this.#barSpacing = options.barSpacing;
 		this.#model = model;
+		this.#store = model.dataStore();
 
 		this.#updateDateTimeFormatter();
 	}
@@ -130,7 +131,7 @@ export class TimeScale {
 	}
 
 	public isEmpty(): boolean {
-		return this.#width === 0 || this.#points.size() === 0;
+		return this.#width === 0 || this.#store.length === 0;
 	}
 
 	public visibleBars(): BarsRange | null {
@@ -142,12 +143,6 @@ export class TimeScale {
 		return this.#visibleBars;
 	}
 
-	public tickMarks(): TickMarks {
-		return this.#tickMarks;
-	}
-	public points(): TimePoints {
-		return this.#points;
-	}
 	public width(): number {
 		return this.#width;
 	}
@@ -214,8 +209,9 @@ export class TimeScale {
 		}
 	}
 
-	public indexToUserTime(index: TimePointIndex): TimePoint | null {
-		return this.#tickMarks.indexToTime(index);
+	/** Time of a time point in UTC seconds, or null when there is no such time point. */
+	public indexToTime(index: TimePointIndex): number | null {
+		return isInteger(index) && index >= 0 && index < this.#store.length ? this.#store.times[index] : null;
 	}
 
 	public coordinateToIndex(x: Coordinate): TimePointIndex {
@@ -268,32 +264,40 @@ export class TimeScale {
 		const firstBar = Math.max(visibleBars.firstBar(), visibleBars.firstBar() - indexPerLabel);
 		const lastBar = Math.max(visibleBars.lastBar(), visibleBars.lastBar() - indexPerLabel);
 
-		const items = this.#tickMarks.build(spacing, maxLabelWidth);
+		const store = this.#store;
+		const marks = this.#tickMarks.build(store.spans, store.length, store.version, spacing, maxLabelWidth);
+		const indexes = marks.indexes;
+
+		// first accepted mark that is not left of the visible range
+		let position = 0;
+		let end = marks.count;
+		while (position < end) {
+			const mid = (position + end) >> 1;
+			if (indexes[mid] < firstBar) {
+				position = mid + 1;
+			} else {
+				end = mid;
+			}
+		}
 
 		let targetIndex = 0;
-		for (const tm of items) {
-			if (!(firstBar <= tm.index && tm.index <= lastBar)) {
-				continue;
-			}
-
-			const time = this.#tickMarks.indexToTime(tm.index);
-			if (time === null) {
-				continue;
-			}
+		for (; position < marks.count && indexes[position] <= lastBar; position++) {
+			const index = indexes[position] as TimePointIndex;
+			const span = store.spans[index];
+			const text = this.#formatLabel(store.times[index], span);
 
 			if (targetIndex < this.#labels.length) {
 				const label = this.#labels[targetIndex];
-				label.coord = this.indexToCoordinate(tm.index);
-				label.label = this.#formatLabel(time, tm.span);
-				label.span = tm.span;
+				label.coord = this.indexToCoordinate(index);
+				label.label = text;
+				label.span = span;
 				label.major = false;
 			} else {
 				this.#labels.push({
-					coord: this.indexToCoordinate(tm.index),
-					label: this.#formatLabel(time, tm.span),
-					span: tm.span,
+					coord: this.indexToCoordinate(index),
+					label: text,
+					span: span,
 					major: false,
-					// major: tm.label >= TimeConstants.DaySpan ? 1 : 0, // ??? there is no label in tick-marks.ts
 				});
 			}
 			targetIndex++;
@@ -307,7 +311,6 @@ export class TimeScale {
 
 	public reset(): void {
 		this.#visibleBarsInvalidated = true;
-		this.#points = new TimePoints();
 		this.#scrollStartPoint = null;
 		this.#scaleStartPoint = null;
 		this.#clearCommonTransitionsStartState();
@@ -462,18 +465,16 @@ export class TimeScale {
 		animationFn();
 	}
 
-	public update(index: TimePointIndex, values: TimePoint[], marks: TickMark[]): void {
+	/**
+	 * Call after the time points of the data store changed.
+	 * @param oldSize - number of time points before the change
+	 */
+	public update(oldSize: number): void {
 		this.#visibleBarsInvalidated = true;
-		if (values.length > 0) {
-			// we have some time points to merge
-			const oldSize = this.#points.size();
-			this.#points.merge(index, values);
-			if (this.#rightOffset < 0 && (this.#points.size() === oldSize + 1)) {
-				this.#rightOffset -= 1;
-				this.#visibleBarsInvalidated = true;
-			}
+		if (this.#rightOffset < 0 && this.#store.length === oldSize + 1) {
+			// one new time point while the user looks at history: keep the visible bars in place
+			this.#rightOffset -= 1;
 		}
-		this.#tickMarks.merge(marks);
 		this.#correctOffset();
 	}
 
@@ -504,40 +505,37 @@ export class TimeScale {
 	}
 
 	public fitContent(): void {
-		const first = this.#points.firstIndex();
-		const last = this.#points.lastIndex();
-		if (first === null || last === null) {
+		const count = this.#store.length;
+		if (count === 0) {
 			return;
 		}
 
-		this.setVisibleRange(new BarsRange(first, last + this.#options.rightOffset as TimePointIndex));
+		this.setVisibleRange(new BarsRange(0 as TimePointIndex, count - 1 + this.#options.rightOffset as TimePointIndex));
 	}
 
-	public setTimePointsRange(range: TimePointsRange): void {
-		const points = this.points();
-		const firstIndex = points.firstIndex();
-		const lastIndex = points.lastIndex();
-
-		if (firstIndex === null || lastIndex === null) {
+	public setTimeRange(range: TimeSecondsRange): void {
+		const store = this.#store;
+		if (store.length === 0) {
 			return;
 		}
 
-		const firstPoint = ensureNotNull(points.valueAt(firstIndex)).timestamp;
-		const lastPoint = ensureNotNull(points.valueAt(lastIndex)).timestamp;
+		const firstTime = store.times[0];
+		const lastTime = store.times[store.length - 1];
 
 		const barRange = new BarsRange(
-			ensureNotNull(points.indexOf(Math.max(firstPoint, range.from.timestamp) as UTCTimestamp, true)),
-			ensureNotNull(points.indexOf(Math.min(lastPoint, range.to.timestamp) as UTCTimestamp, true))
+			ensureNotNull(store.indexOfTime(Math.max(firstTime, range.from), true)) as TimePointIndex,
+			ensureNotNull(store.indexOfTime(Math.min(lastTime, range.to), true)) as TimePointIndex
 		);
 		this.setVisibleRange(barRange);
 	}
 
-	public formatDateTime(time: TimePoint): string {
+	/** Formats a time (UTC seconds) for the crosshair label. */
+	public formatDateTime(time: number): string {
 		if (this.#localizationOptions.timeFormatter !== undefined) {
-			return this.#localizationOptions.timeFormatter(time.businessDay || time.timestamp);
+			return this.#localizationOptions.timeFormatter(this.#store.businessDay ? secondsToBusinessDay(time) : time as UTCTimestamp);
 		}
 
-		return this.#dateTimeFormatter.format(new Date(time.timestamp * 1000));
+		return this.#dateTimeFormatter.format(new Date(time * 1000));
 	}
 
 	#rightOffsetForCoordinate(x: Coordinate): number {
@@ -614,22 +612,22 @@ export class TimeScale {
 	}
 
 	#minRightOffset(): number | null {
-		const firstIndex = this.#points.firstIndex();
 		const baseIndex = this.#baseIndexOrNull;
-		if (firstIndex === null || baseIndex === null) {
+		if (this.#store.length === 0 || baseIndex === null) {
 			return null;
 		}
+		const firstIndex = 0;
 
 		if (this.#leftEdgeIndex !== null) {
 			const barsEstimation = this.#width / this.#barSpacing;
 			return this.#leftEdgeIndex - baseIndex + barsEstimation - 1;
 		}
 
-		return firstIndex - baseIndex - 1 + Math.min(Constants.MinVisibleBarsCount, this.#points.size());
+		return firstIndex - baseIndex - 1 + Math.min(Constants.MinVisibleBarsCount, this.#store.length);
 	}
 
 	#maxRightOffset(): number {
-		return (this.#width / this.#barSpacing) - Math.min(Constants.MinVisibleBarsCount, this.#points.size());
+		return (this.#width / this.#barSpacing) - Math.min(Constants.MinVisibleBarsCount, this.#store.length);
 	}
 
 	#saveCommonTransitionsStartState(): void {
@@ -643,7 +641,7 @@ export class TimeScale {
 		this.#commonTransitionStartState = null;
 	}
 
-	#formatLabel(time: TimePoint, span: number): string {
+	#formatLabel(time: number, span: number): string {
 		let formatter = this.#formattedBySpan.get(span);
 		if (formatter === undefined) {
 			formatter = new FormattedLabelsCache((date: Date) => {
@@ -653,11 +651,7 @@ export class TimeScale {
 			this.#formattedBySpan.set(span, formatter);
 		}
 
-		if (time.businessDay === undefined) {
-			return formatter.format(new Date(time.timestamp * 1000));
-		} else {
-			return formatter.format(new Date(Date.UTC(time.businessDay.year, time.businessDay.month - 1, time.businessDay.day)));
-		}
+		return formatter.format(new Date(time * 1000));
 	}
 
 	#formatLabelImpl(d: Date, span: number): string {
@@ -744,10 +738,10 @@ export class TimeScale {
 		if (!this.#options.fixLeftEdge) {
 			return;
 		}
-		const firstIndex = this.#points.firstIndex();
-		if (firstIndex === null || this.#leftEdgeIndex === firstIndex) {
+		if (this.#store.length === 0 || this.#leftEdgeIndex === 0) {
 			return;
 		}
+		const firstIndex = 0 as TimePointIndex;
 
 		this.#leftEdgeIndex = firstIndex;
 		const delta = ensureNotNull(this.visibleBars()).firstBar() - firstIndex;

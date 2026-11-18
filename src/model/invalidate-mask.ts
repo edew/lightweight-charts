@@ -1,4 +1,4 @@
-import type { TimePointsRange } from './time-scale/time-data';
+import type { TimeSecondsRange } from './time-scale/time-data';
 
 export const enum InvalidationLevel {
 	None = 0,
@@ -26,7 +26,7 @@ export class InvalidateMask {
 	#globalLevel: InvalidationLevel;
 	#force: boolean = false;
 	#fitContent: boolean = false;
-	#targetTimeRange: TimePointsRange | null = null;
+	#targetTimeRange: TimeSecondsRange | null = null;
 
 	public constructor(globalLevel: InvalidationLevel) {
 		this.#globalLevel = globalLevel;
@@ -68,12 +68,12 @@ export class InvalidateMask {
 		return this.#fitContent;
 	}
 
-	public setTargetTimeRange(range: TimePointsRange): void {
+	public setTargetTimeRange(range: TimeSecondsRange): void {
 		this.#targetTimeRange = range;
 		this.#fitContent = false;
 	}
 
-	public getTargetTimeRange(): TimePointsRange | null {
+	public getTargetTimeRange(): TimeSecondsRange | null {
 		return this.#targetTimeRange;
 	}
 

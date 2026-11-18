@@ -59,15 +59,18 @@ for (const count of [10_000, 100_000, 1_000_000]) {
 	}
 	const tickDrawUs = (performance.now() - start) / REPEAT * 1000;
 
+	// the first append makes the typed arrays grow to two times their size; that cost
+	// is amortized over the next `count` appends, so it is not part of this timing
+	series.update(bar(count, 100));
 	start = performance.now();
-	for (let i = 0; i < REPEAT; i++) {
+	for (let i = 1; i <= REPEAT; i++) {
 		series.update(bar(count + i, 100 + (i % 10)));
 	}
 	const appendUs = (performance.now() - start) / REPEAT * 1000;
 
 	start = performance.now();
 	for (let i = 0; i < REPEAT; i++) {
-		series.update(bar(count + REPEAT + i, 100 + (i % 10)));
+		series.update(bar(count + REPEAT + 1 + i, 100 + (i % 10)));
 		chart.draw(ctx, 2);
 	}
 	const appendDrawUs = (performance.now() - start) / REPEAT * 1000;

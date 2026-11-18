@@ -18,11 +18,10 @@ import {
 	type PriceFormatBuiltIn,
 	type SeriesType,
 } from '../model/series-options';
-import type { TimePointIndex } from '../model/time-scale/time-data';
 
 import { CandlestickSeriesApi } from './candlestick-series-api';
-import type { DataUpdatesConsumer, SeriesDataItemTypeMap } from './data-consumer';
-import { DataLayer, type SeriesUpdatePacket } from './data-layer';
+import { convertSeriesData, isBusinessDayTime, itemTimeToSeconds, secondsToTime } from './data-convert';
+import type { BarData, DataUpdatesConsumer, LineData, SeriesDataItemTypeMap } from './data-consumer';
 import type { IChartApi, MouseEventHandler, MouseEventParams, TimeRangeChangeEventHandler } from './ichart-api';
 import type { IPriceScaleApi } from './iprice-scale-api';
 import type { ISeriesApi } from './iseries-api';
@@ -73,7 +72,6 @@ function toInternalOptions(options: DeepPartial<ChartOptions>): DeepPartial<Char
 
 export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 	#chartWidget: ChartWidget;
-	#dataLayer: DataLayer = new DataLayer();
 	readonly #timeRangeChanged: Delegate<TimeRange | null> = new Delegate();
 	readonly #seriesMap: Map<SeriesApi<SeriesType>, Series> = new Map();
 	readonly #seriesMapReversed: Map<Series, SeriesApi<SeriesType>> = new Map();
@@ -130,8 +128,6 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this.#timeRangeChanged.destroy();
 		this.#clickedDelegate.destroy();
 		this.#crosshairMovedDelegate.destroy();
-		this.#dataLayer.destroy();
-		(this.#dataLayer as unknown as null) = null;
 	}
 
 	public resize(width: number, height: number, forceRepaint?: boolean): void {
@@ -169,42 +165,29 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		const seriesObj = seriesApi as SeriesApi<SeriesType>;
 		const series = ensureDefined(this.#seriesMap.get(seriesObj));
 
-		const update = this.#dataLayer.removeSeries(series);
-		const model = this.#chartWidget.model();
-		model.removeSeries(series);
-		const timeScaleUpdate = update.timeScaleUpdate;
-		model.updateTimeScale(timeScaleUpdate.index, timeScaleUpdate.changes, timeScaleUpdate.marks, true);
-		timeScaleUpdate.seriesUpdates.forEach((value: SeriesUpdatePacket, key: Series) => {
-			key.updateData(value.update);
-		});
-		model.updateTimeScaleBaseIndex(0 as TimePointIndex);
+		this.#chartWidget.model().removeSeries(series);
 		this.#seriesMap.delete(seriesObj);
 		this.#seriesMapReversed.delete(series);
 	}
 
 	public applyNewData<TSeriesType extends SeriesType>(series: Series<TSeriesType>, data: SeriesDataItemTypeMap[TSeriesType][]): void {
-		const update = this.#dataLayer.setSeriesData(series, data);
-		const model = this.#chartWidget.model();
-		const timeScaleUpdate = update.timeScaleUpdate;
-		model.updateTimeScale(timeScaleUpdate.index, timeScaleUpdate.changes, timeScaleUpdate.marks, true);
-		timeScaleUpdate.seriesUpdates.forEach((value: SeriesUpdatePacket, key: Series) => {
-			// the latest arg `true` must be removed in https://github.com/tradingview/lightweight-charts/issues/270
-			// here we don't need to clear palettes because they were just filled in DataLayer
-			// see https://github.com/tradingview/lightweight-charts/pull/330#discussion_r379415805
-			key.updateData(value.update, true);
-		});
-		model.updateTimeScaleBaseIndex(0 as TimePointIndex);
+		const converted = convertSeriesData(series.store().stride, data);
+		this.#chartWidget.model().setSeriesData(series as Series, converted.times, converted.values, converted.count, converted.businessDay);
 	}
 
 	public updateData<TSeriesType extends SeriesType>(series: Series<TSeriesType>, data: SeriesDataItemTypeMap[TSeriesType]): void {
-		const update = this.#dataLayer.updateSeriesData(series, data);
 		const model = this.#chartWidget.model();
-		const timeScaleUpdate = update.timeScaleUpdate;
-		model.updateTimeScale(timeScaleUpdate.index, timeScaleUpdate.changes, timeScaleUpdate.marks, false);
-		timeScaleUpdate.seriesUpdates.forEach((value: SeriesUpdatePacket, key: Series) => {
-			key.updateData(value.update);
-		});
-		model.updateTimeScaleBaseIndex(0 as TimePointIndex);
+		// the first data of a chart sets the type of time for all series
+		const businessDay = model.dataStore().businessDay ?? isBusinessDayTime(data.time);
+		const time = itemTimeToSeconds(data.time, businessDay);
+		model.dataStore().businessDay = businessDay;
+
+		if (series.store().stride === 1) {
+			model.updateSeriesData(series as Series, time, (data as LineData).value, 0, 0, 0);
+		} else {
+			const bar = data as BarData;
+			model.updateSeriesData(series as Series, time, bar.open, bar.high, bar.low, bar.close);
+		}
 	}
 
 	public subscribeClick(handler: MouseEventHandler): void {
@@ -272,7 +255,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		const hoveredSeries = param.hoveredSeries === undefined ? undefined : this.#mapSeriesToApi(param.hoveredSeries);
 
 		return {
-			time: param.time && (param.time.businessDay || param.time.timestamp),
+			time: param.time === undefined ? undefined : secondsToTime(param.time, this.#chartWidget.model().dataStore().businessDay === true),
 			point: param.point,
 			hoveredSeries,
 			seriesPrices,

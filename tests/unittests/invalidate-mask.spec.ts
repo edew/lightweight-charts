@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
 import { InvalidateMask, InvalidationLevel } from '../../src/model/invalidate-mask';
-import type { UTCTimestamp } from '../../src/model/time-scale/time-data';
 
 describe('InvalidateMask', () => {
 	it('returns global invalidation for non-invalidated pane', () => {
@@ -30,7 +29,7 @@ describe('InvalidateMask', () => {
 
 	it('setFitContent resets target time range', () => {
 		const mask = new InvalidateMask(InvalidationLevel.Light);
-		mask.setTargetTimeRange({ from: { timestamp: 10 as UTCTimestamp }, to: { timestamp: 15 as UTCTimestamp } });
+		mask.setTargetTimeRange({ from: 10, to: 15 });
 		expect(mask.getTargetTimeRange()).to.not.equal(null);
 
 		mask.setFitContent();
@@ -41,9 +40,9 @@ describe('InvalidateMask', () => {
 	it('setTargetTimeRange resets fitContent', () => {
 		const mask = new InvalidateMask(InvalidationLevel.Light);
 		mask.setFitContent();
-		mask.setTargetTimeRange({ from: { timestamp: 20 as UTCTimestamp }, to: { timestamp: 25 as UTCTimestamp } });
+		mask.setTargetTimeRange({ from: 20, to: 25 });
 		expect(mask.getFitContent()).to.equal(false);
-		expect(mask.getTargetTimeRange()).to.deep.equal({ from: { timestamp: 20 as UTCTimestamp }, to: { timestamp: 25 as UTCTimestamp } });
+		expect(mask.getTargetTimeRange()).to.deep.equal({ from: 20, to: 25 });
 	});
 
 	it('merge combines global levels, pane invalidation and action flags', () => {
@@ -71,7 +70,7 @@ describe('InvalidateMask', () => {
 		first.setFitContent();
 
 		const second = new InvalidateMask(InvalidationLevel.Light);
-		const range = { from: { timestamp: 3 as UTCTimestamp }, to: { timestamp: 9 as UTCTimestamp } };
+		const range = { from: 3, to: 9 };
 		second.setTargetTimeRange(range);
 
 		first.merge(second);

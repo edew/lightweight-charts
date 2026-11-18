@@ -20,7 +20,8 @@ import type { Point } from './point';
 import { PriceScale, type PriceScaleOptions } from './price-scale/price-scale';
 import { Series } from './series';
 import type { SeriesOptionsMap, SeriesType } from './series-options';
-import type { TickMark, TimePoint, TimePointIndex, TimePointsRange } from './time-scale/time-data';
+import { DataStore, UpdateKind } from './data-store';
+import type { TimePointIndex, TimeSecondsRange } from './time-scale/time-data';
 import { TimeScale, type TimeScaleOptions } from './time-scale/time-scale';
 import { Watermark, type WatermarkOptions } from './watermark';
 
@@ -98,6 +99,7 @@ export class ChartModel implements IDestroyable {
 	readonly #watermark: Watermark;
 
 	#serieses: Series[] = [];
+	readonly #dataStore: DataStore = new DataStore();
 
 	#width: number = 0;
 	#initialTimeScrollPos: number | null = null;
@@ -425,48 +427,60 @@ export class ChartModel implements IDestroyable {
 		}
 	}
 
-	public updateTimeScale(index: TimePointIndex, values: TimePoint[], marks: TickMark[], clearFlag: boolean): void {
-		if (clearFlag) {
-			// refresh timescale
-			this.#timeScale.reset();
-		}
-
-		this.#timeScale.update(index, values, marks);
+	public dataStore(): DataStore {
+		return this.#dataStore;
 	}
 
-	public updateTimeScaleBaseIndex(earliestRowIndex?: TimePointIndex): void {
-		// get the latest series bar index
-		const lastSeriesBarIndex = this.#serieses.reduce(
-			(currentRes: TimePointIndex | undefined, series: Series) => {
-				const seriesBars = series.bars();
-				if (seriesBars.isEmpty()) {
-					return currentRes;
-				}
-				const currentLastIndex = ensureNotNull(seriesBars.lastIndex());
-				return (currentRes === undefined) ? currentLastIndex : Math.max(currentLastIndex, currentRes) as TimePointIndex;
-			},
-			undefined);
+	/**
+	 * Replaces all data of a series. `times` are sorted UTC seconds with no duplicates.
+	 * The model takes ownership of the arrays.
+	 */
+	public setSeriesData(series: Series, times: Float64Array, values: Float64Array, count: number, businessDay: boolean): void {
+		if (count !== 0) {
+			this.#dataStore.businessDay = businessDay;
+		}
+		this.#dataStore.setSeriesData(series.store(), times, values, count);
+		this.#onAllTimePointsChanged();
+	}
 
-		if (lastSeriesBarIndex !== undefined) {
-			const timeScale = this.#timeScale;
-			const currentBaseIndex = timeScale.baseIndex();
+	/** Streaming update: new values for the last bar of the series, or a new bar. */
+	public updateSeriesData(series: Series, time: number, v0: number, v1: number, v2: number, v3: number): void {
+		const store = this.#dataStore;
+		const oldSize = store.length;
+		const kind = store.updateSeries(series.store(), time, v0, v1, v2, v3);
 
-			const visibleBars = timeScale.visibleBars();
+		if (kind === UpdateKind.Rebuild) {
+			this.#onAllTimePointsChanged();
+			return;
+		}
 
-			// if time scale cannot return current visible bars range (e.g. time scale has zero-width)
-			// then we do not need to update right offset to shift visible bars range to have the same right offset as we have before new bar
-			// (and actually we cannot)
-			if (visibleBars !== null) {
-				const isLastSeriesBarVisible = visibleBars.contains(currentBaseIndex);
+		if (kind === UpdateKind.AppendTime) {
+			this.#timeScale.update(oldSize);
+		}
 
-				if (earliestRowIndex !== undefined && earliestRowIndex > 0 && !isLastSeriesBarVisible) {
-					const compensationShift = lastSeriesBarIndex - currentBaseIndex;
+		series.onDataChanged();
 
-					timeScale.setRightOffset(timeScale.rightOffset() - compensationShift);
-				}
-			}
+		if (kind !== UpdateKind.InPlace) {
+			this.#updateTimeScaleBaseIndex();
+		}
+	}
 
-			timeScale.setBaseIndex(lastSeriesBarIndex);
+	#onAllTimePointsChanged(): void {
+		this.#timeScale.reset();
+		this.#timeScale.update(0);
+		for (const series of this.#serieses) {
+			series.onDataChanged();
+		}
+		this.#updateTimeScaleBaseIndex();
+	}
+
+	#updateTimeScaleBaseIndex(): void {
+		// the time points are the union of the times of all series,
+		// so the last time point is the last bar of at least one series
+		const count = this.#dataStore.length;
+		if (count !== 0) {
+			// when the user looks at history, TimeScale.update() keeps the visible bars in place
+			this.#timeScale.setBaseIndex(count - 1 as TimePointIndex);
 		}
 
 		this.updateCrosshair();
@@ -551,9 +565,9 @@ export class ChartModel implements IDestroyable {
 
 		this.#serieses.splice(seriesIndex, 1);
 		ensureNotNull(pane).removeDataSource(series);
-		if (series.destroy) {
-			series.destroy();
-		}
+		// removes the data of the series from the store
+		series.destroy();
+		this.#onAllTimePointsChanged();
 	}
 
 	public fitContent(): void {
@@ -562,7 +576,7 @@ export class ChartModel implements IDestroyable {
 		this.#invalidate(mask);
 	}
 
-	public setTargetTimeRange(range: TimePointsRange): void {
+	public setTargetTimeRange(range: TimeSecondsRange): void {
 		const mask = new InvalidateMask(InvalidationLevel.Light);
 		mask.setTargetTimeRange(range);
 		this.#invalidate(mask);

@@ -2,74 +2,58 @@ import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
 import { TickMarks } from '../../src/model/time-scale/tick-marks';
-import type { TickMark, UTCTimestamp } from '../../src/model/time-scale/time-data';
 
-function mark(index: number, span: number, timestamp: number): TickMark {
-	return {
-		index: index as any,
-		span,
-		time: { timestamp: timestamp as UTCTimestamp },
-	};
+function build(marks: TickMarks, spans: number[], spacing: number, maxWidth: number, version: number = 0): number[] {
+	const result = marks.build(new Uint8Array(spans), spans.length, version, spacing, maxWidth);
+	return Array.from(result.indexes.subarray(0, result.count));
 }
 
 describe('TickMarks', () => {
-	it('indexToTime returns null for missing marks and time for existing marks', () => {
-		const marks = new TickMarks();
-		expect(marks.indexToTime(1)).to.equal(null);
-
-		marks.merge([mark(1, 10, 100)]);
-		expect(marks.indexToTime(1)!.timestamp).to.equal(100);
+	it('returns no marks for no time points', () => {
+		expect(build(new TickMarks(), [], 5, 50)).to.deep.equal([]);
 	});
 
-	it('merge updates existing mark time when index and span match', () => {
-		const marks = new TickMarks();
-		marks.merge([mark(2, 20, 100)]);
-		marks.merge([mark(2, 20, 200)]);
-		expect(marks.indexToTime(2)!.timestamp).to.equal(200);
+	it('keeps the minimum distance between marks of the same weight', () => {
+		// 10 time points, marks must be 6 indexes apart (18 / 3)
+		expect(build(new TickMarks(), [20, 20, 20, 20, 20, 20, 20, 20, 20, 20], 3, 18)).to.deep.equal([0, 6]);
 	});
 
-	it('merge replaces mark when same index but different span', () => {
-		const marks = new TickMarks();
-		marks.merge([mark(3, 20, 100)]);
-		marks.merge([mark(3, 30, 150)]);
-		expect(marks.indexToTime(3)!.timestamp).to.equal(150);
+	it('gives priority to the higher weight when marks compete for space', () => {
+		// the first time point always has weight 20; the year mark at index 2 must win
+		const result = build(new TickMarks(), [20, 20, 70, 20], 1, 3);
+		expect(result).to.include(2);
+		expect(result).to.not.include(0);
 	});
 
-	it('build returns cached array when spacing and width imply same maxBar', () => {
-		const marks = new TickMarks();
-		marks.merge([mark(0, 10, 100), mark(5, 10, 200), mark(10, 10, 300)]);
-
-		const first = marks.build(5, 50); // maxBar = 10
-		const second = marks.build(5, 50); // same maxBar, should return cache
-		expect(second).to.equal(first);
+	it('places lower weights between higher weights when there is space', () => {
+		const spans = [20, 20, 20, 20, 50, 20, 20, 20, 20, 50, 20, 20];
+		// marks must be 2 indexes apart
+		expect(build(new TickMarks(), spans, 1, 2)).to.deep.equal([0, 2, 4, 6, 9, 11]);
 	});
 
-	it('build spacing filter keeps distance by maxBar', () => {
+	it('returns the cached result for the same input', () => {
 		const marks = new TickMarks();
-		marks.merge([mark(0, 10, 100), mark(3, 10, 200), mark(6, 10, 300), mark(9, 10, 400)]);
-
-		const built = marks.build(3, 18); // maxBar = 6
-		const indexes = built.map((m) => m.index);
-		expect(indexes).to.deep.equal([0, 6]);
+		const spans = new Uint8Array([20, 20, 20, 20]);
+		const first = marks.build(spans, 4, 1, 5, 10);
+		expect(marks.build(spans, 4, 1, 5, 10)).to.equal(first);
+		// a different spacing that gives the same distance in indexes
+		expect(marks.build(spans, 4, 1, 5, 9)).to.equal(first);
 	});
 
-	it('reset clears all marks', () => {
+	it('builds again when the version, the length or the distance changes', () => {
 		const marks = new TickMarks();
-		marks.merge([mark(1, 10, 100)]);
-		expect(marks.indexToTime(1)).to.not.equal(null);
+		const spans = new Uint8Array([20, 20, 20, 20, 20, 20, 20, 20]);
+		const first = marks.build(spans, 4, 1, 1, 2);
+		expect(marks.build(spans, 4, 2, 1, 2)).to.not.equal(first);
+		expect(Array.from(marks.build(spans, 8, 2, 1, 2).indexes.subarray(0, 4))).to.deep.equal([0, 2, 4, 6]);
+		expect(marks.build(spans, 8, 2, 1, 4).count).to.equal(2);
+	});
 
+	it('builds again after reset', () => {
+		const marks = new TickMarks();
+		const spans = new Uint8Array([20, 20]);
+		const first = marks.build(spans, 2, 1, 1, 1);
 		marks.reset();
-		expect(marks.indexToTime(1)).to.equal(null);
-		expect(marks.build(1, 10)).to.deep.equal([]);
-	});
-
-	it('build gives priority to the higher span when marks compete for space', () => {
-		const marks = new TickMarks();
-		// the low span is inserted first, as the data layer does (first point has span 20)
-		marks.merge([mark(0, 20, 100), mark(1, 20, 200), mark(2, 70, 300), mark(3, 20, 400)]);
-
-		const built = marks.build(1, 3); // marks must be at least 3 indexes apart
-		const indexes = built.map((m) => m.index);
-		expect(indexes).to.include(2);
+		expect(marks.build(spans, 2, 1, 1, 1)).to.not.equal(first);
 	});
 });

@@ -22,15 +22,12 @@ import type { BarPrice, BarPrices } from './bar';
 import { ChartModel } from './chart-model';
 import type { Coordinate } from './coordinate';
 import type { FirstValue } from './data-source/iprice-data-source';
-import { Palette } from './palette';
 import { Pane } from './pane';
-import type { PlotRow } from './plot-data';
-import { type MinMax, PlotList, PlotRowSearchMode } from './plot-list';
+import { SearchMode, type SeriesStore } from './data-store';
 import { PriceDataSource } from './data-source/price-data-source';
 import { PriceRange } from './price-range';
 import { PriceScale } from './price-scale/price-scale';
 import { SeriesBarColorer } from './series-bar-colorer';
-import { type Bar, barFunction, SeriesData, SeriesPlotIndex } from './series-data';
 import type {
 	LineStyleOptions,
 	SeriesOptionsMap,
@@ -63,8 +60,6 @@ export interface LastValueDataResultWithRawPrice extends LastValueDataResultWith
 
 export type LastValueDataResultWithoutRawPrice = LastValueDataResultWithoutData | LastValueDataResultWithData;
 
-export type BarFunction = (bar: Bar['value']) => BarPrice;
-
 export interface MarkerData {
 	price: BarPrice;
 	radius: number;
@@ -77,7 +72,7 @@ export interface SeriesDataAtTypeMap {
 
 export class Series<T extends SeriesType = SeriesType> extends PriceDataSource implements IDestroyable {
 	readonly #seriesType: T;
-	#data: SeriesData = new SeriesData();
+	readonly #store: SeriesStore;
 	readonly #priceAxisViews: IPriceAxisView[];
 	readonly #panePriceAxisView: PanePriceAxisView;
 	#formatter!: IPriceFormatter;
@@ -85,13 +80,12 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	#paneView!: IUpdatablePaneView;
 	#barColorerCache: SeriesBarColorer | null = null;
 	readonly #options: SeriesOptionsMap[T];
-	#barFunction: BarFunction;
-	readonly #palette: Palette = new Palette();
 
 	public constructor(model: ChartModel, options: SeriesOptionsMap[T], seriesType: T) {
 		super(model);
 		this.#options = options;
 		this.#seriesType = seriesType;
+		this.#store = model.dataStore().createSeries(seriesType === 'Line' ? 1 : 4);
 
 		const priceAxisView = new SeriesPriceAxisView(this, { model: model });
 		this.#priceAxisViews = [priceAxisView];
@@ -99,39 +93,26 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.#panePriceAxisView = new PanePriceAxisView(priceAxisView, this, model);
 
 		this.#recreateFormatter();
-		this.#updateBarFunction();
-		this.#barFunction = this.barFunction(); // redundant
-
 		this.#recreatePaneViews();
 	}
 
 	public destroy(): void {
+		this.model().dataStore().removeSeries(this.#store);
 	}
 
 	public priceLineColor(lastBarColor: string): string {
 		return lastBarColor;
 	}
 
-	public lastValueData(plot: SeriesPlotIndex | undefined, globalLast: boolean, withRawPrice?: false): LastValueDataResultWithoutRawPrice;
-	public lastValueData(plot: SeriesPlotIndex | undefined, globalLast: boolean, withRawPrice: true): LastValueDataResultWithRawPrice;
-
-	// returns object with:
-	// formatted price
-	// raw price (if withRawPrice)
-	// coordinate
-	// color
-	// or { "noData":true } if last value could not be found
-	// NOTE: should NEVER return null or undefined!
-	public lastValueData(
-		plot: SeriesPlotIndex | undefined,
-		globalLast: boolean,
-		withRawPrice?: boolean
-	): LastValueDataResultWithoutRawPrice | LastValueDataResultWithRawPrice {
+	// returns the formatted price, coordinate and color of the last visible bar,
+	// or { noData: true } if there is none
+	public lastValueData(): LastValueDataResultWithoutRawPrice {
 		const noDataRes: LastValueDataResultWithoutData = { noData: true };
 
 		const priceScale = this.priceScale();
+		const store = this.#store;
 
-		if (this.model().timeScale().isEmpty() || priceScale.isEmpty() || this.data().isEmpty()) {
+		if (this.model().timeScale().isEmpty() || priceScale.isEmpty() || store.length === 0) {
 			return noDataRes;
 		}
 
@@ -141,50 +122,28 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 			return noDataRes;
 		}
 
-		// find range of bars inside range
-		// TODO: make it more optimal
-		let bar: Bar | null;
-		let lastIndex: TimePointIndex;
-		if (globalLast) {
-			const lastBar = this.data().bars().last();
-			if (lastBar === null) {
-				return noDataRes;
-			}
-
-			bar = lastBar;
-			lastIndex = lastBar.index;
-		} else {
-			const endBar = this.data().bars().search(visibleBars.lastBar(), PlotRowSearchMode.NearestLeft);
-			if (endBar === null) {
-				return noDataRes;
-			}
-
-			bar = this.data().bars().valueAt(endBar.index);
-			if (bar === null) {
-				return noDataRes;
-			}
-			lastIndex = endBar.index;
+		const row = store.rowAt(visibleBars.lastBar(), SearchMode.NearestLeft);
+		if (row < 0) {
+			return noDataRes;
 		}
 
-		const price = plot !== undefined ? bar.value[plot] as number : this.#barFunction(bar.value);
-		const barColorer = this.barColorer();
-		const style = barColorer.barStyle(lastIndex, { value: bar });
+		const price = store.closeAt(row);
+		const style = this.barColorer().barStyle(row);
 		const coordinate = priceScale.priceToCoordinate(price, firstValue.value);
 
 		return {
 			noData: false,
-			price: withRawPrice ? price : undefined,
 			text: priceScale.formatPrice(price, firstValue.value),
 			formattedPriceAbsolute: priceScale.formatPriceAbsolute(price),
 			formattedPricePercentage: priceScale.formatPricePercentage(price, firstValue.value),
 			color: style.barColor,
 			coordinate: coordinate,
-			index: lastIndex,
+			index: store.timeIndexAt(row) as TimePointIndex,
 		};
 	}
 
-	public data(): SeriesData {
-		return this.#data;
+	public store(): SeriesStore {
+		return this.#store;
 	}
 
 	public barColorer(): SeriesBarColorer {
@@ -218,23 +177,8 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.model().updateSource(this);
 	}
 
-	public clearData(): void {
-		this.#data.clear();
-		this.#palette.clear();
-
-		// we must either re-create pane view on clear data
-		// or clear all caches inside pane views
-		// but currently we can't separate update/append last bar and full data replacement (update vs setData) in pane views invalidation
-		// so let's just re-create all views
-		this.#recreatePaneViews();
-	}
-
-	public updateData(data: ReadonlyArray<PlotRow<Bar['time'], Bar['value']>>, clearData: boolean = false): void {
-		if (clearData) {
-			this.#data.clear();
-		}
-		this.#data.bars().merge(data);
-
+	/** Call after the values or the time indexes of the store changed. */
+	public onDataChanged(): void {
 		this.#paneView.update('data');
 
 		const sourcePane = this.model().paneForSource(this);
@@ -244,67 +188,45 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		this.model().lightUpdate();
 	}
 
-	public palette(): Palette {
-		return this.#palette;
-	}
-
 	public seriesType(): T {
 		return this.#seriesType;
 	}
 
+	/** The price and time index of the first visible bar. Percentage scales use it as the base. */
 	public firstValue(): FirstValue | null {
-		const bar = this.firstBar();
-		if (bar === null) {
-			return null;
-		}
-
-		return {
-			value: this.#barFunction(bar.value),
-			timePoint: bar.time,
-		};
-	}
-
-	public firstBar(): Bar | null {
 		const visibleBars = this.model().timeScale().visibleBars();
 		if (visibleBars === null) {
 			return null;
 		}
 
-		const startTimePoint = visibleBars.firstBar();
-		return this.data().search(startTimePoint, PlotRowSearchMode.NearestRight);
-	}
-
-	public bars(): PlotList<Bar['time'], Bar['value']> {
-		return this.#data.bars();
-	}
-
-	public nearestIndex(index: TimePointIndex, options?: PlotRowSearchMode): TimePointIndex | null {
-		const res = this.nearestData(index, options);
-		return res ? res.index : null;
-	}
-
-	public nearestData(index: TimePointIndex, options?: PlotRowSearchMode): PlotRow<Bar['time'], Bar['value']> | null {
-		if (!isInteger(index)) {
+		const row = this.#store.rowAt(visibleBars.firstBar(), SearchMode.NearestRight);
+		if (row < 0) {
 			return null;
 		}
 
-		return this.data().search(index, options);
+		return {
+			value: this.#store.closeAt(row),
+			timeIndex: this.#store.timeIndexAt(row),
+		};
 	}
 
 	public dataAt(time: TimePointIndex): SeriesDataAtTypeMap[SeriesType] | null {
-		const prices = this.data().valueAt(time);
-		if (prices === null) {
+		const row = isInteger(time) ? this.#store.rowAt(time) : -1;
+		if (row < 0) {
 			return null;
 		}
+
+		const values = this.#store.values;
 		if (this.#seriesType === 'Candlestick') {
+			const offset = row * 4;
 			return {
-				open: prices.value[SeriesPlotIndex.Open] as BarPrice,
-				high: prices.value[SeriesPlotIndex.High] as BarPrice,
-				low: prices.value[SeriesPlotIndex.Low] as BarPrice,
-				close: prices.value[SeriesPlotIndex.Close] as BarPrice,
+				open: values[offset] as BarPrice,
+				high: values[offset + 1] as BarPrice,
+				low: values[offset + 2] as BarPrice,
+				close: values[offset + 3] as BarPrice,
 			};
 		} else {
-			return this.barFunction()(prices.value);
+			return values[row] as BarPrice;
 		}
 	}
 
@@ -329,24 +251,34 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 	}
 
 	public autoscaleInfo(startTimePoint: TimePointIndex, endTimePoint: TimePointIndex): AutoscaleInfo | null {
-		if (!isInteger(startTimePoint) || !isInteger(endTimePoint) || this.data().isEmpty()) {
+		const store = this.#store;
+		if (!isInteger(startTimePoint) || !isInteger(endTimePoint) || store.length === 0) {
 			return null;
 		}
 
-		// TODO: refactor this
-		// series data is strongly hardcoded to keep bars
-		const priceSource = (this.#seriesType === 'Line') ? 'close' : null;
-		let barsMinMax: MinMax | null;
-		if (priceSource !== null) {
-			barsMinMax = this.data().bars().minMaxOnRangeCached(startTimePoint, endTimePoint, [{ name: priceSource, offset: 0 }]);
-		} else {
-			barsMinMax = this.data().bars().minMaxOnRangeCached(startTimePoint, endTimePoint, [{ name: 'low', offset: 0 }, { name: 'high', offset: 0 }]);
+		// a plain scan of the visible rows: for a Line the value, for candles low and high
+		const values = store.values;
+		const stride = store.stride;
+		const lowColumn = stride === 4 ? 2 : 0;
+		const highColumn = stride === 4 ? 1 : 0;
+		const from = store.lowerBound(startTimePoint);
+		const to = store.lowerBound(endTimePoint + 1);
+
+		let min = Infinity;
+		let max = -Infinity;
+		for (let row = from; row < to; row++) {
+			const low = values[row * stride + lowColumn];
+			const high = values[row * stride + highColumn];
+			if (low < min) {
+				min = low;
+			}
+			if (high > max) {
+				max = high;
+			}
 		}
 
-		let range = barsMinMax !== null ? new PriceRange(barsMinMax.min, barsMinMax.max) : null;
-
 		return {
-			priceRange: range,
+			priceRange: min <= max ? new PriceRange(min, max) : null,
 			margins: null,
 		};
 	}
@@ -357,10 +289,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 
 	public formatter(): IPriceFormatter {
 		return this.#formatter;
-	}
-
-	public barFunction(): BarFunction {
-		return this.#barFunction;
 	}
 
 	public updateAllViews(): void {
@@ -392,11 +320,11 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		if (!getValue) {
 			return null;
 		}
-		const bar = this.#data.valueAt(index);
-		if (bar === null) {
+		const row = isInteger(index) ? this.#store.rowAt(index) : -1;
+		if (row < 0) {
 			return null;
 		}
-		const price = this.#barFunction(bar.value);
+		const price = this.#store.closeAt(row) as BarPrice;
 		const radius = this.#markerRadius();
 		return { price, radius };
 	}
@@ -442,11 +370,6 @@ export class Series<T extends SeriesType = SeriesType> extends PriceDataSource i
 		if (this._priceScale !== null) {
 			this._priceScale.updateFormatter();
 		}
-	}
-
-	#updateBarFunction(): void {
-		const priceSource = 'close';
-		this.#barFunction = barFunction(priceSource);
 	}
 
 	#recreatePaneViews(): void {

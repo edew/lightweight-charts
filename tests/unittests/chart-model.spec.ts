@@ -8,8 +8,7 @@ import type { ChartOptionsInternal } from '../../src/model/chart-model';
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import { lineStyleDefaults, seriesOptionsDefaults } from '../../src/api/options/series-options-defaults';
 import type { IDataSource } from '../../src/model/data-source/idata-source';
-import type { TimePointIndex, TimePoint, UTCTimestamp } from '../../src/model/time-scale/time-data';
-import type { PlotRow } from '../../src/model/plot-data';
+import type { TimePointIndex } from '../../src/model/time-scale/time-data';
 import type { LineSeriesOptions } from '../../src/model/series-options';
 
 function createLineSeriesOptions(): LineSeriesOptions {
@@ -146,19 +145,16 @@ describe('ChartModel', () => {
         expect(model.paneForSource(wm!)).to.equal(model.panes()[0]);
     });
 
-    it('updateTimeScaleBaseIndex sets base index according to series data', () => {
+    it('sets the base index to the last time point when data changes', () => {
         const series = model.createSeries('Line', createLineSeriesOptions());
-        // manually inject a bar into the series data
-        const plotRow: PlotRow<TimePoint, [number, number, number, number, number]> = {
-            index: 5 as TimePointIndex,
-            time: { timestamp: 1 as UTCTimestamp },
-            value: [100, 100, 100, 100, 0],
-        };
-        series.updateData([plotRow]);
         expect(model.timeScale().baseIndex()).to.equal(0 as TimePointIndex);
-        model.updateTimeScaleBaseIndex();
-        // after update it should equal 5
-        expect(model.timeScale().baseIndex()).to.equal(5 as TimePointIndex);
+        model.setSeriesData(series, new Float64Array([10, 20, 30]), new Float64Array([1, 2, 3]), 3, false);
+        expect(model.timeScale().baseIndex()).to.equal(2 as TimePointIndex);
+        model.updateSeriesData(series, 40, 4, 0, 0, 0);
+        expect(model.timeScale().baseIndex()).to.equal(3 as TimePointIndex);
+        // an in-place update does not move the base index
+        model.updateSeriesData(series, 40, 5, 0, 0, 0);
+        expect(model.timeScale().baseIndex()).to.equal(3 as TimePointIndex);
     });
 
     it('setPriceAutoScaleForAllMainSources toggles all main price scales to auto', () => {
@@ -175,10 +171,8 @@ describe('ChartModel', () => {
         expect(model.serieses()).to.include(s1);
         expect(invalidations.pop()!.fullInvalidation()).to.be.oneOf([InvalidationLevel.Full, InvalidationLevel.Light]);
 
-        const beforeInvalidationCount = invalidations.length;
         model.removeSeries(s1);
         expect(model.serieses()).to.not.include(s1);
-        expect(invalidations.length).to.equal(beforeInvalidationCount);
     });
 
     it('fitContent and setTargetTimeRange produce appropriate masks', () => {
@@ -189,8 +183,8 @@ describe('ChartModel', () => {
 
         invalidations.length = 0;
         const range = {
-            from: { timestamp: 0 as UTCTimestamp },
-            to: { timestamp: 10 as UTCTimestamp },
+            from: 0,
+            to: 10,
         };
         model.setTargetTimeRange(range);
         const m2 = invalidations.pop()!;

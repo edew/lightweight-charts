@@ -12,23 +12,13 @@ export interface BusinessDay {
 	day: number;
 }
 
-export interface TimePoint {
-	timestamp: UTCTimestamp;
-	businessDay?: BusinessDay;
-}
-
-export interface TimePointsRange {
-	from: TimePoint;
-	to: TimePoint;
+/** A range of time, in UTC seconds. */
+export interface TimeSecondsRange {
+	from: number;
+	to: number;
 }
 
 export type TimePointIndex = Nominal<number, 'TimePointIndex'>;
-
-export interface TickMark {
-	index: TimePointIndex;
-	span: number;
-	time: TimePoint;
-}
 
 export interface TimedValue {
 	time: TimePointIndex;
@@ -71,4 +61,13 @@ export function visibleTimedValues(items: TimedValue[], range: BarsRange, extend
 	}
 
 	return { from: extendedFrom, to: extendedTo };
+}
+
+export function secondsToBusinessDay(seconds: number): BusinessDay {
+	const d = new Date(seconds * 1000);
+	return {
+		year: d.getUTCFullYear(),
+		month: d.getUTCMonth() + 1,
+		day: d.getUTCDate(),
+	};
 }

@@ -4,14 +4,13 @@
 import { candlestickStyleDefaults, lineStyleDefaults, seriesOptionsDefaults } from '../../src/api/options/series-options-defaults';
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import type { BarData, LineData } from '../../src/api/data-consumer';
-import { DataLayer, type SeriesUpdatePacket } from '../../src/api/data-layer';
+import { convertSeriesData, isBusinessDayTime, itemTimeToSeconds } from '../../src/api/data-convert';
 import { clone, type DeepPartial, merge } from '../../src/helpers/strict-type-checks';
 import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
 import type { Coordinate } from '../../src/model/coordinate';
 import type { IDataSource } from '../../src/model/data-source/idata-source';
 import type { Series } from '../../src/model/series';
 import type { SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from '../../src/model/series-options';
-import type { TimePointIndex } from '../../src/model/time-scale/time-data';
 
 export interface HeadlessSeries<T extends SeriesType> {
 	setData(data: (T extends 'Line' ? LineData : BarData)[]): void;
@@ -44,17 +43,9 @@ export function createHeadlessChart(params: HeadlessChartParams): HeadlessChart 
 	options.height = params.height;
 
 	const model = new ChartModel(() => {}, options);
-	const dataLayer = new DataLayer();
 	const pane = model.panes()[0];
 	model.setPaneHeight(pane, params.height);
 	model.setWidth(params.width);
-
-	function applySeriesUpdates(updates: Map<Series, SeriesUpdatePacket>, clear: boolean): void {
-		updates.forEach((value: SeriesUpdatePacket, key: Series) => {
-			key.updateData(value.update, clear);
-		});
-		model.updateTimeScaleBaseIndex(0 as TimePointIndex);
-	}
 
 	function drawSource(source: IDataSource, ctx: CanvasRenderingContext2D, pixelRatio: number): void {
 		for (const paneView of source.paneViews(pane)) {
@@ -74,14 +65,19 @@ export function createHeadlessChart(params: HeadlessChartParams): HeadlessChart 
 			const series = model.createSeries(type, strictOptions);
 			return {
 				setData(data: (LineData | BarData)[]): void {
-					const update = dataLayer.setSeriesData(series as Series, data as never[]).timeScaleUpdate;
-					model.updateTimeScale(update.index, update.changes, update.marks, true);
-					applySeriesUpdates(update.seriesUpdates, true);
+					const converted = convertSeriesData(series.store().stride, data);
+					model.setSeriesData(series as Series, converted.times, converted.values, converted.count, converted.businessDay);
 				},
 				update(item: LineData | BarData): void {
-					const update = dataLayer.updateSeriesData(series as Series, item as never).timeScaleUpdate;
-					model.updateTimeScale(update.index, update.changes, update.marks, false);
-					applySeriesUpdates(update.seriesUpdates, false);
+					const businessDay = model.dataStore().businessDay ?? isBusinessDayTime(item.time);
+					const time = itemTimeToSeconds(item.time, businessDay);
+					model.dataStore().businessDay = businessDay;
+					if (series.store().stride === 1) {
+						model.updateSeriesData(series as Series, time, (item as LineData).value, 0, 0, 0);
+					} else {
+						const bar = item as BarData;
+						model.updateSeriesData(series as Series, time, bar.open, bar.high, bar.low, bar.close);
+					}
 				},
 			};
 		},

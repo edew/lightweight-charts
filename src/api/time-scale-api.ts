@@ -1,13 +1,10 @@
-import { ensureNotNull } from '../helpers/assertions';
 import type { IDestroyable } from '../helpers/idestroyable';
 import { clone, type DeepPartial } from '../helpers/strict-type-checks';
 
 import { ChartModel } from '../model/chart-model';
-import type { TimePoint, TimePointIndex, TimePointsRange } from '../model/time-scale/time-data';
 import { TimeScale, type TimeScaleOptions } from '../model/time-scale/time-scale';
 
-import type { Time } from './data-consumer';
-import { convertTime } from './data-layer';
+import { secondsToTime, timeToSeconds } from './data-convert';
 import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 
 const enum Constants {
@@ -48,22 +45,19 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 			return null;
 		}
 
-		const points = this.#model.timeScale().points();
-		const firstIndex = ensureNotNull(points.firstIndex());
-		const lastIndex = ensureNotNull(points.lastIndex());
-
+		const store = this.#model.dataStore();
+		const businessDay = store.businessDay === true;
 		return {
-			from: timePointToTime(ensureNotNull(points.valueAt(Math.max(firstIndex, visibleBars.firstBar()) as TimePointIndex))),
-			to: timePointToTime(ensureNotNull(points.valueAt(Math.min(lastIndex, visibleBars.lastBar()) as TimePointIndex))),
+			from: secondsToTime(store.times[Math.max(0, visibleBars.firstBar())], businessDay),
+			to: secondsToTime(store.times[Math.min(store.length - 1, visibleBars.lastBar())], businessDay),
 		};
 	}
 
 	public setVisibleRange(range: TimeRange): void {
-		const convertedRange: TimePointsRange = {
-			from: convertTime(range.from),
-			to: convertTime(range.to),
-		};
-		this.#model.setTargetTimeRange(convertedRange);
+		this.#model.setTargetTimeRange({
+			from: timeToSeconds(range.from),
+			to: timeToSeconds(range.to),
+		});
 	}
 
 	public resetTimeScale(): void {
@@ -85,8 +79,4 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 	#timeScale(): TimeScale {
 		return this.#model.timeScale();
 	}
-}
-
-function timePointToTime(point: TimePoint): Time {
-	return point.businessDay || point.timestamp;
 }

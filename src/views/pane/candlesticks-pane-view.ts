@@ -1,7 +1,6 @@
 import { ChartModel } from '../../model/chart-model';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import type { Bar } from '../../model/series-data';
 import type { TimePointIndex } from '../../model/time-scale/time-data';
 import {
 	type CandlestickItem,
@@ -36,10 +35,10 @@ export class SeriesCandlesticksPaneView extends BarsPaneViewBase<'Candlestick', 
 		return this.#renderer;
 	}
 
-	protected _createRawItem(time: TimePointIndex, bar: Bar, colorer: SeriesBarColorer): CandlestickItem {
-		const style = colorer.barStyle(time);
+	protected _createRawItem(time: TimePointIndex, row: number, colorer: SeriesBarColorer): CandlestickItem {
+		const style = colorer.barStyle(row);
 		return {
-			...this._createDefaultItem(time, bar, colorer),
+			...this._createDefaultItem(time, row),
 			color: style.barColor,
 			wickColor: style.barWickColor,
 			borderColor: style.barBorderColor,

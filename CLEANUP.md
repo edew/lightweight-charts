@@ -58,6 +58,16 @@ The numbers in the table above came from a partial script. `npm run bench` drive
 
 One draw with 1,000,000 visible bars: 429 ms. The retained figure is higher than in the first table because it includes the view item arrays. A tick with a draw costs 21 ms at 100,000 bars: the view rebuilds one item for each bar, with a binary search for each candle color.
 
+**Phase 3 (columnar store):**
+
+| Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs |
+|---|---|---|---|---|---|---|
+| 10,000 | 3.8 | 381 | 2.8 | 455 | 2.6 | 559 |
+| 100,000 | 4.1 | 298 | 1.2 | 11,031 | 1.8 | 13,030 |
+| 1,000,000 | 32.2 | 300 | 0.7 | 138,550 | 1.9 | 156,810 |
+
+One draw with 1,000,000 visible bars: 154 ms. Bundle (`.mjs`): 152.99 kB, gzip 38.38 kB. The append timing excludes the one-time growth of the typed arrays. The memory and the draw cost that stay are the view item arrays; Phase 4 removes them.
+
 Largest modules now (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8,459; `price-axis-widget.ts` 7,989; `time-scale.ts` 7,028; `chart-widget.ts` 6,245; `time-axis-widget.ts` 6,031; `chart-model.ts` 5,833; `plot-list.ts` 4,923; `mouse-event-handler.ts` 4,757. By directory: model 47.8 kB, gui 38.5 kB, api 10.9 kB, views 10.4 kB, renderers 9.2 kB.
 
 ## Phase 0: environment and safety net (do first)
@@ -140,7 +150,16 @@ The 2026-08 separator bugs (`if (i > 1)` at `src/gui/chart-widget.ts:492`, and t
 
 **Transition:** the views and renderers still exist in this phase. Fill their item arrays from the store, so that the Phase 0 golden images are still the test. Phase 4 removes the item arrays.
 
-**Done when:** `npm run bench` meets the memory, `setData` and append targets, and `npm run test:visual` passes with no golden change.
+**Done 2026-11-18.** `src/model/data-store.ts`, `src/api/data-convert.ts`. All 68 golden images pass with no change. Also done in this phase, earlier than planned:
+
+- Tick marks (Phase 6.2, partly): `TickMarks.build` reads `spans` and returns an `Int32Array` of accepted indexes. `TimeScale.marks()` finds the visible marks with a binary search. The build is still for all time points, not for the visible window: the old greedy algorithm starts at the first time point, and a build for the window only would make labels move during a scroll. Phase 6 must find a rule that does not depend on the window, or keep this.
+- Autoscale (Phase 5.1): `Series.autoscaleInfo` is a plain scan of the visible rows. The chunked cache is deleted with `PlotList`.
+- In-place tick (Phase 6.1): `ChartModel.updateSeriesData` does not touch the time scale for `UpdateKind.InPlace`.
+- `ChartModel.updateTimeScaleBaseIndex` dead block (Phase 6.5) is deleted.
+- `PriceScale.firstValue()` compared two objects with `<`, which is always false. It now compares time indexes.
+- An update with a time that is older than the last bar of the series now throws. Before, it was merged into the middle.
+
+Original gate: `npm run bench` meets the memory, `setData` and append targets, and `npm run test:visual` passes with no golden change. The memory target is not met until Phase 4 removes the view items.
 
 ## Phase 4: frame record, draw functions, `SeriesKind`, panes
 

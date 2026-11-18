@@ -1,5 +1,4 @@
 import { ensureNotNull } from '../helpers/assertions';
-import { notNull } from '../helpers/strict-type-checks';
 
 import { LineStyle, type LineWidth } from '../renderers/draw-line';
 import { CrosshairMarksPaneView } from '../views/pane/crosshair-marks-pane-view';
@@ -17,8 +16,7 @@ import type { Coordinate } from './coordinate';
 import { DataSource } from './data-source/data-source';
 import { Pane } from './pane';
 import { PriceScale } from './price-scale/price-scale';
-import { Series } from './series';
-import type { TimePoint, TimePointIndex } from './time-scale/time-data';
+import type { TimePointIndex } from './time-scale/time-data';
 
 export interface CrosshairPriceAndCoordinate {
 	price: number;
@@ -26,7 +24,7 @@ export interface CrosshairPriceAndCoordinate {
 }
 
 export interface CrosshairTimeAndCoordinate {
-	time: TimePoint | null;
+	time: number | null;
 	coordinate: number;
 }
 
@@ -118,7 +116,7 @@ export class Crosshair extends DataSource {
 		const valueTimeProvider = (rawIndexProvider: RawIndexProvider, rawCoordinateProvider: RawCoordinateProvider) => {
 			return () => {
 				return {
-					time: this.#model.timeScale().indexToUserTime(rawIndexProvider()),
+					time: this.#model.timeScale().indexToTime(rawIndexProvider()),
 					coordinate: rawCoordinateProvider(),
 				};
 			};
@@ -283,11 +281,8 @@ export class Crosshair extends DataSource {
 	}
 
 	#setIndexToLastSeriesBarIndex(): void {
-		const lastIndexes = this.#model.serieses()
-			.map((s: Series) => s.bars().lastIndex())
-			.filter(notNull);
-		const lastBarIndex = (lastIndexes.length === 0) ? null : (Math.max(...lastIndexes) as TimePointIndex);
-		this.#index = lastBarIndex !== null ? lastBarIndex : NaN as TimePointIndex;
+		const count = this.#model.dataStore().length;
+		this.#index = (count !== 0 ? count - 1 : NaN) as TimePointIndex;
 	}
 
 	#createPriceAxisViewOnDemand(map: Map<PriceScale, CrosshairPriceAxisView>, priceScale: PriceScale, valueProvider: PriceAndCoordinateProvider): IPriceAxisView {

@@ -6,7 +6,6 @@ import type { Coordinate } from '../../model/coordinate';
 import { type PricedValue, PriceScale } from '../../model/price-scale/price-scale';
 import { Series } from '../../model/series';
 import { SeriesBarColorer } from '../../model/series-bar-colorer';
-import type { Bar } from '../../model/series-data';
 import type { TimedValue, TimePointIndex } from '../../model/time-scale/time-data';
 import { TimeScale } from '../../model/time-scale/time-scale';
 
@@ -34,15 +33,12 @@ export abstract class LinePaneViewBase<TSeriesType extends 'Line', ItemType exte
 	}
 
 	protected _fillRawPoints(): void {
-		const barValueGetter = this._series.barFunction();
-		const newItems: ItemType[] = [];
+		const store = this._series.store();
 		const colorer = this._series.barColorer();
-		this._series.bars().each((index: TimePointIndex, bar: Bar) => {
-			const value = barValueGetter(bar.value);
-			const item = this._createRawItem(index, value, colorer);
-			newItems.push(item);
-			return false;
-		});
+		const newItems: ItemType[] = new Array(store.length);
+		for (let row = 0; row < store.length; row++) {
+			newItems[row] = this._createRawItem(store.timeIndexAt(row) as TimePointIndex, store.values[row] as BarPrice, colorer);
+		}
 		this._items = newItems;
 	}
 }

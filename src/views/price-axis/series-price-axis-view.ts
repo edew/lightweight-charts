@@ -43,7 +43,7 @@ export class SeriesPriceAxisView extends PriceAxisView {
 		const showSymbolLabel = this.#source.title() !== '';
 		const showPriceAndPercentage = seriesOptions.seriesLastValueMode === PriceAxisLastValueMode.LastPriceAndPercentageValue;
 
-		const lastValueData = this.#source.lastValueData(undefined, false);
+		const lastValueData = this.#source.lastValueData();
 		if (lastValueData.noData) {
 			return;
 		}

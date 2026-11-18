@@ -1,4 +1,3 @@
-import { ensureNotNull } from '../../helpers/assertions';
 import { generateTextColor } from '../../helpers/color';
 
 import { ChartModel } from '../../model/chart-model';
@@ -60,16 +59,15 @@ export class CrosshairTimeAxisView extends TimeAxisView {
 			return;
 		}
 
-		const currentTime = timeScale.indexToUserTime(this.#crosshair.appliedIndex());
 		data.width = timeScale.width();
 
 		const value = this.#valueProvider();
-		if (!value.time) {
+		if (value.time === null) {
 			return;
 		}
 
 		data.coordinate = value.coordinate;
-		data.text = timeScale.formatDateTime(ensureNotNull(currentTime));
+		data.text = timeScale.formatDateTime(value.time);
 		data.visible = true;
 		data.background = options.labelBackgroundColor;
 		data.color = generateTextColor(options.labelBackgroundColor);

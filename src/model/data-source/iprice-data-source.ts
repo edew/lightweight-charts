@@ -3,11 +3,11 @@ import type { IPriceFormatter } from '../../formatters/iformatter';
 import type { AutoscaleInfo } from './autoscale-info';
 import { ChartModel } from '../chart-model';
 import type { IDataSource } from './idata-source';
-import type { TimePoint, TimePointIndex } from '../time-scale/time-data';
+import type { TimePointIndex } from '../time-scale/time-data';
 
 export interface FirstValue {
 	value: number;
-	timePoint: TimePoint;
+	timeIndex: number;
 }
 
 export interface IPriceDataSource extends IDataSource {
