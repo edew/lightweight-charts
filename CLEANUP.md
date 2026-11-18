@@ -13,18 +13,52 @@ Line numbers were correct at audit time. **Find each one again with grep before 
 
 ## Status (2026-11-18)
 
+All phases are done. The sections after "Open items" are the plan as it was written, with notes; they are kept as history.
+
 | Phase | State |
 |---|---|
 | 0 Environment and safety net | Done |
 | 1 Small bug fixes | Done |
 | 3 Columnar store | Done |
 | 4 Draw functions, `SeriesKind`, panes | Done |
-| 5 Autoscale and level of detail | Autoscale done. Level of detail is not necessary: see Phase 5 |
-| 6 Time scale and tick marks | Done except items 3 and 4 |
+| 5 Autoscale and level of detail | Autoscale done. Level of detail is not built: see "Open items" |
+| 6 Time scale and tick marks | Done |
 | 7 GUI | Done. Touch input is not tested on a device |
-| 8 Platform replacements and API layer | Partly done: see Phase 8 |
-| 9 Packaging | Open |
-| 10 Documents | Open |
+| 8 Platform replacements and API layer | Done |
+| 9 Packaging | Done |
+| 10 Documents | Done |
+
+### Result
+
+| Metric | Start | Now | Target |
+|---|---|---|---|
+| Bundle, UMD minified | 130.63 kB | 70.48 kB | < 60 kB |
+| Bundle, UMD gzip | 36.80 kB | 22.91 kB | < 20 kB |
+| Bundle, ES module (`.js`) | 165.81 kB | 90.76 kB | |
+| Bundle, ES module gzip | 40.87 kB | 25.64 kB | |
+| Runtime dependencies | 1 | 0 | 0 |
+| `src` lines | 14,195 | 8,121 | |
+| Classes / interfaces | 75 / 118 | 23 / 70 | |
+| Canvas elements for one chart | 7 | 2 | 2 |
+| `setData`, 100,000 bars | 94.6 ms | 4.2 ms | < 10 ms |
+| Retained memory for each bar | 965 B | 33 B | < 50 B |
+| In-place tick + draw, 100,000 bars | 20,906 µs | 13 µs | |
+| In-place tick + draw, 1,000,000 bars | 306,705 µs | 12 µs | |
+| Append + draw, 1,000,000 bars | 311,423 µs | 12 µs | |
+| Unit and pixel tests | 270 | 297 | |
+
+The two bundle size targets are not met. See "Open items".
+
+### Open items
+
+1. **Bundle size.** 22.9 kB gzip against a target of 20 kB. The largest files are `price-scale.ts` (737 lines), `time-scale.ts` (712), `chart-widget.ts` (684) and `chart-model.ts` (526). The price scale still has the four modes (normal, log, percentage, indexed to 100) and the scale and scroll gestures as methods of one class; that is the next place to look.
+2. **Touch input.** Long tap, tracking mode and pinch are ported to Pointer Events but were checked only with a mouse. Test on a touch device.
+3. **Level of detail.** `TimeScale` does not permit a bar spacing below 0.5 CSS pixels, so there are at most two bars for each CSS pixel and the draw cost is already limited by the canvas width. Level of detail is necessary only if that limit is removed.
+4. **Tick marks on zoom.** A change of the minimum distance between marks builds all marks again (about 2 ms for 100,000 time points, 18 ms for 1,000,000). Appends are incremental. A rule that does not depend on the first time point would make this constant, but it changes which labels are shown.
+5. **Draw order of series.** The series that was added last is below the other series. This is the old behavior. Decide if it must be the opposite.
+6. **Pane API.** `chart.panes()` returns `IPaneApi` with `height()`, `stretchFactor()`, `setStretchFactor()`, `applyPriceScaleOptions()` and `priceScaleOptions()`. The plan said to confirm this shape with the user.
+7. **`touch-action`.** One element has one CSS `touch-action`, so the page scroll setting of the pane also applies on the axes.
+8. **`website/`, `lib/`, `.github/copilot-instructions.md`.** `website/` and `lib/` are old build output that git ignores; they can be deleted from the disk. The Copilot file now points to `CLAUDE.md`.
 
 **What is different from the plan below:**
 
@@ -32,6 +66,8 @@ Line numbers were correct at audit time. **Find each one again with grep before 
 - **Candle passes.** The candle draw code keeps the old order (all wicks, all borders, all bodies) and writes `fillStyle` when the color changes from bar to bar. Two passes (up, down) would change pixels where bars overlap at a small bar spacing, and the golden images had to stay the same.
 - **Draw order of series.** The series that was added last is drawn first (below). This is the old behavior; the golden images showed it. Upstream changed this in later versions. It is one loop direction in `drawPane` if you want the other order.
 - **Tick marks.** The build is still for all time points (the greedy rule starts at the first time point), but it is incremental: new time points at the end build only the end again. A change of the bar spacing that changes the minimum distance builds all marks again: about 2 ms for 100,000 time points.
+- **Date and time labels.** Tick mark labels come from one cached `Intl.DateTimeFormat` for each weight, with `timeZone: 'UTC'`.
+- **Type declarations.** `tsc` writes a directory `dist/types/`, not one bundled file, so no new dependency was necessary.
 - **Touch.** One element has one CSS `touch-action`, so the page scroll setting of the pane (`handleScroll.vertTouchDrag` / `horzTouchDrag`) also applies on the axes.
 - **Hovered series.** `MouseEventParams.hoveredSeries` is removed: no code could set it.
 
@@ -101,6 +137,16 @@ One draw with 1,000,000 visible bars: 154 ms. Bundle (`.mjs`): 152.99 kB, gzip 3
 | 1,000,000 | 32.4 | 34 | 0.4 | 12 | 0.8 | 20 | 12 |
 
 Bundle (`.mjs`): 94.66 kB, gzip 26.52 kB. `src`: 8,348 lines (was 14,195), 26 classes and 71 interfaces (were 75 and 118). No runtime dependency. All costs are now constant in the number of bars, except `setData`.
+
+**Final (after Phases 8 and 9):**
+
+| Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs | Pan frame µs |
+|---|---|---|---|---|---|---|---|
+| 10,000 | 3.7 | 74 | 1.7 | 28 | 2.1 | 19 | 13 |
+| 100,000 | 4.2 | 33 | 0.4 | 13 | 0.9 | 15 | 12 |
+| 1,000,000 | 31.0 | 34 | 0.4 | 12 | 0.5 | 12 | 11 |
+
+The context in the benchmark does nothing, so these numbers are the cost of the library code and not of the rasterizer.
 
 Largest modules at the start (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8,459; `price-axis-widget.ts` 7,989; `time-scale.ts` 7,028; `chart-widget.ts` 6,245; `time-axis-widget.ts` 6,031; `chart-model.ts` 5,833; `plot-list.ts` 4,923; `mouse-event-handler.ts` 4,757. By directory: model 47.8 kB, gui 38.5 kB, api 10.9 kB, views 10.4 kB, renderers 9.2 kB.
 
