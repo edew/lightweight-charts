@@ -23,7 +23,7 @@ This is a pared-down fork of TradingView's `lightweight-charts` (v2.0.0), develo
 
 `npm run bench` and `npm run test:visual` do not exist until Phase 0 of `CLEANUP.md` is done.
 
-Verify changes with `npm run typecheck && npm test` before considering work complete. If a command is missing from `node_modules`, run `npm install` first.
+Verify changes with `npm run typecheck && npm test` before considering work complete. Use `npm ci` for a clean install; `package-lock.json` is committed.
 
 ## Target design (not built yet; see `CLEANUP.md`)
 
@@ -64,7 +64,7 @@ Known facts about the current code. Older documents said the opposite for the fi
 - **Ingest:** an in-place tick writes values in place and changes nothing in the time scale. An append is amortized O(1). An older timestamp throws.
 - **Lookup:** time to index is a binary search. No linear scan over all points.
 - **Tiered invalidation** (`src/model/invalidate-mask.ts`): `None < Cursor < Light < Full`. Cursor draws only the overlay. Use the lowest level that is correct.
-- **RAF batching:** all changes in a frame merge into one draw. An invalidation does not draw synchronously. A `Full` escalation during a Light draw applies in the same frame (`perf-summary-2.md`, Deep dive A).
+- **RAF batching:** all changes in a frame merge into one draw. An invalidation does not draw synchronously. A `Full` escalation during a Light draw applies in the same frame (`CLEANUP.md`, Phase 7, "RAF mask ownership").
 - **Draw only what is visible.** Loops run over `[from, to)`. When a bar is narrower than one device pixel, draw one aggregate for each pixel column.
 - **Cheap inner loops.** Write `fillStyle` / `strokeStyle` only when the value changes. One `fill()` or `stroke()` for each color run. No `save` / `restore` in a bar loop.
 - **Pixels.** Series draw in physical bitmap pixels with rounding. Read `devicePixelRatio` one time on resize, not in a draw path.

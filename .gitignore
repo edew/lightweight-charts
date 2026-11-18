@@ -3,7 +3,6 @@
 # Node.js & npm
 node_modules/
 npm-debug.log*
-package-lock.json
 
 # VS Code, Idea, Sublime Text
 .idea/**

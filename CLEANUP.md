@@ -50,7 +50,7 @@ Largest modules now (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8
 
 ### 0.1 Repair the install
 
-`node_modules` has no `vite` and no `vitest`, and `fancy-canvas` is 2.1.0 while `package.json` pins 0.2.1. There is no lock file. Run `npm install`, commit the lock file, and make sure that `npm run typecheck`, `npm test` and `npm run build` pass before any other work.
+Done 2026-11-18. `package-lock.json` is committed and `.npmrc` (`package-lock=false`) is deleted. Use `npm ci` for a clean install. Baseline: typecheck passes, 270 tests pass, build passes, lint has 77 errors (dead code that later phases delete).
 
 ### 0.2 Benchmark script
 
@@ -241,8 +241,6 @@ interface Pane {
 
 ## Phase 7: GUI
 
-Read `perf-summary-2.md` Deep dive A before you change the RAF code.
-
 1. **Layout as data.** Add a pure function `layout(width, height, panes, axisSizes): Layout`. It returns a rectangle for each pane, each price axis, each separator, the time axis and the corners. Pane heights come from the stretch factors. No DOM in this function.
 2. **Draw with no DOM.** Add `drawStatic(ctx, frame, layout, model)` and `drawOverlay(ctx, frame, layout, model)`. They set `translate` + clip for each rectangle and call the Phase 4 draw functions. The DOM code only makes the canvases, observes size, and sends pointer events. This split is what makes the full-chart tests in "Test gates" possible.
 3. **Two canvases.** One static canvas and one overlay canvas in one `div`, for any number of panes. Delete the `<table>`, `price-axis-stub.ts`, the three widget classes, and most of `takeScreenshot` (it becomes one `drawImage` of each canvas).
@@ -252,7 +250,11 @@ Read `perf-summary-2.md` Deep dive A before you change the RAF code.
 7. **Resolve the crosshair one time for each frame.** One drag event now moves the crosshair three or four times and fires the public callback each time. Set a dirty flag and resolve it in the draw step. Fire `crosshairMoved` at most one time for each frame.
 8. **Overlay clears.** A Cursor frame clears and draws only the overlay canvas.
 9. **Delete `LabelsImageCache`.** Draw price labels with `fillText`, as the time axis does.
-10. **RAF mask ownership** (`#invalidateHandler`): take ownership of the mask before the draw (`const mask = this.#invalidateMask; this.#invalidateMask = null`). A Full escalation during a Light draw must still apply in the same frame. This removes the wasted RAF after each Full draw.
+10. **RAF mask ownership** (`#invalidateHandler`): take ownership of the mask before the draw (`const mask = this.#invalidateMask; this.#invalidateMask = null`). This removes the wasted RAF after each Full draw. Keep the fold-forward behavior:
+	- An invalidation does not draw. It merges into the mask field and schedules one RAF.
+	- A Light draw can change the model on the same stack: autoscale makes a price label wider, the price axis width changes, and thus the time scale width changes. That change calls the invalidate handler again, during the draw.
+	- If the mask field has a Full level after the update step and before the paint step, do the layout, autoscale and time scale steps again in the same frame, then paint one time. The Light frame with the old width must not paint.
+	- Add a data test for this case: one draw call, one paint, no second RAF.
 11. **Layout recalculation:** set sizes for all regions, then recalculate one time.
 12. Cache the font string when options change. Do not build it in a draw path.
 13. Remaining dead code in files that stay (from 2026-08): `ChartWidget.#priceAxisWidthChanged` and `#priceAxisWidth`; the duplicate `drawScaled` in `canvas-utils.ts`; `InvalidateMask.#force`; `Crosshair.#subscribed`.
@@ -282,7 +284,6 @@ Read `perf-summary-2.md` Deep dive A before you change the RAF code.
 
 - Delete the "Current code" section.
 - Record the final numbers from "Baseline and targets".
-- Delete `perf-summary.md` and `perf-summary-2.md`, or mark them as history.
 
 ## Test gates for each phase
 
