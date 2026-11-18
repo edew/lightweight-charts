@@ -287,7 +287,6 @@ export class ChartWidget implements IDestroyable {
 				if (this.#options.priceScale.position === 'right') {
 					targetX = firstPane.getSize().w;
 					drawStub();
-					ctx.restore();
 				}
 			}
 		});

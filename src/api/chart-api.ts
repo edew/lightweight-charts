@@ -90,7 +90,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 			merge(clone(chartOptionsDefaults), toInternalOptions(options)) as ChartOptionsInternal;
 
 		this.#chartWidget = new ChartWidget(container, internalOptions);
-		this.#chartWidget.model().timeScale().visibleBarsChanged().subscribe(this.#onVisibleBarsChanged.bind(this));
+		this.#chartWidget.model().timeScale().visibleBarsChanged().subscribe(this.#onVisibleBarsChanged.bind(this), this);
 
 		this.#chartWidget.clicked().subscribe(
 			(paramSupplier: MouseEventParamsImplSupplier) => {
@@ -131,7 +131,7 @@ export class ChartApi implements IChartApi, DataUpdatesConsumer<SeriesType> {
 		this.#clickedDelegate.destroy();
 		this.#crosshairMovedDelegate.destroy();
 		this.#dataLayer.destroy();
-		(this.#dataLayer as unknown as null)
+		(this.#dataLayer as unknown as null) = null;
 	}
 
 	public resize(width: number, height: number, forceRepaint?: boolean): void {

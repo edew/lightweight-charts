@@ -62,4 +62,14 @@ describe('TickMarks', () => {
 		expect(marks.indexToTime(1)).to.equal(null);
 		expect(marks.build(1, 10)).to.deep.equal([]);
 	});
+
+	it('build gives priority to the higher span when marks compete for space', () => {
+		const marks = new TickMarks();
+		// the low span is inserted first, as the data layer does (first point has span 20)
+		marks.merge([mark(0, 20, 100), mark(1, 20, 200), mark(2, 70, 300), mark(3, 20, 400)]);
+
+		const built = marks.build(1, 3); // marks must be at least 3 indexes apart
+		const indexes = built.map((m) => m.index);
+		expect(indexes).to.include(2);
+	});
 });

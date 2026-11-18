@@ -879,7 +879,7 @@ export class PriceScale {
 
 				if (autoScaleInfo !== null && autoScaleInfo.margins !== null) {
 					marginAbove = Math.max(marginAbove, autoScaleInfo.margins.above);
-					marginBelow = Math.max(marginAbove, autoScaleInfo.margins.below);
+					marginBelow = Math.max(marginBelow, autoScaleInfo.margins.below);
 				}
 			}
 		}

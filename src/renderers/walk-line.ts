@@ -12,7 +12,7 @@ export function walkLine(
 	lineType: LineType,
 	visibleRange: SeriesItemsIndexesRange
 ): void {
-	if (points.length === 0) {
+	if (points.length === 0 || visibleRange.from >= visibleRange.to) {
 		return;
 	}
 

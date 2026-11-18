@@ -109,7 +109,10 @@ export class TickMarks {
 		// Each pass tries to fill in smaller marks between already-accepted bigger marks,
 		// keeping only candidates that satisfy the minimum spacing on both sides.
 		let acceptedMarks: TickMark[] = [];
-		for (const currentSpanMarks of this.#marksBySpan.values()) {
+		// higher spans (year, month, day) go first, so they win when marks compete for space
+		const spans = Array.from(this.#marksBySpan.keys()).sort((a: number, b: number) => b - a);
+		for (const span of spans) {
+			const currentSpanMarks = ensureDefined(this.#marksBySpan.get(span));
 			const previouslyAccepted = acceptedMarks;
 			acceptedMarks = [];
 

@@ -108,6 +108,7 @@ export class TimeAxisWidget implements MouseEventHandlers, IDestroyable {
 	}
 
 	public destroy(): void {
+		this.#chart.model().mainPriceScaleOptionsChanged().unsubscribeAll(this);
 		this.#mouseEventHandler.destroy();
 		if (this.#stub !== null) {
 			this.#stub.destroy();

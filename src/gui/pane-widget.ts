@@ -119,6 +119,7 @@ export class PaneWidget implements IDestroyable {
 	}
 
 	public destroy(): void {
+		this.#chart.model().mainPriceScaleOptionsChanged().unsubscribeAll(this);
 		if (this.#priceAxisWidget !== null) {
 			this.#priceAxisWidget.destroy();
 		}

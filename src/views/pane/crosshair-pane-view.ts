@@ -40,6 +40,7 @@ export class CrosshairPaneView implements IPaneView {
 	public renderer(height: number, width: number): IPaneRenderer {
 		if (this.#invalidated) {
 			this.#updateImpl();
+			this.#invalidated = false;
 		}
 
 		return this.#renderer;

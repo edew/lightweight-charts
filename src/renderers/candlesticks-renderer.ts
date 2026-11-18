@@ -133,7 +133,7 @@ export class PaneRendererCandlesticks implements IPaneRenderer {
 			const top = Math.round(Math.min(bar.openY, bar.closeY) * pixelRatio);
 			const bottom = Math.round(Math.max(bar.openY, bar.closeY) * pixelRatio);
 
-			if (barSpacing > 2 * borderWidth) {
+			if (barSpacing * pixelRatio > 2 * borderWidth) {
 				strokeRectInnerWithFill(ctx, left, top, right - left + 1, bottom - top + 1, borderWidth);
 			} else {
 				ctx.fillRect(left, top, right - left + 1, bottom - top + 1);
