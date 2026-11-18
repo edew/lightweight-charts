@@ -6,35 +6,74 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
 	<title>Debug page</title>
 	<script type="module">
-		import { createChart, version } from "./src/index.ts";
+		import { Candlestick, createChart, Line, version } from "./src/index.ts";
 
 		console.log(version());
 
-		function generateData() {
+		// fixed pseudo-random numbers, so that the page is the same on each load
+		let seed = 1;
+		function random() {
+			seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+			return seed / 4294967296;
+		}
+
+		function generateCandles(count) {
 			const res = [];
-			const time = new Date(Date.UTC(2018, 0, 1, 0, 0, 0, 0));
-			for (let i = 0; i < 500; ++i) {
-				res.push({
-					time: time.getTime() / 1000,
-					value: i,
-				});
-
-				time.setUTCDate(time.getUTCDate() + 1);
+			let time = Date.UTC(2018, 0, 1) / 1000;
+			let close = 100;
+			for (let i = 0; i < count; ++i) {
+				const open = close;
+				close = Math.round((open + (random() - 0.5) * 4) * 100) / 100;
+				const high = Math.max(open, close) + random() * 2;
+				const low = Math.min(open, close) - random() * 2;
+				res.push({ time, open, high, low, close });
+				time += 24 * 60 * 60;
 			}
-
 			return res;
 		}
 
-		const chart = window.chart = createChart(document.getElementById('container'));
+		const container = document.getElementById('container');
+		const chart = window.chart = createChart(container);
 
-		const mainSeries = chart.addLineSeries({
-			priceFormat: {
-				minMove: 1,
-				precision: 0,
-			},
-		});
+		const candles = generateCandles(500);
+		const mainSeries = window.mainSeries = chart.addSeries(Candlestick({ title: 'MAIN' }));
+		mainSeries.setData(candles);
 
-		mainSeries.setData(generateData());
+		// a moving average on the same price scale
+		const average = chart.addSeries(Line({ color: '#f5a623', lineWidth: 2, lastValueVisible: false, crosshairMarkerVisible: false }));
+		average.setData(candles.map((bar, i) => {
+			const from = Math.max(0, i - 19);
+			let sum = 0;
+			for (let j = from; j <= i; j++) {
+				sum += candles[j].close;
+			}
+			return { time: bar.time, value: sum / (i - from + 1) };
+		}));
+
+		// a second pane
+		const volume = chart.addSeries(Line({ pane: 1, color: '#7b61ff', lineWidth: 1, priceFormat: { type: 'volume', precision: 1, minMove: 1 } }));
+		volume.setData(candles.map((bar) => ({ time: bar.time, value: Math.round(1000 + random() * 9000) })));
+		chart.panes()[0].setStretchFactor(3);
+
+		chart.subscribeCrosshairMove((param) => { window.lastCrosshair = param; });
+		chart.subscribeClick((param) => console.log('click', param.time, param.point));
+
+		window.addEventListener('resize', () => chart.resize(container.clientWidth, container.clientHeight));
+
+		// streaming: add ?stream to the address
+		if (location.search.includes('stream')) {
+			let last = { ...candles[candles.length - 1] };
+			let ticks = 0;
+			setInterval(() => {
+				if (++ticks % 10 === 0) {
+					last = { time: last.time + 24 * 60 * 60, open: last.close, high: last.close, low: last.close, close: last.close };
+				}
+				last.close = Math.round((last.close + (Math.random() - 0.5)) * 100) / 100;
+				last.high = Math.max(last.high, last.close);
+				last.low = Math.min(last.low, last.close);
+				mainSeries.update(last);
+			}, 100);
+		}
 	</script>
 </head>
 

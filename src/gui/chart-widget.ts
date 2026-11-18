@@ -1,115 +1,157 @@
-import { ensureDefined, ensureNotNull } from '../helpers/assertions';
-import { drawScaled } from '../helpers/canvas-helpers';
-import { Delegate } from '../helpers/delegate';
+// The DOM part of the chart: two canvases, size observation, the frame loop and
+// pointer input. All drawing is in src/draw; all state is in the model.
+
+import { ensureNotNull } from '../helpers/assertions';
 import type { IDestroyable } from '../helpers/idestroyable';
-import type { ISubscription } from '../helpers/isubscription';
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import type { BarPrice, BarPrices } from '../model/bar';
+import { drawOverlay, drawStatic, layoutChart, layoutPriceAxisWidth } from '../draw/chart';
+import { type HitResult, hitTest, type Layout, Region } from '../draw/layout';
+
 import { ChartModel, type ChartOptionsInternal } from '../model/chart-model';
 import type { Coordinate } from '../model/coordinate';
 import { InvalidateMask, InvalidationLevel } from '../model/invalidate-mask';
-import type { Point } from '../model/point';
-import { Series } from '../model/series';
+import type { Pane } from '../model/pane';
 import type { TimePointIndex } from '../model/time-scale/time-data';
 
-import { createPreconfiguredCanvas, getCanvasDevicePixelRatio, getContext2D, Size } from './canvas-utils';
-import { PaneSeparator, SEPARATOR_HEIGHT } from './pane-separator';
-import { PaneWidget } from './pane-widget';
-import { TimeAxisWidget } from './time-axis-widget';
+import { bindPointerEvents, type PointerHandlers } from './pointer-events';
 
-export interface MouseEventParamsImpl {
-	/** UTC seconds */
-	time?: number;
-	point?: Point;
-	seriesPrices: Map<Series, BarPrice | BarPrices>;
-	hoveredSeries?: Series;
-	hoveredObject?: string;
+/** A separator can be grabbed this number of pixels above and below it. */
+const SEPARATOR_GRAB_MARGIN = 4;
+const MIN_PANE_HEIGHT_ON_RESIZE = 30;
+const MIN_CHART_WIDTH = 70;
+const MIN_CHART_HEIGHT = 50;
+
+export interface Point {
+	x: number;
+	y: number;
 }
 
-export type MouseEventParamsImplSupplier = () => MouseEventParamsImpl;
+/** Called with the time index under the pointer and the pointer position in the pane. */
+export type ChartPointerCallback = (index: TimePointIndex | null, point: Point | null) => void;
 
-export class ChartWidget implements IDestroyable {
+function createCanvas(zIndex: string): HTMLCanvasElement {
+	const canvas = document.createElement('canvas');
+	const style = canvas.style;
+	style.position = 'absolute';
+	style.left = '0';
+	style.top = '0';
+	style.width = '100%';
+	style.height = '100%';
+	style.zIndex = zIndex;
+	// the chart does all selection and scroll handling itself
+	style.userSelect = 'none';
+	style.setProperty('-webkit-user-select', 'none');
+	style.setProperty('-webkit-tap-highlight-color', 'transparent');
+	return canvas;
+}
+
+export class ChartWidget implements IDestroyable, PointerHandlers {
+	/** Set by the API layer. */
+	public onClick: ChartPointerCallback | null = null;
+	public onCrosshairMove: ChartPointerCallback | null = null;
+
 	readonly #options: ChartOptionsInternal;
-	#paneWidgets: PaneWidget[] = [];
-	#paneSeparators: PaneSeparator[] = [];
 	readonly #model: ChartModel;
-	#drawRafId: number = 0;
-	readonly #priceAxisWidthChanged: Delegate<number> = new Delegate();
-	#height: number = 0;
+	readonly #element: HTMLDivElement;
+	readonly #staticCanvas: HTMLCanvasElement;
+	readonly #overlayCanvas: HTMLCanvasElement;
+	readonly #staticCtx: CanvasRenderingContext2D;
+	readonly #overlayCtx: CanvasRenderingContext2D;
+	readonly #resizeObserver: ResizeObserver;
+	readonly #unbindPointerEvents: () => void;
+	readonly #onWheelBound: (event: WheelEvent) => void;
+
+	// size in CSS pixels, and the size of the canvas bitmaps in device pixels
 	#width: number = 0;
-	#priceAxisWidth: number = 0;
-	#element: HTMLElement;
-	readonly #tableElement: HTMLElement;
-	#timeAxisWidget: TimeAxisWidget;
+	#height: number = 0;
+	#bitmapWidth: number = 0;
+	#bitmapHeight: number = 0;
+	#pixelRatio: number = 1;
+	/** True when the browser gives the exact bitmap size in device pixels. */
+	#exactBitmapSize: boolean = false;
+	#layout: Layout;
+
+	// frame loop
 	#invalidateMask: InvalidateMask | null = null;
-	#drawPlanned: boolean = false;
-	#clicked: Delegate<MouseEventParamsImplSupplier> = new Delegate();
-	#crosshairMoved: Delegate<MouseEventParamsImplSupplier> = new Delegate();
-	#onWheelBound: (event: WheelEvent) => void;
+	#rafId: number = 0;
+	/** True while a frame prepares the model: invalidations from that step need no new frame. */
+	#preparing: boolean = false;
+
+	// pointer state
+	readonly #hit: HitResult = { region: Region.None, index: -1, x: 0, y: 0 };
+	#dragRegion: Region = Region.None;
+	#dragIndex: number = -1;
+	#isScrolling: boolean = false;
+	#scrollStartX: number = NaN;
+	#scrollStartY: number = NaN;
+	#prevPinchScale: number = 1;
+	#separatorStartY: number = 0;
+	#separatorStartHeights: number[] = [];
+	// touch: the crosshair shows only after a long tap ("tracking mode"), then a drag moves it
+	#longTap: boolean = false;
+	#trackStart: Point | null = null;
+	#trackCrosshairStart: Point = { x: 0, y: 0 };
+	#exitTrackingModeOnNextTry: boolean = false;
 
 	public constructor(container: HTMLElement, options: ChartOptionsInternal) {
 		this.#options = options;
 
-		this.#element = document.createElement('div');
-		this.#element.classList.add('tv-lightweight-charts');
-		this.#element.style.overflow = 'hidden';
-		this.#element.style.width = '100%';
-		this.#element.style.height = '100%';
+		const element = document.createElement('div');
+		element.classList.add('tv-lightweight-charts');
+		element.style.position = 'relative';
+		element.style.overflow = 'hidden';
+		this.#element = element;
 
-		this.#tableElement = document.createElement('table');
-		this.#tableElement.setAttribute('cellspacing', '0');
-		this.#element.appendChild(this.#tableElement);
+		this.#staticCanvas = createCanvas('1');
+		this.#overlayCanvas = createCanvas('2');
+		element.appendChild(this.#staticCanvas);
+		element.appendChild(this.#overlayCanvas);
+		this.#staticCtx = ensureNotNull(this.#staticCanvas.getContext('2d'));
+		this.#overlayCtx = ensureNotNull(this.#overlayCanvas.getContext('2d'));
 
-		this.#onWheelBound = this.#onMousewheel.bind(this);
-		this.#element.addEventListener('wheel', this.#onWheelBound, { passive: false });
+		this.#model = new ChartModel((mask: InvalidateMask) => this.#invalidate(mask), options);
+		this.#applyTouchAction();
 
-		this.#model = new ChartModel(
-			this.#invalidateHandler.bind(this),
-			this.#options
-		);
-		this.model().crosshairMoved().subscribe(this.#onPaneWidgetCrosshairMoved.bind(this), this);
-
-		this.#timeAxisWidget = new TimeAxisWidget(this);
-		this.#tableElement.appendChild(this.#timeAxisWidget.getElement());
-
-		let width = this.#options.width;
-		let height = this.#options.height;
-
+		let width = options.width;
+		let height = options.height;
 		if (width === 0 && height === 0) {
 			const containerRect = container.getBoundingClientRect();
-			// TODO: Fix it better
-			// on Hi-DPI CSS size * Device Pixel Ratio should be integer to avoid smoothing
-			// For chart widget we decreases because we must be inside container.
-			// For time axis this is not important, since it just affects space for pane widgets
 			width = Math.floor(containerRect.width);
-			if (width % 2) {
-				width -= 1;
-			}
 			height = Math.floor(containerRect.height);
-			if (height % 2) {
-				height -= 1;
-			}
 		}
-
-		width = Math.max(70, width);
-		height = Math.max(50, height);
-
-		// BEWARE: resize must be called BEFORE _syncGuiWithModel (in constructor only)
-		// or after but with adjustSize to properly update time scale
+		this.#layout = layoutChart(this.#staticCtx, this.#model, MIN_CHART_WIDTH, MIN_CHART_HEIGHT, 0);
 		this.resize(width, height);
 
-		this.#syncGuiWithModel();
+		container.appendChild(element);
 
-		container.appendChild(this.#element);
-		this.#updateTimeAxisVisibility();
-		this.#model.timeScale().optionsApplied().subscribe(
-			() => {
-				this.#updateTimeAxisVisibility();
-				this.adjustSize();
-			},
-			this
-		);
+		// the bitmap of a canvas must have the size of the canvas in device pixels, or the image is not sharp
+		this.#resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => this.#onCanvasResized(entries[0]));
+		try {
+			this.#resizeObserver.observe(this.#staticCanvas, { box: 'device-pixel-content-box' });
+		} catch {
+			// Safari: the size comes from the CSS size and the device pixel ratio
+			this.#resizeObserver.observe(this.#staticCanvas);
+		}
+
+		this.#unbindPointerEvents = bindPointerEvents(element, this);
+		this.#onWheelBound = this.#onWheel.bind(this);
+		element.addEventListener('wheel', this.#onWheelBound, { passive: false });
+	}
+
+	public destroy(): void {
+		if (this.#rafId !== 0) {
+			cancelAnimationFrame(this.#rafId);
+			this.#rafId = 0;
+		}
+
+		this.#resizeObserver.disconnect();
+		this.#unbindPointerEvents();
+		this.#element.removeEventListener('wheel', this.#onWheelBound);
+		this.#model.destroy();
+		this.#element.remove();
+		this.onClick = null;
+		this.onCrosshairMove = null;
 	}
 
 	public model(): ChartModel {
@@ -120,256 +162,362 @@ export class ChartWidget implements IDestroyable {
 		return this.#options;
 	}
 
-	public paneWidgets(): PaneWidget[] {
-		return this.#paneWidgets;
-	}
-
-	public destroy(): void {
-		this.#element.removeEventListener('wheel', this.#onWheelBound);
-		if (this.#drawRafId !== 0) {
-			window.cancelAnimationFrame(this.#drawRafId);
-		}
-
-		this.#model.crosshairMoved().unsubscribeAll(this);
-		this.#model.timeScale().optionsApplied().unsubscribeAll(this);
-		this.#model.destroy();
-
-		for (const paneWidget of this.#paneWidgets) {
-			this.#tableElement.removeChild(paneWidget.getElement());
-			paneWidget.clicked().unsubscribeAll(this);
-			paneWidget.destroy();
-		}
-		this.#paneWidgets = [];
-
-		for (const paneSeparator of this.#paneSeparators) {
-			this.#destroySeparator(paneSeparator);
-		}
-		this.#paneSeparators = [];
-
-		ensureNotNull(this.#timeAxisWidget).destroy();
-
-		if (this.#element.parentElement !== null) {
-			this.#element.parentElement.removeChild(this.#element);
-		}
-
-		this.#crosshairMoved.destroy();
-		this.#clicked.destroy();
-
-		(this.#element as unknown as null) = null;
-	}
-
 	public resize(width: number, height: number, forceRepaint: boolean = false): void {
+		width = Math.max(MIN_CHART_WIDTH, width);
+		height = Math.max(MIN_CHART_HEIGHT, height);
 		if (this.#height === height && this.#width === width) {
 			return;
 		}
 
-		this.#height = height;
 		this.#width = width;
+		this.#height = height;
+		this.#element.style.width = width + 'px';
+		this.#element.style.height = height + 'px';
 
-		const heightStr = height + 'px';
-		const widthStr = width + 'px';
+		if (!this.#exactBitmapSize) {
+			this.#pixelRatio = window.devicePixelRatio || 1;
+			this.#bitmapWidth = Math.round(width * this.#pixelRatio);
+			this.#bitmapHeight = Math.round(height * this.#pixelRatio);
+		}
 
-		ensureNotNull(this.#element).style.height = heightStr;
-		ensureNotNull(this.#element).style.width = widthStr;
-
-		this.#tableElement.style.height = heightStr;
-		this.#tableElement.style.width = widthStr;
+		// the model needs its size now, not in the next frame: the time scale uses the
+		// width when it gets data
+		this.#layout = layoutChart(this.#staticCtx, this.#model, width, height, 0);
 
 		if (forceRepaint) {
-			this.#drawImpl(new InvalidateMask(InvalidationLevel.Full));
+			this.#draw(new InvalidateMask(InvalidationLevel.Full));
 		} else {
 			this.#model.fullUpdate();
 		}
 	}
 
-	public paint(invalidateMask?: InvalidateMask): void {
-		if (invalidateMask === undefined) {
-			invalidateMask = new InvalidateMask(InvalidationLevel.Full);
-		}
-
-		for (let i = 0; i < this.#paneWidgets.length; i++) {
-			this.#paneWidgets[i].paint(invalidateMask.invalidateForPane(i).level);
-		}
-
-		this.#timeAxisWidget.paint(invalidateMask.fullInvalidation());
+	public applyOptions(options: DeepPartial<ChartOptionsInternal>): void {
+		this.#model.applyOptions(options);
+		this.#applyTouchAction();
+		this.resize(options.width || this.#width, options.height || this.#height);
 	}
 
-	public adjustSize(): void {
-		this.#adjustSizeImpl();
+	/** Draws the chart, with the crosshair, on a new canvas. */
+	public takeScreenshot(): HTMLCanvasElement {
+		this.#flush();
+
+		const canvas = document.createElement('canvas');
+		canvas.width = this.#bitmapWidth;
+		canvas.height = this.#bitmapHeight;
+		canvas.style.width = this.#width + 'px';
+		canvas.style.height = this.#height + 'px';
+		const ctx = ensureNotNull(canvas.getContext('2d'));
+		drawStatic(ctx, this.#model, this.#layout, this.#pixelRatio);
+		drawOverlay(ctx, this.#model, this.#layout, this.#pixelRatio);
+		return canvas;
+	}
+
+	// ---- pointer input (PointerHandlers)
+
+	public hover(x: number, y: number): void {
+		const hit = this.#hitTest(x, y);
+		this.#setCursor(hit.region, hit.index);
+		if (hit.region === Region.Pane) {
+			this.#setCrosshair(hit.index, hit.x, hit.y);
+		} else {
+			this.#model.clearCrosshairPosition();
+		}
+	}
+
+	public leave(): void {
+		this.#model.clearCrosshairPosition();
+	}
+
+	public down(x: number, y: number, isTouch: boolean): void {
+		const hit = this.#hitTest(x, y);
+		const model = this.#model;
+		this.#dragRegion = hit.region;
+		this.#dragIndex = hit.index;
+
+		switch (hit.region) {
+			case Region.Pane: {
+				this.#longTap = false;
+				this.#exitTrackingModeOnNextTry = this.#trackStart !== null;
+
+				const pane = model.panes()[hit.index];
+				if (pane.priceScale.isEmpty() || model.timeScale().isEmpty()) {
+					return;
+				}
+
+				if (this.#trackStart !== null) {
+					const crosshair = model.crosshair();
+					this.#trackCrosshairStart = { x: crosshair.x, y: crosshair.y };
+					this.#trackStart = { x: hit.x, y: hit.y };
+				}
+
+				if (!isTouch) {
+					this.#setCrosshair(hit.index, hit.x, hit.y);
+				}
+				break;
+			}
+
+			case Region.PriceAxis: {
+				const priceScale = model.panes()[hit.index].priceScale;
+				if (this.#options.handleScale.axisPressedMouseMove && !priceScale.isEmpty()) {
+					model.startScalePrice(priceScale, hit.y);
+				}
+				break;
+			}
+
+			case Region.TimeAxis:
+				if (this.#options.handleScale.axisPressedMouseMove && !model.timeScale().isEmpty()) {
+					model.startScaleTime(hit.x as Coordinate);
+				}
+				break;
+
+			case Region.Separator: {
+				this.#separatorStartY = y;
+				this.#separatorStartHeights = this.#layout.panes.map((rect: { height: number }) => rect.height);
+				break;
+			}
+		}
+	}
+
+	public drag(x: number, y: number, isTouch: boolean): void {
+		const model = this.#model;
+		const index = this.#dragIndex;
+
+		switch (this.#dragRegion) {
+			case Region.Pane: {
+				const rect = this.#layout.panes[index];
+				this.#dragPane(model.panes()[index], index, x - rect.left, y - rect.top, isTouch);
+				break;
+			}
+
+			case Region.PriceAxis:
+				if (this.#options.handleScale.axisPressedMouseMove) {
+					const pane = model.panes()[index];
+					model.scalePriceTo(pane, pane.priceScale, y - this.#layout.priceAxes[index].top);
+				}
+				break;
+
+			case Region.TimeAxis:
+				if (this.#options.handleScale.axisPressedMouseMove && !model.timeScale().isEmpty()) {
+					model.scaleTimeTo(x - ensureNotNull(this.#layout.timeAxis).left as Coordinate);
+				}
+				break;
+
+			case Region.Separator:
+				this.#dragSeparator(index, y - this.#separatorStartY);
+				break;
+		}
+	}
+
+	public up(): void {
+		const model = this.#model;
+		const pane = this.#dragIndex >= 0 ? model.panes()[this.#dragIndex] : undefined;
+
+		switch (this.#dragRegion) {
+			case Region.Pane:
+				this.#longTap = false;
+				if (this.#isScrolling && pane !== undefined) {
+					model.endScrollPrice(pane, pane.priceScale);
+					model.endScrollTime();
+				}
+				this.#isScrolling = false;
+				this.#scrollStartX = NaN;
+				break;
+
+			case Region.PriceAxis:
+				if (pane !== undefined) {
+					model.endScalePrice(pane, pane.priceScale);
+				}
+				break;
+
+			case Region.TimeAxis:
+				model.endScaleTime();
+				break;
+		}
+
+		this.#dragRegion = Region.None;
+		this.#dragIndex = -1;
+	}
+
+	public click(x: number, y: number): void {
+		const hit = this.#hitTest(x, y);
+		if (hit.region !== Region.Pane) {
+			return;
+		}
+
+		if (this.onClick !== null) {
+			this.#flush();
+			const index = this.#model.crosshair().index;
+			this.onClick(Number.isNaN(index) ? null : index, { x: hit.x, y: hit.y });
+		}
+
+		if (this.#exitTrackingModeOnNextTry) {
+			this.#trackStart = null;
+			this.#model.clearCrosshairPosition();
+		}
+	}
+
+	public doubleClick(x: number, y: number): void {
+		if (!this.#options.handleScale.axisDoubleClickReset) {
+			return;
+		}
+
+		const hit = this.#hitTest(x, y);
+		if (hit.region === Region.PriceAxis) {
+			const pane = this.#model.panes()[hit.index];
+			this.#model.resetPriceScale(pane, pane.priceScale);
+		} else if (hit.region === Region.TimeAxis) {
+			this.#model.resetTimeScale();
+		}
+	}
+
+	public longTap(x: number, y: number): void {
+		const hit = this.#hitTest(x, y);
+		if (hit.region !== Region.Pane) {
+			return;
+		}
+
+		this.#longTap = true;
+		if (this.#trackStart === null) {
+			// start the tracking mode: the crosshair appears and the next drags move it
+			this.#trackStart = { x: hit.x, y: hit.y };
+			this.#exitTrackingModeOnNextTry = false;
+			this.#setCrosshair(hit.index, hit.x, hit.y);
+			// the crosshair snaps to a bar, so its start position comes from the model
+			this.#model.resolveCrosshair();
+			const crosshair = this.#model.crosshair();
+			this.#trackCrosshairStart = { x: crosshair.x, y: crosshair.y };
+			this.#model.updateCrosshair();
+		}
+	}
+
+	public pinchStart(): void {
+		this.#prevPinchScale = 1;
+	}
+
+	public pinch(centerX: number, scale: number): void {
+		if (!this.#options.handleScale.pinch) {
+			return;
+		}
+
+		const zoomScale = (scale - this.#prevPinchScale) * 5;
+		this.#prevPinchScale = scale;
+		this.#model.zoomTime(centerX - this.#paneLeft() as Coordinate, zoomScale);
+	}
+
+	// ---- pointer helpers
+
+	#hitTest(x: number, y: number): HitResult {
+		return hitTest(this.#layout, x, y, SEPARATOR_GRAB_MARGIN, this.#hit);
+	}
+
+	#paneLeft(): number {
+		return this.#layout.panes[0].left;
+	}
+
+	#setCrosshair(paneIndex: number, x: number, y: number): void {
+		const rect = this.#layout.panes[paneIndex];
+		this.#model.setCrosshairPosition(
+			Math.max(0, Math.min(x, rect.width - 1)),
+			Math.max(0, Math.min(y, rect.height - 1)),
+			this.#model.panes()[paneIndex]
+		);
+	}
+
+	#setCursor(region: Region, index: number): void {
+		let cursor = 'default';
+		const handleScale = this.#options.handleScale;
+		if (region === Region.Separator) {
+			cursor = 'row-resize';
+		} else if (region === Region.TimeAxis && handleScale.axisPressedMouseMove) {
+			cursor = 'ew-resize';
+		} else if (region === Region.PriceAxis && handleScale.axisPressedMouseMove) {
+			const priceScale = this.#model.panes()[index].priceScale;
+			if (!priceScale.isPercentage() && !priceScale.isIndexedTo100()) {
+				cursor = 'ns-resize';
+			}
+		} else if (region === Region.Pane) {
+			cursor = 'crosshair';
+		}
+
+		if (this.#element.style.cursor !== cursor) {
+			this.#element.style.cursor = cursor;
+		}
+	}
+
+	#dragPane(pane: Pane, paneIndex: number, x: number, y: number, isTouch: boolean): void {
+		const model = this.#model;
+
+		if (this.#trackStart !== null) {
+			// tracking mode: the drag moves the crosshair
+			this.#exitTrackingModeOnNextTry = false;
+			this.#setCrosshair(
+				paneIndex,
+				this.#trackCrosshairStart.x + (x - this.#trackStart.x),
+				this.#trackCrosshairStart.y + (y - this.#trackStart.y)
+			);
+		} else if (!isTouch) {
+			this.#setCrosshair(paneIndex, x, y);
+		}
+
+		if (model.timeScale().isEmpty()) {
+			return;
+		}
+
+		const scrollOptions = this.#options.handleScroll;
+		const canScroll = isTouch ? (scrollOptions.horzTouchDrag || scrollOptions.vertTouchDrag) : scrollOptions.pressedMouseMove;
+		if (!canScroll) {
+			return;
+		}
+
+		const priceScale = pane.priceScale;
+		const preventScroll = (isTouch && this.#longTap) || this.#trackStart !== null;
+		if (Number.isNaN(this.#scrollStartX) && !preventScroll) {
+			this.#scrollStartX = x;
+			this.#scrollStartY = y;
+		}
+
+		if (!this.#isScrolling && !Number.isNaN(this.#scrollStartX) && (this.#scrollStartX !== x || this.#scrollStartY !== y)) {
+			if (!priceScale.isEmpty()) {
+				model.startScrollPrice(priceScale, y);
+			}
+			model.startScrollTime(x as Coordinate);
+			this.#isScrolling = true;
+		}
+
+		if (this.#isScrolling) {
+			if (!priceScale.isEmpty()) {
+				model.scrollPriceTo(pane, priceScale, y);
+			}
+			model.scrollTimeTo(x as Coordinate);
+		}
+	}
+
+	/** Moves the border between pane `index` and pane `index + 1` by `delta` pixels. */
+	#dragSeparator(index: number, delta: number): void {
+		const heights = this.#separatorStartHeights;
+		const total = heights[index] + heights[index + 1];
+		const upper = Math.max(MIN_PANE_HEIGHT_ON_RESIZE, Math.min(total - MIN_PANE_HEIGHT_ON_RESIZE, heights[index] + delta));
+		if (total < MIN_PANE_HEIGHT_ON_RESIZE * 2) {
+			return;
+		}
+
+		// the stretch factors become the pixel heights: only their ratio is important
+		const panes = this.#model.panes();
+		for (let i = 0; i < panes.length; i++) {
+			panes[i].stretch = heights[i];
+		}
+		panes[index].stretch = upper;
+		panes[index + 1].stretch = total - upper;
 		this.#model.fullUpdate();
 	}
 
-	public applyOptions(options: DeepPartial<ChartOptionsInternal>): void {
-		this.#model.applyOptions(options);
-		this.#updateTimeAxisVisibility();
-
-		const width = options.width || this.#width;
-		const height = options.height || this.#height;
-
-		this.resize(width, height);
-	}
-
-	public clicked(): ISubscription<MouseEventParamsImplSupplier> {
-		return this.#clicked;
-	}
-
-	public crosshairMoved(): ISubscription<MouseEventParamsImplSupplier> {
-		return this.#crosshairMoved;
-	}
-
-	public takeScreenshot(): HTMLCanvasElement {
-		if (this.#invalidateMask !== null) {
-			this.#drawImpl(this.#invalidateMask);
-			this.#invalidateMask = null;
-		}
-		// calculate target size
-		const firstPane = this.#paneWidgets[0];
-		const targetCanvas = createPreconfiguredCanvas(document, new Size(this.#width, this.#height));
-		const ctx = getContext2D(targetCanvas);
-		const pixelRatio = getCanvasDevicePixelRatio(targetCanvas);
-		drawScaled(ctx, pixelRatio, () => {
-			let targetX = 0;
-			let targetY = 0;
-
-			const drawPriceAxises = () => {
-				for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; paneIndex++) {
-					const paneWidget = this.#paneWidgets[paneIndex];
-					const paneWidgetHeight = paneWidget.getSize().h;
-					const priceAxisWidget = ensureNotNull(paneWidget.priceAxisWidget());
-					const image = priceAxisWidget.getImage();
-					ctx.drawImage(image, targetX, targetY, priceAxisWidget.getWidth(), paneWidgetHeight);
-					targetY += paneWidgetHeight;
-					if (paneIndex < this.#paneWidgets.length - 1) {
-						targetY += SEPARATOR_HEIGHT;
-					}
-				}
-			};
-			// draw left price scale if exists
-			if (this.#options.priceScale.position === 'left') {
-				drawPriceAxises();
-				targetX = ensureNotNull(firstPane.priceAxisWidget()).getWidth();
-			}
-			targetY = 0;
-			for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; paneIndex++) {
-				const paneWidget = this.#paneWidgets[paneIndex];
-				const paneWidgetSize = paneWidget.getSize();
-				const image = paneWidget.getImage();
-				ctx.drawImage(image, targetX, targetY, paneWidgetSize.w, paneWidgetSize.h);
-				targetY += paneWidgetSize.h;
-				if (paneIndex < this.#paneWidgets.length - 1) {
-					const separator = this.#paneSeparators[paneIndex];
-					const separatorSize = separator.getSize();
-					const separatorImage = separator.getImage();
-					ctx.drawImage(separatorImage, targetX, targetY, separatorSize.w, separatorSize.h);
-					targetY += separatorSize.h;
-				}
-			}
-			targetX += firstPane.getSize().w;
-			if (this.#options.priceScale.position === 'right') {
-				targetY = 0;
-				drawPriceAxises();
-			}
-			const drawStub = () => {
-				const stub = ensureNotNull(this.#timeAxisWidget.stub());
-				const size = stub.getSize();
-				const image = stub.getImage();
-				ctx.drawImage(image, targetX, targetY, size.w, size.h);
-			};
-			// draw time scale
-			if (this.#options.timeScale.visible) {
-				targetX = 0;
-				if (this.#options.priceScale.position === 'left') {
-					drawStub();
-					targetX = ensureNotNull(firstPane.priceAxisWidget()).getWidth();
-				}
-				const size = this.#timeAxisWidget.getSize();
-				const image = this.#timeAxisWidget.getImage();
-				ctx.drawImage(image, targetX, targetY, size.w, size.h);
-				if (this.#options.priceScale.position === 'right') {
-					targetX = firstPane.getSize().w;
-					drawStub();
-				}
-			}
-		});
-		return targetCanvas;
-	}
-
-	#adjustSizeImpl(): void {
-		let totalStretch = 0;
-		let priceAxisWidth = 0;
-
-		for (const paneWidget of this.#paneWidgets) {
-			if (this.#options.priceScale.position !== 'none') {
-				priceAxisWidth = Math.max(priceAxisWidth, ensureNotNull(paneWidget.priceAxisWidget()).optimalWidth());
-			}
-
-			totalStretch += paneWidget.stretchFactor();
-		}
-
-		const width = this.#width;
-		const height = this.#height;
-
-		const paneWidth = Math.max(width - priceAxisWidth, 0);
-
-		const separatorCount = this.#paneSeparators.length;
-		const separatorHeight = SEPARATOR_HEIGHT;
-		const separatorsHeight = separatorHeight * separatorCount;
-		let timeAxisHeight = this.#options.timeScale.visible ? this.#timeAxisWidget.optimalHeight() : 0;
-		// TODO: Fix it better
-		// on Hi-DPI CSS size * Device Pixel Ratio should be integer to avoid smoothing
-		if (timeAxisHeight % 2) {
-			timeAxisHeight += 1;
-		}
-		const otherWidgetHeight = separatorsHeight + timeAxisHeight;
-		const totalPaneHeight = height < otherWidgetHeight ? 0 : height - otherWidgetHeight;
-		const stretchPixels = totalPaneHeight / totalStretch;
-
-		let accumulatedHeight = 0;
-		for (let paneIndex = 0; paneIndex < this.#paneWidgets.length; ++paneIndex) {
-			const paneWidget = this.#paneWidgets[paneIndex];
-			paneWidget.setState(this.#model.panes()[paneIndex]);
-
-			let paneHeight = 0;
-			let calculatePaneHeight = 0;
-
-			if (paneIndex === this.#paneWidgets.length - 1) {
-				calculatePaneHeight = totalPaneHeight - accumulatedHeight;
-			} else {
-				calculatePaneHeight = Math.round(paneWidget.stretchFactor() * stretchPixels);
-			}
-
-			paneHeight = Math.max(calculatePaneHeight, 2);
-
-			accumulatedHeight += paneHeight;
-
-			paneWidget.setSize(new Size(paneWidth, paneHeight));
-			if (this.#options.priceScale.position !== 'none') {
-				paneWidget.setPriceAxisSize(priceAxisWidth);
-			}
-
-			if (paneWidget.state()) {
-				this.#model.setPaneHeight(paneWidget.state(), paneHeight);
-			}
-		}
-
-		this.#timeAxisWidget.setSizes(
-			new Size(paneWidth, timeAxisHeight),
-			priceAxisWidth
-		);
-
-		this.#model.setWidth(paneWidth);
-		if (this.#priceAxisWidth !== priceAxisWidth) {
-			this.#priceAxisWidth = priceAxisWidth;
-			this.#priceAxisWidthChanged.fire(priceAxisWidth);
-		}
-	}
-
-	#onMousewheel(event: WheelEvent): void {
+	#onWheel(event: WheelEvent): void {
 		let deltaX = event.deltaX / 100;
 		let deltaY = -(event.deltaY / 100);
+		const options = this.#options;
 
-		if ((deltaX === 0 || !this.#options.handleScroll.mouseWheel) &&
-			(deltaY === 0 || !this.#options.handleScale.mouseWheel)) {
+		if ((deltaX === 0 || !options.handleScroll.mouseWheel) &&
+			(deltaY === 0 || !options.handleScale.mouseWheel)) {
 			return;
 		}
 
@@ -391,177 +539,145 @@ export class ChartWidget implements IDestroyable {
 				break;
 		}
 
-		if (deltaY !== 0 && this.#options.handleScale.mouseWheel) {
+		if (deltaY !== 0 && options.handleScale.mouseWheel) {
 			const zoomScale = Math.sign(deltaY) * Math.min(1, Math.abs(deltaY));
-			const scrollPosition = event.clientX - this.#element.getBoundingClientRect().left;
-			this.model().zoomTime(scrollPosition as Coordinate, zoomScale);
+			const scrollPosition = event.clientX - this.#element.getBoundingClientRect().left - this.#paneLeft();
+			this.#model.zoomTime(scrollPosition as Coordinate, zoomScale);
 		}
 
-		if (deltaX !== 0 && this.#options.handleScroll.mouseWheel) {
-			this.model().scrollChart(deltaX * -80 as Coordinate); // 80 is a made up coefficient, and minus is for the "natural" scroll
+		if (deltaX !== 0 && options.handleScroll.mouseWheel) {
+			// 80 is a made up coefficient, and minus is for the "natural" scroll
+			this.#model.scrollChart(deltaX * -80 as Coordinate);
 		}
 	}
 
-	#drawImpl(invalidateMask: InvalidateMask): void {
-		const invalidationType = invalidateMask.fullInvalidation();
-
-		// actions for full invalidation ONLY (not shared with light)
-		if (invalidationType === InvalidationLevel.Full) {
-			this.#syncGuiWithModel();
+	/** Tells the browser which touch drags the page can use for its own scroll. */
+	#applyTouchAction(): void {
+		const scroll = this.#options.handleScroll;
+		let touchAction = 'none';
+		if (!scroll.horzTouchDrag && !scroll.vertTouchDrag) {
+			touchAction = 'pan-x pan-y';
+		} else if (!scroll.vertTouchDrag) {
+			touchAction = 'pan-y';
+		} else if (!scroll.horzTouchDrag) {
+			touchAction = 'pan-x';
 		}
-
-		// light or full invalidate actions
-		if (
-			invalidationType === InvalidationLevel.Full ||
-			invalidationType === InvalidationLevel.Light
-		) {
-			const panes = this.#model.panes();
-			for (let i = 0; i < panes.length; i++) {
-				if (invalidateMask.invalidateForPane(i).autoScale) {
-					panes[i].momentaryAutoScale();
-				}
-			}
-
-			if (invalidateMask.getFitContent()) {
-				this.#model.timeScale().fitContent();
-			}
-
-			const targetTimeRange = invalidateMask.getTargetTimeRange();
-			if (targetTimeRange !== null) {
-				this.#model.timeScale().setTimeRange(targetTimeRange);
-			}
-
-			this.#timeAxisWidget.update();
-		}
-
-		this.paint(invalidateMask);
+		this.#element.style.touchAction = touchAction;
 	}
 
-	#invalidateHandler(invalidateMask: InvalidateMask): void {
-		if (this.#invalidateMask !== null) {
-			this.#invalidateMask.merge(invalidateMask);
+	// ---- size
+
+	#onCanvasResized(entry: ResizeObserverEntry): void {
+		let bitmapWidth: number;
+		let bitmapHeight: number;
+		const pixelRatio = window.devicePixelRatio || 1;
+
+		const exact = entry.devicePixelContentBoxSize;
+		if (exact !== undefined && exact.length !== 0) {
+			this.#exactBitmapSize = true;
+			bitmapWidth = exact[0].inlineSize;
+			bitmapHeight = exact[0].blockSize;
 		} else {
-			this.#invalidateMask = invalidateMask;
+			bitmapWidth = Math.round(this.#width * pixelRatio);
+			bitmapHeight = Math.round(this.#height * pixelRatio);
 		}
 
-		if (!this.#drawPlanned) {
-			this.#drawPlanned = true;
-			this.#drawRafId = window.requestAnimationFrame(() => {
-				this.#drawPlanned = false;
-				this.#drawRafId = 0;
+		if (bitmapWidth !== this.#bitmapWidth || bitmapHeight !== this.#bitmapHeight || pixelRatio !== this.#pixelRatio) {
+			this.#bitmapWidth = bitmapWidth;
+			this.#bitmapHeight = bitmapHeight;
+			this.#pixelRatio = pixelRatio;
+			this.#model.fullUpdate();
+		}
+	}
 
-				if (this.#invalidateMask !== null) {
-					this.#drawImpl(this.#invalidateMask);
-					this.#invalidateMask = null;
-				}
+	// ---- frame loop
+
+	#invalidate(mask: InvalidateMask): void {
+		if (this.#preparing) {
+			// the frame that is in progress draws after this change
+			return;
+		}
+
+		if (this.#invalidateMask !== null) {
+			this.#invalidateMask.merge(mask);
+		} else {
+			this.#invalidateMask = mask;
+		}
+
+		if (this.#rafId === 0) {
+			this.#rafId = requestAnimationFrame(() => {
+				this.#rafId = 0;
+				this.#flush();
 			});
 		}
 	}
 
-	#destroySeparator(separator: PaneSeparator): void {
-		this.#tableElement.removeChild(separator.getElement());
-		separator.destroy();
+	/** Draws the pending changes now, if there are some. */
+	#flush(): void {
+		// take ownership of the mask before the draw: a change during the draw makes a new mask
+		const mask = this.#invalidateMask;
+		if (mask !== null) {
+			this.#invalidateMask = null;
+			this.#draw(mask);
+		}
 	}
 
-	#syncGuiWithModel(): void {
-		const panes = this.#model.panes();
-		const targetPaneWidgetsCount = panes.length;
-		const actualPaneWidgetsCount = this.#paneWidgets.length;
+	#draw(mask: InvalidateMask): void {
+		const level = mask.fullInvalidation();
+		const model = this.#model;
 
-		// Remove (if needed) pane widgets and separators
-		for (let i = targetPaneWidgetsCount; i < actualPaneWidgetsCount; i++) {
-			const paneWidget = ensureDefined(this.#paneWidgets.pop());
-			this.#tableElement.removeChild(paneWidget.getElement());
-			paneWidget.clicked().unsubscribeAll(this);
-			paneWidget.destroy();
+		if (level > InvalidationLevel.Cursor) {
+			// changes that this step makes in the model are drawn by this frame
+			this.#preparing = true;
+			try {
+				const panes = model.panes();
+				for (let i = 0; i < panes.length; i++) {
+					if (mask.invalidateForPane(i).autoScale) {
+						panes[i].momentaryAutoScale();
+					}
+				}
 
-			const paneSeparator = this.#paneSeparators.pop();
-			if (paneSeparator !== undefined) {
-				this.#destroySeparator(paneSeparator);
+				if (mask.getFitContent()) {
+					model.timeScale().fitContent();
+				}
+
+				const targetTimeRange = mask.getTargetTimeRange();
+				if (targetTimeRange !== null) {
+					model.timeScale().setTimeRange(targetTimeRange);
+				}
+
+				// between full updates the price axis only grows, so that it does not jump during a scroll
+				const minAxisWidth = level === InvalidationLevel.Full ? 0 : layoutPriceAxisWidth(this.#layout);
+				this.#layout = layoutChart(this.#staticCtx, model, this.#width, this.#height, minAxisWidth);
+			} finally {
+				this.#preparing = false;
+			}
+
+			for (const canvas of [this.#staticCanvas, this.#overlayCanvas]) {
+				if (canvas.width !== this.#bitmapWidth || canvas.height !== this.#bitmapHeight) {
+					canvas.width = this.#bitmapWidth;
+					canvas.height = this.#bitmapHeight;
+				}
 			}
 		}
 
-		// Create (if needed) new pane widgets and separators
-		for (let i = actualPaneWidgetsCount; i < targetPaneWidgetsCount; i++) {
-			const paneWidget = new PaneWidget(this, panes[i]);
-			paneWidget.clicked().subscribe(this.#onPaneWidgetClicked.bind(this), this);
+		// one calculation of the crosshair for each frame, and at most one event
+		const crosshairChanged = model.resolveCrosshair();
 
-			this.#paneWidgets.push(paneWidget);
-
-			// create and insert separator
-			if (i > 1) {
-				const paneSeparator = new PaneSeparator(this, i - 1, i, true);
-				this.#paneSeparators.push(paneSeparator);
-				this.#tableElement.insertBefore(paneSeparator.getElement(), this.#timeAxisWidget.getElement());
-			}
-
-			// insert paneWidget
-			this.#tableElement.insertBefore(paneWidget.getElement(), this.#timeAxisWidget.getElement());
+		if (level > InvalidationLevel.Cursor) {
+			drawStatic(this.#staticCtx, model, this.#layout, this.#pixelRatio);
 		}
 
-		for (let i = 0; i < targetPaneWidgetsCount; i++) {
-			const state = panes[i];
-			const paneWidget = this.#paneWidgets[i];
-			if (paneWidget.state() !== state) {
-				paneWidget.setState(state);
+		this.#overlayCtx.clearRect(0, 0, this.#bitmapWidth, this.#bitmapHeight);
+		drawOverlay(this.#overlayCtx, model, this.#layout, this.#pixelRatio);
+
+		if (crosshairChanged && this.onCrosshairMove !== null) {
+			const crosshair = model.crosshair();
+			if (crosshair.pane === null) {
+				this.onCrosshairMove(null, null);
 			} else {
-				paneWidget.updatePriceAxisWidget();
+				this.onCrosshairMove(Number.isNaN(crosshair.index) ? null : crosshair.index, { x: crosshair.originX, y: crosshair.originY });
 			}
 		}
-
-		this.#updateTimeAxisVisibility();
-		this.#adjustSizeImpl();
-	}
-
-	#getMouseEventParamsImpl(time: TimePointIndex | null, point: Point | null): MouseEventParamsImpl {
-		const seriesPrices = new Map<Series, BarPrice | BarPrices>();
-		if (time !== null) {
-			const serieses = this.#model.serieses();
-			serieses.forEach((s: Series) => {
-				// TODO: replace with search left
-				const prices = s.dataAt(time);
-				if (prices !== null) {
-					seriesPrices.set(s, prices);
-				}
-			});
-		}
-		let clientTime: number | undefined;
-		if (time !== null) {
-			const seconds = this.#model.timeScale().indexToTime(time);
-			if (seconds !== null) {
-				clientTime = seconds;
-			}
-		}
-
-		const hoveredSource = this.model().hoveredSource();
-
-		const hoveredSeries = hoveredSource !== null && hoveredSource.source instanceof Series
-			? hoveredSource.source
-			: undefined;
-
-		const hoveredObject = hoveredSource !== null && hoveredSource.object !== undefined
-			? hoveredSource.object.externalId
-			: undefined;
-
-		return {
-			time: clientTime,
-			point: point || undefined,
-			hoveredSeries,
-			seriesPrices,
-			hoveredObject,
-		};
-	}
-
-	#onPaneWidgetClicked(time: TimePointIndex | null, point: Point): void {
-		this.#clicked.fire(() => this.#getMouseEventParamsImpl(time, point));
-	}
-
-	#onPaneWidgetCrosshairMoved(time: TimePointIndex | null, point: Point | null): void {
-		this.#crosshairMoved.fire(() => this.#getMouseEventParamsImpl(time, point));
-	}
-
-	#updateTimeAxisVisibility(): void {
-		const display = this.#options.timeScale.visible ? '' : 'none';
-		this.#timeAxisWidget.getElement().style.display = display;
 	}
 }

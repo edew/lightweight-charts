@@ -1,16 +1,19 @@
 // A chart with no DOM. The pixel tests and the benchmark use only this interface,
 // so they stay valid while the code below it is rewritten.
 
-import { candlestickStyleDefaults, lineStyleDefaults, seriesOptionsDefaults } from '../../src/api/options/series-options-defaults';
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import type { BarData, LineData } from '../../src/api/data-consumer';
-import { convertSeriesData, isBusinessDayTime, itemTimeToSeconds } from '../../src/api/data-convert';
+import { seriesOptionsFromSpec, setSeriesData, updateSeriesData } from '../../src/api/series-api';
+import { drawOverlay, drawStatic, layoutChart } from '../../src/draw/chart';
+import type { Layout } from '../../src/draw/layout';
 import { clone, type DeepPartial, merge } from '../../src/helpers/strict-type-checks';
 import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
 import type { Coordinate } from '../../src/model/coordinate';
-import type { IDataSource } from '../../src/model/data-source/idata-source';
 import type { Series } from '../../src/model/series';
-import type { SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from '../../src/model/series-options';
+import type { SeriesSpec } from '../../src/model/series-kind';
+import type { SeriesPartialOptionsMap, SeriesType } from '../../src/model/series-options';
+import { Candlestick } from '../../src/series/candlestick';
+import { Line } from '../../src/series/line';
 
 export interface HeadlessSeries<T extends SeriesType> {
 	setData(data: (T extends 'Line' ? LineData : BarData)[]): void;
@@ -19,16 +22,26 @@ export interface HeadlessSeries<T extends SeriesType> {
 
 export interface HeadlessChart {
 	addSeries<T extends SeriesType>(type: T, options?: SeriesPartialOptionsMap[T]): HeadlessSeries<T>;
-	/** Pointer position in CSS pixels in the pane. */
-	setCrosshair(x: number, y: number): void;
+	/** Pointer position in CSS pixels in a pane. */
+	setCrosshair(x: number, y: number, paneIndex?: number): void;
 	clearCrosshair(): void;
-	/** Draws the pane (background, grid, series, crosshair) at the origin of the context. */
+	/** Scrolls the time scale by a number of CSS pixels. */
+	scrollBy(pixels: number): void;
+	/** Sets the relative heights of the panes. */
+	setPaneStretch(paneIndex: number, stretch: number): void;
+	/** Draws the chart at the origin of the context: the static content, then the crosshair. */
 	draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void;
+	layout(ctx: CanvasRenderingContext2D): Layout;
+	model: ChartModel;
 }
 
 export interface HeadlessChartParams {
 	width: number;
 	height: number;
+	/**
+	 * By default the chart has no axes, so the pane has the full size of the chart.
+	 * Give `priceScale.position` and `timeScale.visible` to draw the axes.
+	 */
 	options?: DeepPartial<ChartOptionsInternal>;
 }
 
@@ -38,84 +51,54 @@ export function createHeadlessChart(params: HeadlessChartParams): HeadlessChart 
 	const options = clone(chartOptionsDefaults);
 	options.layout.fontFamily = testFontFamily;
 	options.localization.locale = 'en-US';
+	options.priceScale.position = 'none';
+	options.timeScale.visible = false;
 	merge(options, params.options ?? {});
 	options.width = params.width;
 	options.height = params.height;
 
 	const model = new ChartModel(() => {}, options);
-	const pane = model.panes()[0];
-	model.setPaneHeight(pane, params.height);
-	model.setWidth(params.width);
-
-	function drawSource(source: IDataSource, ctx: CanvasRenderingContext2D, pixelRatio: number): void {
-		for (const paneView of source.paneViews(pane)) {
-			const renderer = paneView.renderer(pane.height(), pane.width());
-			if (renderer !== null) {
-				ctx.save();
-				renderer.draw(ctx, pixelRatio, false);
-				ctx.restore();
-			}
-		}
-	}
+	// as in the widget: the model has a size before it gets data
+	model.setSize(params.width, [params.height]);
 
 	return {
+		model,
+
 		addSeries<T extends SeriesType>(type: T, seriesOptions?: SeriesPartialOptionsMap[T]): HeadlessSeries<T> {
-			const styleDefaults = type === 'Line' ? lineStyleDefaults : candlestickStyleDefaults;
-			const strictOptions = merge(clone(seriesOptionsDefaults), styleDefaults, seriesOptions ?? {}) as SeriesOptionsMap[T];
-			const series = model.createSeries(type, strictOptions);
+			const spec = (type === 'Line' ? Line(seriesOptions ?? {}) : Candlestick(seriesOptions ?? {})) as unknown as SeriesSpec<T>;
+			const strictOptions = seriesOptionsFromSpec(spec);
+			const series = model.createSeries(spec.kind, strictOptions, strictOptions.pane) as unknown as Series;
 			return {
-				setData(data: (LineData | BarData)[]): void {
-					const converted = convertSeriesData(series.store().stride, data);
-					model.setSeriesData(series as Series, converted.times, converted.values, converted.count, converted.businessDay);
-				},
-				update(item: LineData | BarData): void {
-					const businessDay = model.dataStore().businessDay ?? isBusinessDayTime(item.time);
-					const time = itemTimeToSeconds(item.time, businessDay);
-					model.dataStore().businessDay = businessDay;
-					if (series.store().stride === 1) {
-						model.updateSeriesData(series as Series, time, (item as LineData).value, 0, 0, 0);
-					} else {
-						const bar = item as BarData;
-						model.updateSeriesData(series as Series, time, bar.open, bar.high, bar.low, bar.close);
-					}
-				},
+				setData: (data: (LineData | BarData)[]) => setSeriesData(series, data),
+				update: (item: LineData | BarData) => updateSeriesData(series, item),
 			};
 		},
 
-		setCrosshair(x: number, y: number): void {
-			model.setAndSaveCurrentPosition(x as Coordinate, y as Coordinate, pane);
+		setCrosshair(x: number, y: number, paneIndex: number = 0): void {
+			model.setCrosshairPosition(x, y, model.panes()[paneIndex]);
 		},
 
 		clearCrosshair(): void {
-			model.clearCurrentPosition();
+			model.clearCrosshairPosition();
+		},
+
+		scrollBy(pixels: number): void {
+			model.scrollChart(pixels as Coordinate);
+		},
+
+		setPaneStretch(paneIndex: number, stretch: number): void {
+			model.panes()[paneIndex].stretch = stretch;
+		},
+
+		layout(ctx: CanvasRenderingContext2D): Layout {
+			return layoutChart(ctx, model, params.width, params.height, 0);
 		},
 
 		draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
-			model.recalculateAllPanes();
-
-			ctx.save();
-			ctx.fillStyle = model.options().layout.backgroundColor;
-			ctx.fillRect(0, 0, Math.ceil(params.width * pixelRatio), Math.ceil(params.height * pixelRatio));
-
-			drawSource(model.gridSource(), ctx, pixelRatio);
-			const crosshair = model.crosshairSource();
-			for (const source of pane.orderedSources()) {
-				for (const paneView of source.paneViews(pane)) {
-					const renderer = paneView.renderer(pane.height(), pane.width());
-					if (renderer !== null && renderer.drawBackground !== undefined) {
-						ctx.save();
-						renderer.drawBackground(ctx, pixelRatio, false);
-						ctx.restore();
-					}
-				}
-			}
-			for (const source of pane.orderedSources()) {
-				if (source !== crosshair) {
-					drawSource(source, ctx, pixelRatio);
-				}
-			}
-			drawSource(crosshair, ctx, pixelRatio);
-			ctx.restore();
+			const layout = layoutChart(ctx, model, params.width, params.height, 0);
+			model.resolveCrosshair();
+			drawStatic(ctx, model, layout, pixelRatio);
+			drawOverlay(ctx, model, layout, pixelRatio);
 		},
 	};
 }

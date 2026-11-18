@@ -1,33 +1,9 @@
-import {
-	type CandlestickStyleOptions,
-	type LineStyleOptions,
-	type SeriesOptionsCommon,
-} from '../../model/series-options';
-import { LineStyle, LineType } from '../../renderers/draw-line';
+import { LineStyle } from '../../draw/line-style';
 
-export const candlestickStyleDefaults: CandlestickStyleOptions = {
-	upColor: '#26a69a',
-	downColor: '#ef5350',
-	wickVisible: true,
-	borderVisible: true,
-	borderColor: '#378658',
-	borderUpColor: '#26a69a',
-	borderDownColor: '#ef5350',
-	wickColor: '#737375',
-	wickUpColor: '#26a69a',
-	wickDownColor: '#ef5350',
-};
-
-export const lineStyleDefaults: LineStyleOptions = {
-	color: '#2196f3',
-	lineStyle: LineStyle.Solid,
-	lineWidth: 3,
-	lineType: LineType.Simple,
-	crosshairMarkerVisible: true,
-	crosshairMarkerRadius: 4,
-};
+import type { SeriesOptionsCommon } from '../../model/series-options';
 
 export const seriesOptionsDefaults: SeriesOptionsCommon = {
+	pane: 0,
 	title: '',
 	lastValueVisible: true,
 	baseLineVisible: true,

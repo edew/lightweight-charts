@@ -27,7 +27,7 @@ function bar(index: number, close: number): BarData {
 	return { time: (firstTime + index * 60) as UTCTimestamp, open: 100, high: 110, low: 90, close };
 }
 
-console.log('bars      | setData ms | B/bar | tick us | tick+draw us | append us | append+draw us | 1M-visible draw ms');
+console.log('bars      | setData ms | B/bar | tick us | tick+draw us | append us | append+draw us | pan frame us');
 
 for (const count of [10_000, 100_000, 1_000_000]) {
 	const ctx = createNullContext();
@@ -75,20 +75,15 @@ for (const count of [10_000, 100_000, 1_000_000]) {
 	}
 	const appendDrawUs = (performance.now() - start) / REPEAT * 1000;
 
-	// all bars visible: bar spacing is much less than one device pixel
-	let allVisibleMs = NaN;
-	if (count === 1_000_000) {
-		const wide = createHeadlessChart({ width: WIDTH, height: HEIGHT, options: { timeScale: { barSpacing: WIDTH / count } } });
-		const wideSeries = wide.addSeries('Candlestick');
-		wideSeries.setData(candles(count));
-		wide.draw(ctx, 2);
-		start = performance.now();
-		for (let i = 0; i < 5; i++) {
-			wideSeries.update(bar(count - 1, 100 + i));
-			wide.draw(ctx, 2);
-		}
-		allVisibleMs = (performance.now() - start) / 5;
+	// a pan: the time scale moves by some pixels in each frame, in the middle of the data
+	chart.scrollBy(WIDTH * 4);
+	chart.draw(ctx, 2);
+	start = performance.now();
+	for (let i = 0; i < REPEAT; i++) {
+		chart.scrollBy(i % 2 === 0 ? 7 : -5);
+		chart.draw(ctx, 2);
 	}
+	const panUs = (performance.now() - start) / REPEAT * 1000;
 
-	console.log(`${String(count).padStart(9)} | ${fmt(setDataMs)}  | ${fmt(bytesPerBar, 0).trim().padStart(5)} | ${fmt(tickUs).trim().padStart(7)} | ${fmt(tickDrawUs).trim().padStart(12)} | ${fmt(appendUs).trim().padStart(9)} | ${fmt(appendDrawUs).trim().padStart(14)} | ${Number.isNaN(allVisibleMs) ? '-' : fmt(allVisibleMs).trim()}`);
+	console.log(`${String(count).padStart(9)} | ${fmt(setDataMs)}  | ${fmt(bytesPerBar, 0).trim().padStart(5)} | ${fmt(tickUs).trim().padStart(7)} | ${fmt(tickDrawUs).trim().padStart(12)} | ${fmt(appendUs).trim().padStart(9)} | ${fmt(appendDrawUs).trim().padStart(14)} | ${fmt(panUs).trim()}`);
 }

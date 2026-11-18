@@ -2,23 +2,24 @@ import type { DeepPartial } from '../helpers/strict-type-checks';
 
 import type { BarPrice, BarPrices } from '../model/bar';
 import type { ChartOptions } from '../model/chart-model';
-import type { Point } from '../model/point';
-import type {
-	CandlestickSeriesPartialOptions,
-	LineSeriesPartialOptions,
-	SeriesType,
-} from '../model/series-options';
+import type { SeriesSpec } from '../model/series-kind';
+import type { SeriesType } from '../model/series-options';
 import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
+import type { IPaneApi } from './ipane-api';
 import type { IPriceScaleApi } from './iprice-scale-api';
 import type { ISeriesApi } from './iseries-api';
 import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
+
+export interface Point {
+	readonly x: number;
+	readonly y: number;
+}
 
 export interface MouseEventParams {
 	time?: UTCTimestamp | BusinessDay;
 	point?: Point;
 	seriesPrices: Map<ISeriesApi<SeriesType>, BarPrice | BarPrices>;
-	hoveredSeries?: ISeriesApi<SeriesType>;
 }
 
 export type MouseEventHandler = (param: MouseEventParams) => void;
@@ -42,18 +43,12 @@ export interface IChartApi {
 	resize(width: number, height: number, forceRepaint?: boolean): void;
 
 	/**
-	 * Creates a candlestick series with specified parameters
-	 * @param candlestickOptions - customization parameters of the series being created
+	 * Creates a series. The argument holds the type of the series and its options:
+	 * `chart.addSeries(Line({ color: 'red' }))`, `chart.addSeries(Candlestick({ pane: 1 }))`.
+	 * @param spec - the result of `Line()`, `Candlestick()` or another series function
 	 * @returns an interface of the created series
 	 */
-	addCandlestickSeries(candlestickOptions?: CandlestickSeriesPartialOptions): ISeriesApi<'Candlestick'>;
-
-	/**
-	 * Creates a line series with specified parameters
-	 * @param lineOptions - customization parameters of the series being created
-	 * @returns an interface of the created series
-	 */
-	addLineSeries(lineOptions?: LineSeriesPartialOptions): ISeriesApi<'Line'>;
+	addSeries<T extends SeriesType>(spec: SeriesSpec<T>): ISeriesApi<T>;
 
 	/**
 	 * Removes a series of any type. This is an irreversible operation, you cannot do anything with the series after removing it
@@ -95,6 +90,12 @@ export interface IChartApi {
 	 * @param handler - previously subscribed handler
 	 */
 	unsubscribeVisibleTimeRangeChange(handler: TimeRangeChangeEventHandler): void;
+
+	/**
+	 * Returns one interface for each pane, from top to bottom.
+	 * A series with the option `pane` equal to the number of panes makes a new pane.
+	 */
+	panes(): IPaneApi[];
 
 	/**
 	 * Returns API to manipulate the price scale

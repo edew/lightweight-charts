@@ -6,26 +6,6 @@ import type { ChartOptions } from '../model/chart-model';
 import { ChartApi } from './chart-api';
 import type { IChartApi } from './ichart-api';
 
-export { LineStyle, LineType } from '../renderers/draw-line';
-export type { LineWidth } from '../renderers/draw-line';
-
-export type { BarPrice } from '../model/bar';
-export { CrosshairMode } from '../model/crosshair';
-export { PriceScaleMode } from '../model/price-scale/price-scale';
-export type { UTCTimestamp } from '../model/time-scale/time-data';
-
-export type { IChartApi, MouseEventParams } from './ichart-api';
-export type { ISeriesApi } from './iseries-api';
-
-export {
-	isBusinessDay,
-	isUTCTimestamp
-} from './data-consumer';
-export type {
-	BarData,
-	LineData
-} from './data-consumer';
-
 /**
  * This function is the main entry point of the Lightweight Charting Library
  * @param container - id of HTML element or element itself

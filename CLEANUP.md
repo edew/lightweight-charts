@@ -11,6 +11,30 @@ The 2026-11 audit found that the storage and draw layers must be replaced, not r
 
 Line numbers were correct at audit time. **Find each one again with grep before you edit.**
 
+## Status (2026-11-18)
+
+| Phase | State |
+|---|---|
+| 0 Environment and safety net | Done |
+| 1 Small bug fixes | Done |
+| 3 Columnar store | Done |
+| 4 Draw functions, `SeriesKind`, panes | Done |
+| 5 Autoscale and level of detail | Autoscale done. Level of detail is not necessary: see Phase 5 |
+| 6 Time scale and tick marks | Done except items 3 and 4 |
+| 7 GUI | Done. Touch input is not tested on a device |
+| 8 Platform replacements and API layer | Partly done: see Phase 8 |
+| 9 Packaging | Open |
+| 10 Documents | Open |
+
+**What is different from the plan below:**
+
+- **Frame record.** There is no single `Frame` object. `SeriesDrawData` (`src/model/series-kind.ts`) is the record that a series kind gets: scratch arrays with x and y for the visible bars. `Layout` (`src/draw/layout.ts`) has the rectangles. The price scale converts a range of values to y in one pass (`PriceScale.pricesToCoordinates`).
+- **Candle passes.** The candle draw code keeps the old order (all wicks, all borders, all bodies) and writes `fillStyle` when the color changes from bar to bar. Two passes (up, down) would change pixels where bars overlap at a small bar spacing, and the golden images had to stay the same.
+- **Draw order of series.** The series that was added last is drawn first (below). This is the old behavior; the golden images showed it. Upstream changed this in later versions. It is one loop direction in `drawPane` if you want the other order.
+- **Tick marks.** The build is still for all time points (the greedy rule starts at the first time point), but it is incremental: new time points at the end build only the end again. A change of the bar spacing that changes the minimum distance builds all marks again: about 2 ms for 100,000 time points.
+- **Touch.** One element has one CSS `touch-action`, so the page scroll setting of the pane (`handleScroll.vertTouchDrag` / `horzTouchDrag`) also applies on the axes.
+- **Hovered series.** `MouseEventParams.hoveredSeries` is removed: no code could set it.
+
 ## Ground rules
 
 - One commit for each phase. Tab indentation. No `!` non-null assertions (use `ensureNotNull` / `ensureDefined`).
@@ -68,7 +92,17 @@ One draw with 1,000,000 visible bars: 429 ms. The retained figure is higher than
 
 One draw with 1,000,000 visible bars: 154 ms. Bundle (`.mjs`): 152.99 kB, gzip 38.38 kB. The append timing excludes the one-time growth of the typed arrays. The memory and the draw cost that stay are the view item arrays; Phase 4 removes them.
 
-Largest modules now (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8,459; `price-axis-widget.ts` 7,989; `time-scale.ts` 7,028; `chart-widget.ts` 6,245; `time-axis-widget.ts` 6,031; `chart-model.ts` 5,833; `plot-list.ts` 4,923; `mouse-event-handler.ts` 4,757. By directory: model 47.8 kB, gui 38.5 kB, api 10.9 kB, views 10.4 kB, renderers 9.2 kB.
+**Phases 4 and 7 (draw functions, two canvases):**
+
+| Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs | Pan frame µs |
+|---|---|---|---|---|---|---|---|
+| 10,000 | 3.9 | 74 | 1.7 | 28 | 2.2 | 25 | 14 |
+| 100,000 | 4.3 | 33 | 0.4 | 13 | 0.9 | 21 | 14 |
+| 1,000,000 | 32.4 | 34 | 0.4 | 12 | 0.8 | 20 | 12 |
+
+Bundle (`.mjs`): 94.66 kB, gzip 26.52 kB. `src`: 8,348 lines (was 14,195), 26 classes and 71 interfaces (were 75 and 118). No runtime dependency. All costs are now constant in the number of bars, except `setData`.
+
+Largest modules at the start (minified bytes): `price-scale.ts` 8,765; `pane-widget.ts` 8,459; `price-axis-widget.ts` 7,989; `time-scale.ts` 7,028; `chart-widget.ts` 6,245; `time-axis-widget.ts` 6,031; `chart-model.ts` 5,833; `plot-list.ts` 4,923; `mouse-event-handler.ts` 4,757. By directory: model 47.8 kB, gui 38.5 kB, api 10.9 kB, views 10.4 kB, renderers 9.2 kB.
 
 ## Phase 0: environment and safety net (do first)
 

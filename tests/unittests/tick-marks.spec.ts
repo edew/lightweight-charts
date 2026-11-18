@@ -40,20 +40,51 @@ describe('TickMarks', () => {
 		expect(marks.build(spans, 4, 1, 5, 9)).to.equal(first);
 	});
 
-	it('builds again when the version, the length or the distance changes', () => {
+	it('builds again when the generation or the distance changes', () => {
 		const marks = new TickMarks();
 		const spans = new Uint8Array([20, 20, 20, 20, 20, 20, 20, 20]);
-		const first = marks.build(spans, 4, 1, 1, 2);
-		expect(marks.build(spans, 4, 2, 1, 2)).to.not.equal(first);
-		expect(Array.from(marks.build(spans, 8, 2, 1, 2).indexes.subarray(0, 4))).to.deep.equal([0, 2, 4, 6]);
-		expect(marks.build(spans, 8, 2, 1, 4).count).to.equal(2);
+		expect(Array.from(marks.build(spans, 8, 1, 1, 2).indexes.subarray(0, 4))).to.deep.equal([0, 2, 4, 6]);
+		expect(marks.build(spans, 8, 1, 1, 4).count).to.equal(2);
+		spans[1] = 70;
+		expect(Array.from(marks.build(spans, 8, 2, 1, 4).indexes.subarray(0, 2))).to.deep.equal([1, 5]);
+	});
+
+	it('gives the same marks for appended time points as a build of all time points', () => {
+		// fixed pseudo-random weights with some high weights
+		let seed = 12345;
+		const random = (): number => {
+			seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+			return seed / 4294967296;
+		};
+		const weights = [19, 20, 20, 20, 21, 21, 22, 30, 31, 33, 50, 50, 60, 70];
+		const total = 4000;
+		const spans = new Uint8Array(total);
+		for (let i = 0; i < total; i++) {
+			spans[i] = random() < 0.7 ? 20 : weights[Math.floor(random() * weights.length)];
+		}
+
+		for (const minDistance of [1, 2, 5, 13, 40]) {
+			const incremental = new TickMarks();
+			let length = 100;
+			while (length <= total) {
+				const result = incremental.build(spans, length, 0, 1, minDistance);
+				const full = new TickMarks().build(spans, length, 0, 1, minDistance);
+				expect(Array.from(result.indexes.subarray(0, result.count)), `distance ${minDistance}, length ${length}`)
+					.to.deep.equal(Array.from(full.indexes.subarray(0, full.count)));
+				// add 1 to 30 time points
+				length += 1 + Math.floor(random() * 30);
+			}
+		}
 	});
 
 	it('builds again after reset', () => {
 		const marks = new TickMarks();
-		const spans = new Uint8Array([20, 20]);
-		const first = marks.build(spans, 2, 1, 1, 1);
+		const spans = new Uint8Array([20, 20, 20]);
+		expect(marks.build(spans, 3, 1, 1, 1).count).to.equal(3);
+		// the caller changed the weights and says so with reset()
+		spans[1] = 70;
+		spans[2] = 70;
 		marks.reset();
-		expect(marks.build(spans, 2, 1, 1, 1)).to.not.equal(first);
+		expect(Array.from(marks.build(spans, 3, 1, 1, 2).indexes.subarray(0, 1))).to.deep.equal([1]);
 	});
 });

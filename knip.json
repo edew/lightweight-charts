@@ -1,5 +1,6 @@
 {
 	"$schema": "https://unpkg.com/knip@5/schema.json",
-	"entry": ["src/index.ts!", "index.html"],
-	"project": ["src/**/*.ts!", "tests/**/*.ts"]
+	"entry": ["index.html", "bench/bench.ts", "bench/run.mjs"],
+	"project": ["src/**/*.ts!", "tests/**/*.ts", "bench/**/*.ts"],
+	"ignoreDependencies": ["dejavu-fonts-ttf"]
 }

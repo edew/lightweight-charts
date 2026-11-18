@@ -105,7 +105,7 @@ export class TimeScale {
 		this.#updateDateTimeFormatter();
 	}
 
-	public applyOptions(options: DeepPartial<TimeScaleOptions>, localizationOptions?: DeepPartial<LocalizationOptions>): void {
+	public applyOptions(options: DeepPartial<TimeScaleOptions>): void {
 		merge(this.#options, options);
 
 		if (this.#options.fixLeftEdge) {
@@ -265,7 +265,7 @@ export class TimeScale {
 		const lastBar = Math.max(visibleBars.lastBar(), visibleBars.lastBar() - indexPerLabel);
 
 		const store = this.#store;
-		const marks = this.#tickMarks.build(store.spans, store.length, store.version, spacing, maxLabelWidth);
+		const marks = this.#tickMarks.build(store.spans, store.length, store.generation, spacing, maxLabelWidth);
 		const indexes = marks.indexes;
 
 		// first accepted mark that is not left of the visible range

@@ -1,7 +1,5 @@
 import { isNumber, isString } from '../helpers/strict-type-checks';
 
-import { Series } from '../model/series';
-import type { SeriesType } from '../model/series-options';
 import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
 export type Time = UTCTimestamp | BusinessDay | string;
@@ -38,9 +36,4 @@ export interface BarData {
 export interface SeriesDataItemTypeMap {
 	Candlestick: BarData;
 	Line: LineData;
-}
-
-export interface DataUpdatesConsumer<TSeriesType extends SeriesType> {
-	applyNewData(series: Series<TSeriesType>, data: SeriesDataItemTypeMap[TSeriesType][]): void;
-	updateData(series: Series<TSeriesType>, data: SeriesDataItemTypeMap[TSeriesType]): void;
 }

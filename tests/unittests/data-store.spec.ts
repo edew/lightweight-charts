@@ -101,23 +101,26 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const candles = store.createSeries(4);
 		store.setSeriesData(candles, f64(10, 20), f64(1, 4, 0, 3, 3, 6, 2, 5), 2);
-		const version = store.version;
+		const generation = store.generation;
 
 		expect(store.updateSeries(candles, 20, 3, 9, 1, 8)).to.equal(UpdateKind.InPlace);
 		expect(Array.from(candles.values.subarray(4, 8))).to.deep.equal([3, 9, 1, 8]);
 		expect(store.length).to.equal(2);
-		expect(store.version).to.equal(version);
+		expect(store.generation).to.equal(generation);
 	});
 
 	it('appends a new time point and grows the arrays', () => {
 		const store = new DataStore();
 		const line = store.createSeries(1);
+		const generation = store.generation;
 		expect(store.updateSeries(line, 10, 1, 0, 0, 0)).to.equal(UpdateKind.AppendTime);
 		for (let i = 1; i < 100; i++) {
 			expect(store.updateSeries(line, 10 + i * 10, i + 1, 0, 0, 0)).to.equal(UpdateKind.AppendTime);
 		}
 
 		expect(store.length).to.equal(100);
+		// an append does not change existing time points
+		expect(store.generation).to.equal(generation);
 		expect(line.length).to.equal(100);
 		expect(line.index).to.equal(null);
 		expect(store.times[99]).to.equal(1000);

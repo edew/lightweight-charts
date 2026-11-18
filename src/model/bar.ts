@@ -1,7 +1,5 @@
 import type { Nominal } from '../helpers/nominal';
 
-import type { Coordinate } from './coordinate';
-
 export type BarPrice = Nominal<number, 'BarPrice'>;
 
 export interface BarPrices {
@@ -9,11 +7,4 @@ export interface BarPrices {
 	high: BarPrice;
 	low: BarPrice;
 	close: BarPrice;
-}
-
-export interface BarCoordinates {
-	openY: Coordinate;
-	highY: Coordinate;
-	lowY: Coordinate;
-	closeY: Coordinate;
 }

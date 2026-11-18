@@ -198,8 +198,11 @@ export class DataStore {
 	/** Tick-mark weight for each time point. */
 	public spans: Uint8Array = new Uint8Array(0);
 	public length: number = 0;
-	/** Changes each time `times` changes. Caches use it as a key. */
-	public version: number = 0;
+	/**
+	 * Changes each time existing time points change. It does not change when time
+	 * points are only added at the end. Caches use it as a key.
+	 */
+	public generation: number = 0;
 	/** True when the user gives times as business days. Null until the first data. */
 	public businessDay: boolean | null = null;
 
@@ -274,7 +277,6 @@ export class DataStore {
 		this.times[timeCount] = time;
 		this.spans[timeCount] = spanByTime(time, timeCount === 0 ? null : this.times[timeCount - 1]);
 		this.length = timeCount + 1;
-		this.version++;
 
 		this.#appendTimeIndex(series, timeCount);
 		return UpdateKind.AppendTime;
@@ -357,7 +359,7 @@ export class DataStore {
 		// only when it is a view of a larger buffer
 		this.times = merged.byteOffset === 0 && merged.buffer.byteLength === merged.byteLength ? merged : merged.slice();
 		this.length = merged.length;
-		this.version++;
+		this.generation++;
 
 		const spans = new Uint8Array(this.length);
 		for (let i = 0; i < this.length; i++) {

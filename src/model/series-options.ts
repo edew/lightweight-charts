@@ -1,6 +1,6 @@
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { LineStyle, LineType, type LineWidth } from '../renderers/draw-line';
+import type { LineStyle, LineType, LineWidth } from '../draw/line-style';
 
 import type { PriceFormatterFn } from './price-scale/price-formatter-fn';
 import type { PriceScaleMargins } from './price-scale/price-scale';
@@ -34,17 +34,6 @@ export interface CandlestickStyleOptions {
 	wickUpColor: string;
 	/** Color of falling candlestick wicks. Ignored if wickVisible == false or wickColor is specified */
 	wickDownColor: string;
-}
-
-export function fillUpDownCandlesticksColors(options: Partial<CandlestickStyleOptions>): void {
-	if (options.borderColor !== undefined) {
-		options.borderUpColor = options.borderColor;
-		options.borderDownColor = options.borderColor;
-	}
-	if (options.wickColor !== undefined) {
-		options.wickUpColor = options.wickColor;
-		options.wickDownColor = options.wickColor;
-	}
 }
 
 export interface LineStyleOptions {
@@ -133,6 +122,12 @@ export interface NonOverlaySeriesSpecificOptions {
  * Structure describing options common for all types of series
  */
 export interface SeriesOptionsCommon {
+	/**
+	 * Index of the pane of the series. It is used only when the series is added.
+	 * The index can be equal to the number of panes: then the chart makes a new pane.
+	 */
+	pane: number;
+
 	/** Visibility of the label with the latest visible price on the price scale */
 	lastValueVisible: boolean;
 	/** Title of the series. This label is placed with price axis label */

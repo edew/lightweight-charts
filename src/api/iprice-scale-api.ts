@@ -2,7 +2,7 @@ import type { DeepPartial } from '../helpers/strict-type-checks';
 
 import type { PriceScaleOptions } from '../model/price-scale/price-scale';
 
-/** Interface to control chart's price scale */
+/** Interface to control the price scales of the chart. The options apply to the price scale of each pane. */
 export interface IPriceScaleApi {
 	/**
 	 * Applies new options to the price scale

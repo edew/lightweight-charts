@@ -38,9 +38,6 @@
     "test:visual": "vitest run tests/visual",
     "bench": "node bench/run.mjs"
   },
-  "dependencies": {
-    "fancy-canvas": "0.2.1"
-  },
   "devDependencies": {
     "@napi-rs/canvas": "1.1.1",
     "@types/chai": "5.2.2",

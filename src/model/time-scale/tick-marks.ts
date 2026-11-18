@@ -2,7 +2,8 @@
 //
 // Each time point has a weight (span): year > month > day > hour steps > minute steps.
 // Marks with a higher weight are placed first. A mark with a lower weight is accepted
-// only when it is far enough from all accepted marks.
+// only when it is far enough from all accepted marks. In each weight, the marks are
+// tried from left to right.
 
 export interface TickMarksResult {
 	/** Accepted time indexes, in ascending order. Only the first `count` items are valid. */
@@ -10,14 +11,21 @@ export interface TickMarksResult {
 	count: number;
 }
 
+/**
+ * New time points at the end can change accepted marks only near the end: one
+ * minimum distance for the new mark with the highest weight, and one more for each
+ * lower weight that then gets or loses space. This is more than the number of weights.
+ */
+const AFFECTED_DISTANCES = 16;
+
 export class TickMarks {
-	#result: TickMarksResult = { indexes: new Int32Array(0), count: 0 };
-	#scratch: Int32Array = new Int32Array(0);
+	readonly #result: TickMarksResult = { indexes: new Int32Array(0), count: 0 };
+	#suffix: Int32Array = new Int32Array(64);
+	#scratch: Int32Array = new Int32Array(64);
 	#valid: boolean = false;
 	#minIndexesBetweenMarks: number = NaN;
-	#spans: Uint8Array | null = null;
-	#length: number = -1;
-	#version: number = -1;
+	#length: number = 0;
+	#generation: number = -1;
 
 	public reset(): void {
 		this.#valid = false;
@@ -26,36 +34,52 @@ export class TickMarks {
 	/**
 	 * @param spans - weight for each time point
 	 * @param length - number of time points
-	 * @param version - changes when the time points change
+	 * @param generation - changes when existing time points change. It does not change
+	 * when time points are only added at the end.
 	 * @param spacing - pixels for each time point
 	 * @param maxWidth - pixel width of the widest label
 	 */
-	public build(spans: Uint8Array, length: number, version: number, spacing: number, maxWidth: number): TickMarksResult {
+	public build(spans: Uint8Array, length: number, generation: number, spacing: number, maxWidth: number): TickMarksResult {
 		// two marks must be at least this number of time points apart, or their labels overlap
-		const minIndexesBetweenMarks = Math.ceil(maxWidth / spacing);
-		if (
-			this.#valid &&
-			this.#minIndexesBetweenMarks === minIndexesBetweenMarks &&
-			this.#spans === spans &&
-			this.#length === length &&
-			this.#version === version
-		) {
-			return this.#result;
+		const minDistance = Math.ceil(maxWidth / spacing);
+		const result = this.#result;
+
+		let start = 0;
+		if (this.#valid && this.#minIndexesBetweenMarks === minDistance && this.#generation === generation && length >= this.#length) {
+			if (length === this.#length) {
+				return result;
+			}
+			// only new time points at the end: the marks before `start` stay as they are
+			start = Math.max(0, this.#length - AFFECTED_DISTANCES * minDistance);
 		}
 
-		this.#minIndexesBetweenMarks = minIndexesBetweenMarks;
-		this.#spans = spans;
+		this.#minIndexesBetweenMarks = minDistance;
+		this.#generation = generation;
 		this.#length = length;
-		this.#version = version;
 		this.#valid = true;
 
-		// which weights are present
+		// keep the accepted marks before `start`
+		const prefix = result.indexes;
+		let prefixCount = 0;
+		if (start > 0) {
+			let end = result.count;
+			while (prefixCount < end) {
+				const mid = (prefixCount + end) >> 1;
+				if (prefix[mid] < start) {
+					prefixCount = mid + 1;
+				} else {
+					end = mid;
+				}
+			}
+		}
+
+		// which weights are present in the part to build
 		const present = new Uint8Array(256);
-		for (let i = 0; i < length; i++) {
+		for (let i = start; i < length; i++) {
 			present[spans[i]] = 1;
 		}
 
-		let accepted = this.#result.indexes;
+		let accepted = this.#suffix;
 		let acceptedCount = 0;
 		let next = this.#scratch;
 
@@ -64,13 +88,21 @@ export class TickMarks {
 				continue;
 			}
 
+			// the nearest kept mark that this weight cannot be near to
+			let leftNeighbor = -Infinity;
+			for (let i = prefixCount - 1; i >= 0; i--) {
+				if (spans[prefix[i]] >= span) {
+					leftNeighbor = prefix[i];
+					break;
+				}
+			}
+
 			// merge the candidates of this weight into the marks that are already accepted
 			let nextCount = 0;
 			let acceptedPosition = 0;
-			let leftNeighbor = -Infinity;
 			let rightNeighbor = Infinity;
 
-			for (let candidate = 0; candidate < length; candidate++) {
+			for (let candidate = start; candidate < length; candidate++) {
 				if (spans[candidate] !== span) {
 					continue;
 				}
@@ -88,7 +120,7 @@ export class TickMarks {
 					}
 				}
 
-				if (rightNeighbor - candidate >= minIndexesBetweenMarks && candidate - leftNeighbor >= minIndexesBetweenMarks) {
+				if (rightNeighbor - candidate >= minDistance && candidate - leftNeighbor >= minDistance) {
 					next = push(next, nextCount++, candidate);
 					leftNeighbor = candidate;
 				}
@@ -104,15 +136,25 @@ export class TickMarks {
 			next = swap;
 		}
 
+		this.#suffix = accepted;
 		this.#scratch = next;
-		this.#result = { indexes: accepted, count: acceptedCount };
-		return this.#result;
+
+		// the result is the kept marks and then the new marks
+		const total = prefixCount + acceptedCount;
+		if (result.indexes.length < total) {
+			const larger = new Int32Array(Math.max(total, result.indexes.length * 2, 64));
+			larger.set(result.indexes.subarray(0, prefixCount));
+			result.indexes = larger;
+		}
+		result.indexes.set(accepted.subarray(0, acceptedCount), prefixCount);
+		result.count = total;
+		return result;
 	}
 }
 
 function push(array: Int32Array, position: number, value: number): Int32Array {
 	if (position >= array.length) {
-		const larger = new Int32Array(Math.max(64, array.length * 2));
+		const larger = new Int32Array(array.length * 2);
 		larger.set(array);
 		array = larger;
 	}

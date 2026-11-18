@@ -1,193 +1,220 @@
 import { expect } from 'chai';
-import { describe, it, beforeEach } from 'vitest';
+import { beforeEach, describe, it } from 'vitest';
 
-import { clone, merge } from '../../src/helpers/strict-type-checks';
-import { InvalidationLevel, InvalidateMask } from '../../src/model/invalidate-mask';
-import { ChartModel } from '../../src/model/chart-model';
-import type { ChartOptionsInternal } from '../../src/model/chart-model';
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
-import { lineStyleDefaults, seriesOptionsDefaults } from '../../src/api/options/series-options-defaults';
-import type { IDataSource } from '../../src/model/data-source/idata-source';
+import { seriesOptionsFromSpec } from '../../src/api/series-api';
+import { clone } from '../../src/helpers/strict-type-checks';
+import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
+import { InvalidateMask, InvalidationLevel } from '../../src/model/invalidate-mask';
+import type { Series } from '../../src/model/series';
 import type { TimePointIndex } from '../../src/model/time-scale/time-data';
-import type { LineSeriesOptions } from '../../src/model/series-options';
-
-function createLineSeriesOptions(): LineSeriesOptions {
-    return merge(clone(seriesOptionsDefaults), lineStyleDefaults) as LineSeriesOptions;
-}
+import { Candlestick } from '../../src/series/candlestick';
+import { Line } from '../../src/series/line';
 
 function createModel(): { model: ChartModel; invalidations: InvalidateMask[] } {
-    const invalidations: InvalidateMask[] = [];
-    const invalidator = (mask: InvalidateMask) => {
-        invalidations.push(mask);
-    };
-    const options: ChartOptionsInternal = clone(chartOptionsDefaults) as ChartOptionsInternal;
-    // make sizes non-zero to avoid empty time scale behavior
-    options.width = 100;
-    options.height = 100;
-    return { model: new ChartModel(invalidator, options), invalidations };
+	const invalidations: InvalidateMask[] = [];
+	const options: ChartOptionsInternal = clone(chartOptionsDefaults);
+	return { model: new ChartModel((mask: InvalidateMask) => invalidations.push(mask), options), invalidations };
+}
+
+function addLine(model: ChartModel, pane: number = 0, overlay: boolean = false): Series {
+	const spec = overlay ? Line({ pane, overlay: true, scaleMargins: { top: 0.5, bottom: 0 } }) : Line({ pane });
+	const options = seriesOptionsFromSpec(spec);
+	return model.createSeries(spec.kind, options, options.pane) as unknown as Series;
+}
+
+function setLine(model: ChartModel, series: Series, times: number[], values: number[]): void {
+	model.setSeriesData(series, new Float64Array(times), new Float64Array(values), times.length, false);
 }
 
 describe('ChartModel', () => {
-    let model: ChartModel;
-    let invalidations: InvalidateMask[];
+	let model: ChartModel;
+	let invalidations: InvalidateMask[];
 
-    beforeEach(() => {
-        const result = createModel();
-        model = result.model;
-        invalidations = result.invalidations;
-    });
+	beforeEach(() => {
+		const result = createModel();
+		model = result.model;
+		invalidations = result.invalidations;
+		model.setSize(100, [100]);
+	});
 
-    it('should create one pane and watermark on construction', () => {
-        expect(model.panes().length).to.equal(1);
-        expect(model.watermarkSource()).to.not.be.equal(null);
-        // constructor creates a pane which triggers at least one invalidation
-        expect(invalidations.length).to.be.greaterThan(0);
-        const mask = invalidations[0];
-        expect(mask.fullInvalidation()).to.be.oneOf([InvalidationLevel.Light, InvalidationLevel.Full]);
-    });
+	it('has one pane after construction and asks for a full update', () => {
+		expect(model.panes().length).to.equal(1);
+		expect(invalidations[0].fullInvalidation()).to.equal(InvalidationLevel.Full);
+		expect(invalidations[0].invalidateForPane(0).autoScale).to.equal(true);
+	});
 
-    it('fullUpdate and lightUpdate call invalidator with correct level', () => {
-        invalidations.length = 0;
-        model.fullUpdate();
-        expect(invalidations.pop()!.fullInvalidation()).to.equal(InvalidationLevel.Full);
-        model.lightUpdate();
-        expect(invalidations.pop()!.fullInvalidation()).to.equal(InvalidationLevel.Light);
-    });
+	it('fullUpdate and lightUpdate call the invalidate handler with the level', () => {
+		invalidations.length = 0;
+		model.fullUpdate();
+		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Full);
+		model.lightUpdate();
+		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Light);
+	});
 
-    it('applyOptions merges, fires main price scale change and invalidates', () => {
-        let fired = false;
-        model.mainPriceScaleOptionsChanged().subscribe(() => { fired = true; });
-        invalidations.length = 0;
-        model.applyOptions({ priceScale: { borderColor: '#ff0000' } });
-        expect(fired).to.be.true;
-        const mask = invalidations.pop()!;
-        expect(mask.fullInvalidation()).to.equal(InvalidationLevel.Full);
-        expect(model.options().priceScale.borderColor).to.equal('#ff0000');
-    });
+	it('applyOptions gives price scale options to all panes and asks for a full update', () => {
+		addLine(model, 1);
+		invalidations.length = 0;
+		model.applyOptions({ priceScale: { invertScale: true } });
+		expect(model.panes()[0].priceScale.options().invertScale).to.equal(true);
+		expect(model.panes()[1].priceScale.options().invertScale).to.equal(true);
+		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Full);
+	});
 
-    it('setHoveredSource updates source and invalidates previous and new source', () => {
-        const fakeSource: IDataSource = {
-            priceScale: () => null,
-            attached(): boolean { return false; },
-            destroy(): void { },
-            updateAllViews(): void { },
-            setUpdater(): void { },
-            subscribe(): void { },
-            unsubscribeAll(): void { },
-        } as unknown as IDataSource;
-        // previous null -> set to source should trigger one invalidation
-        invalidations.length = 0;
-        model.setHoveredSource({ source: fakeSource });
-        expect(invalidations.length).to.be.greaterThan(0);
+	describe('panes', () => {
+		it('adds a series to the first pane by default', () => {
+			const series = addLine(model);
+			expect(model.panes().length).to.equal(1);
+			expect(series.pane()).to.equal(model.panes()[0]);
+			expect(series.priceScale()).to.equal(model.panes()[0].priceScale);
+		});
 
-        // setting to null should invalidate the previous source
-        invalidations.length = 0;
-        model.setHoveredSource(null);
-        expect(invalidations.length).to.be.greaterThan(0);
-    });
+		it('makes a new pane when the pane index is equal to the number of panes', () => {
+			const first = addLine(model);
+			const second = addLine(model, 1);
+			expect(model.panes().length).to.equal(2);
+			expect(second.pane()).to.equal(model.panes()[1]);
+			expect(second.priceScale()).to.not.equal(first.priceScale());
+		});
 
-    it('setWidth updates width on model and time scale and invalidates', () => {
-        invalidations.length = 0;
-        model.setWidth(200);
-        expect(model.width()).to.equal(200);
-        expect(model.timeScale().width()).to.equal(200);
-        expect(invalidations.pop()!.fullInvalidation()).to.equal(InvalidationLevel.Light);
-    });
+		it('throws when the pane index is too large', () => {
+			expect(() => addLine(model, 2)).to.throw('Invalid pane index');
+		});
 
-    it('createPane adds a pane at the end and invalidates with autoScale', () => {
-        invalidations.length = 0;
-        const before = model.panes().length;
-        const pane = model.createPane();
-        expect(model.panes().length).to.equal(before + 1);
-        expect(pane).to.be.instanceOf(Object);
-        const mask = invalidations.pop()!;
-        expect(mask.fullInvalidation()).to.be.at.least(InvalidationLevel.Light);
-    });
+		it('removes a pane when its last series is removed, but not the first pane', () => {
+			const first = addLine(model);
+			const second = addLine(model, 1);
+			model.removeSeries(second);
+			expect(model.panes().length).to.equal(1);
+			model.removeSeries(first);
+			expect(model.panes().length).to.equal(1);
+			expect(model.serieses().length).to.equal(0);
+		});
 
-    it('scrollTimeTo returns true when movement exceeds threshold', () => {
-        model.startScrollTime(0 as any);
-        const res1 = model.scrollTimeTo(10 as any);
-        expect(res1).to.be.false;
-        const res2 = model.scrollTimeTo(25 as any);
-        expect(res2).to.be.true;
-    });
+		it('gives an overlay series its own price scale with its margins', () => {
+			const main = addLine(model);
+			const overlay = addLine(model, 0, true);
+			expect(overlay.pane()).to.equal(main.pane());
+			expect(overlay.priceScale()).to.not.equal(main.priceScale());
+			expect(overlay.priceScale().options().scaleMargins.top).to.equal(0.5);
+		});
 
-    it('setAndSaveCurrentPosition updates crosshair and fires moved event', () => {
-        let called = false;
-        model.crosshairMoved().subscribe((_idx, _coord) => { called = true; });
-        const pane = model.panes()[0];
-        model.setAndSaveCurrentPosition(10 as any, 20 as any, pane);
-        expect(called).to.be.true;
-        // crosshair applied index should be a number (default 0)
-        expect(model.crosshairSource().appliedIndex()).to.be.a('number');
-    });
+		it('setSize gives each pane its height', () => {
+			addLine(model, 1);
+			model.setSize(200, [60, 40]);
+			expect(model.width()).to.equal(200);
+			expect(model.panes()[0].height()).to.equal(60);
+			expect(model.panes()[1].height()).to.equal(40);
+			expect(model.panes()[1].priceScale.height()).to.equal(40);
+		});
+	});
 
-    it('clearCurrentPosition clears crosshair and fires moved event', () => {
-        let eventCount = 0;
-        model.crosshairMoved().subscribe(() => { eventCount += 1; });
-        model.clearCurrentPosition();
-        expect(eventCount).to.equal(1);
-        expect(model.crosshairSource().visible()).to.be.false;
-    });
+	describe('data', () => {
+		it('sets the base index to the last time point when data changes', () => {
+			const series = addLine(model);
+			expect(model.timeScale().baseIndex()).to.equal(0 as TimePointIndex);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			expect(model.timeScale().baseIndex()).to.equal(2 as TimePointIndex);
+			model.updateSeriesData(series, 40, 4, 0, 0, 0);
+			expect(model.timeScale().baseIndex()).to.equal(3 as TimePointIndex);
+		});
 
-    it('paneForSource returns null for unknown source and correct pane after adding watermark', () => {
-        const fakeSource: IDataSource = {
-            priceScale: () => null,
-            attached(): boolean { return false; },
-            destroy(): void { },
-            updateAllViews(): void { },
-            setUpdater(): void { },
-            subscribe(): void { },
-            unsubscribeAll(): void { },
-        } as unknown as IDataSource;
-        expect(model.paneForSource(fakeSource)).to.equal(null);
-        const wm = model.watermarkSource();
-        expect(model.paneForSource(wm!)).to.equal(model.panes()[0]);
-    });
+		it('an in-place update invalidates only the pane of the series and does not touch the time scale', () => {
+			const first = addLine(model);
+			const second = addLine(model, 1);
+			setLine(model, first, [10, 20], [1, 2]);
+			setLine(model, second, [10, 20], [5, 6]);
 
-    it('sets the base index to the last time point when data changes', () => {
-        const series = model.createSeries('Line', createLineSeriesOptions());
-        expect(model.timeScale().baseIndex()).to.equal(0 as TimePointIndex);
-        model.setSeriesData(series, new Float64Array([10, 20, 30]), new Float64Array([1, 2, 3]), 3, false);
-        expect(model.timeScale().baseIndex()).to.equal(2 as TimePointIndex);
-        model.updateSeriesData(series, 40, 4, 0, 0, 0);
-        expect(model.timeScale().baseIndex()).to.equal(3 as TimePointIndex);
-        // an in-place update does not move the base index
-        model.updateSeriesData(series, 40, 5, 0, 0, 0);
-        expect(model.timeScale().baseIndex()).to.equal(3 as TimePointIndex);
-    });
+			let visibleBarsChanged = 0;
+			model.timeScale().visibleBarsChanged().subscribe(() => visibleBarsChanged++);
+			model.timeScale().visibleBars();
+			visibleBarsChanged = 0;
+			invalidations.length = 0;
 
-    it('setPriceAutoScaleForAllMainSources toggles all main price scales to auto', () => {
-        const series = model.createSeries('Line', createLineSeriesOptions());
-        // before call the default mode is maybe autoScale=false
-        series.priceScale().setMode({ autoScale: false });
-        model.setPriceAutoScaleForAllMainSources();
-        expect(series.priceScale().mode().autoScale).to.be.true;
-    });
+			model.updateSeriesData(second, 20, 7, 0, 0, 0);
 
-    it('createSeries and removeSeries manage series list and invalidations', () => {
-        invalidations.length = 0;
-        const s1 = model.createSeries('Line', createLineSeriesOptions());
-        expect(model.serieses()).to.include(s1);
-        expect(invalidations.pop()!.fullInvalidation()).to.be.oneOf([InvalidationLevel.Full, InvalidationLevel.Light]);
+			expect(invalidations.length).to.equal(1);
+			expect(invalidations[0].fullInvalidation()).to.equal(InvalidationLevel.Light);
+			model.timeScale().visibleBars();
+			expect(visibleBarsChanged).to.equal(0);
+			expect(model.timeScale().baseIndex()).to.equal(1 as TimePointIndex);
+		});
 
-        model.removeSeries(s1);
-        expect(model.serieses()).to.not.include(s1);
-    });
+		it('removeSeries removes the time points of the series', () => {
+			const first = addLine(model);
+			const second = addLine(model);
+			setLine(model, first, [10, 30], [1, 3]);
+			setLine(model, second, [20, 40], [2, 4]);
+			expect(model.dataStore().length).to.equal(4);
+			model.removeSeries(second);
+			expect(model.dataStore().length).to.equal(2);
+		});
 
-    it('fitContent and setTargetTimeRange produce appropriate masks', () => {
-        invalidations.length = 0;
-        model.fitContent();
-        const m1 = invalidations.pop()!;
-        expect(m1.getFitContent()).to.be.true;
+		it('gives the range of the visible bars for autoscale', () => {
+			const spec = Candlestick();
+			const series = model.createSeries(spec.kind, seriesOptionsFromSpec(spec)) as unknown as Series;
+			model.setSeriesData(series, new Float64Array([10, 20]), new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), 2, false);
+			const range = series.autoscaleRange(0 as TimePointIndex, 1 as TimePointIndex);
+			expect(range?.minValue()).to.equal(2);
+			expect(range?.maxValue()).to.equal(9);
+			expect(series.autoscaleRange(5 as TimePointIndex, 9 as TimePointIndex)).to.equal(null);
+		});
+	});
 
-        invalidations.length = 0;
-        const range = {
-            from: 0,
-            to: 10,
-        };
-        model.setTargetTimeRange(range);
-        const m2 = invalidations.pop()!;
-        expect(m2.getTargetTimeRange()).to.deep.equal(range);
-    });
+	describe('crosshair', () => {
+		it('is calculated one time for each frame, from the last pointer position', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			invalidations.length = 0;
+
+			model.setCrosshairPosition(10, 10, model.panes()[0]);
+			model.setCrosshairPosition(97, 50, model.panes()[0]);
+			expect(invalidations.every((mask: InvalidateMask) => mask.fullInvalidation() === InvalidationLevel.Cursor)).to.equal(true);
+
+			expect(model.resolveCrosshair()).to.equal(true);
+			const crosshair = model.crosshair();
+			expect(crosshair.visible).to.equal(true);
+			expect(crosshair.index).to.equal(2);
+			expect(crosshair.x).to.equal(model.timeScale().indexToCoordinate(2 as TimePointIndex));
+			expect(Number.isNaN(crosshair.price)).to.equal(false);
+
+			// nothing changed: no new calculation
+			expect(model.resolveCrosshair()).to.equal(false);
+		});
+
+		it('is calculated again after a scale change', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			model.setCrosshairPosition(97, 50, model.panes()[0]);
+			model.resolveCrosshair();
+
+			model.updateSeriesData(series, 40, 4, 0, 0, 0);
+			expect(model.resolveCrosshair()).to.equal(true);
+			expect(model.crosshair().index).to.equal(3);
+		});
+
+		it('clears to the last time point with no pane', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			model.setCrosshairPosition(10, 10, model.panes()[0]);
+			model.resolveCrosshair();
+
+			model.clearCrosshairPosition();
+			expect(model.resolveCrosshair()).to.equal(true);
+			const crosshair = model.crosshair();
+			expect(crosshair.visible).to.equal(false);
+			expect(crosshair.pane).to.equal(null);
+			expect(crosshair.index).to.equal(2);
+		});
+	});
+
+	it('fitContent and setTargetTimeRange put the request in the mask', () => {
+		invalidations.length = 0;
+		model.fitContent();
+		expect(invalidations.pop()?.getFitContent()).to.equal(true);
+
+		const range = { from: 0, to: 10 };
+		model.setTargetTimeRange(range);
+		expect(invalidations.pop()?.getTargetTimeRange()).to.deep.equal(range);
+	});
 });
