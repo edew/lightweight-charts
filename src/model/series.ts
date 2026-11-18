@@ -239,12 +239,7 @@ export class Series<T extends SeriesType = SeriesType> {
 			}
 			default: {
 				const priceScale = Math.pow(10, priceFormat.precision);
-				this.#formatter = new PriceFormatter(
-					priceScale,
-					priceFormat.minMove * priceScale,
-					false,
-					undefined
-				);
+				this.#formatter = new PriceFormatter(priceScale, priceFormat.minMove * priceScale);
 			}
 		}
 

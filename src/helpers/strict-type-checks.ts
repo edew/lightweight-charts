@@ -13,8 +13,11 @@ export function merge(dst: Record<string, any>, ...sources: Record<string, any>[
 				continue;
 			}
 
-			if ('object' !== typeof src[i] || dst[i] === undefined) {
+			if ('object' !== typeof src[i] || src[i] === null) {
 				dst[i] = src[i];
+			} else if (dst[i] === undefined) {
+				// a copy: the destination must not share objects with the source
+				dst[i] = clone(src[i]);
 			} else {
 				merge(dst[i], src[i]);
 			}
@@ -74,12 +77,4 @@ export function clone<T>(object: T): T {
 	}
 
 	return c;
-}
-
-export function notNull<T>(t: T | null): t is T {
-	return t !== null;
-}
-
-export function undefinedIfNull<T>(t: T | null): T | undefined {
-	return (t === null) ? undefined : t;
 }

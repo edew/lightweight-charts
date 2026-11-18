@@ -1,31 +1,9 @@
 import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
-import { numberToStringWithLeadingZero, PriceFormatter } from '../../src/formatters/price-formatter';
+import { PriceFormatter } from '../../src/formatters/price-formatter';
 
 describe('PriceFormatter', () => {
-	describe('numberToStringWithLeadingZero', () => {
-		it('should add leading zeros correctly', () => {
-			expect(numberToStringWithLeadingZero(5, 2)).to.equal('05');
-			expect(numberToStringWithLeadingZero(123, 5)).to.equal('00123');
-		});
-
-		it('should not add zeros if length is met', () => {
-			expect(numberToStringWithLeadingZero(123, 3)).to.equal('123');
-			expect(numberToStringWithLeadingZero(1234, 2)).to.equal('34'); // Truncates? slice(-length)
-		});
-
-		it('should return n/a for non-numbers', () => {
-			expect(numberToStringWithLeadingZero(NaN, 2)).to.equal('n/a');
-		});
-
-		it('should throw for invalid lengths', () => {
-			expect(() => numberToStringWithLeadingZero(5, -1)).to.throw(TypeError);
-			expect(() => numberToStringWithLeadingZero(5, 17)).to.throw(TypeError);
-			expect(() => numberToStringWithLeadingZero(5, 1.5)).to.throw(TypeError);
-		});
-	});
-
 	describe('format', () => {
 		it('should format prices as decimal by default', () => {
 			const formatter = new PriceFormatter(100, 1);

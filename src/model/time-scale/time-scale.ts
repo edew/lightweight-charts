@@ -1,5 +1,4 @@
-import { DateFormatter } from '../../formatters/date-formatter';
-import { DateTimeFormatter } from '../../formatters/date-time-formatter';
+import { formatDate, formatTime } from '../../formatters/date-format';
 
 import { ensureNotNull } from '../../helpers/assertions';
 import { Delegate } from '../../helpers/delegate';
@@ -62,8 +61,6 @@ export class TimeScale {
 	readonly #model: ChartModel;
 	readonly #localizationOptions: LocalizationOptions;
 
-	#dateTimeFormatter!: DateFormatter | DateTimeFormatter;
-
 	#width: number = 0;
 	#baseIndexOrNull: TimePointIndex | null = null;
 	#rightOffset: number;
@@ -76,7 +73,6 @@ export class TimeScale {
 	#visibleBars: BarsRange | null = null;
 	#visibleBarsInvalidated: boolean = true;
 	readonly #visibleBarsChanged: Delegate = new Delegate();
-	readonly #optionsApplied: Delegate = new Delegate();
 	#leftEdgeIndex: TimePointIndex | null = null;
 	#commonTransitionStartState: TransitionState | null = null;
 	#timeMarksCache: TimeMark[] | null = null;
@@ -90,8 +86,6 @@ export class TimeScale {
 		this.#barSpacing = options.barSpacing;
 		this.#model = model;
 		this.#store = model.dataStore();
-
-		this.#updateDateTimeFormatter();
 	}
 
 	public options(): Readonly<TimeScaleOptions> {
@@ -102,7 +96,6 @@ export class TimeScale {
 		merge(this.#localizationOptions, localizationOptions);
 
 		this.#invalidateTickMarks();
-		this.#updateDateTimeFormatter();
 	}
 
 	public applyOptions(options: DeepPartial<TimeScaleOptions>): void {
@@ -125,9 +118,6 @@ export class TimeScale {
 		}
 
 		this.#invalidateTickMarks();
-		this.#updateDateTimeFormatter();
-
-		this.#optionsApplied.fire();
 	}
 
 	public isEmpty(): boolean {
@@ -482,10 +472,6 @@ export class TimeScale {
 		return this.#visibleBarsChanged;
 	}
 
-	public optionsApplied(): ISubscription {
-		return this.#optionsApplied;
-	}
-
 	public baseIndex(): TimePointIndex {
 		// null is used to known that baseIndex is not set yet
 		// so in methods which should known whether it is set or not
@@ -535,7 +521,9 @@ export class TimeScale {
 			return this.#localizationOptions.timeFormatter(this.#store.businessDay ? secondsToBusinessDay(time) : time as UTCTimestamp);
 		}
 
-		return this.#dateTimeFormatter.format(new Date(time * 1000));
+		const date = new Date(time * 1000);
+		const text = formatDate(date, this.#localizationOptions.dateFormat, this.#localizationOptions.locale);
+		return this.#options.timeVisible ? text + '   ' + formatTime(date, this.#options.secondsVisible) : text;
 	}
 
 	#rightOffsetForCoordinate(x: Coordinate): number {
@@ -642,20 +630,20 @@ export class TimeScale {
 	}
 
 	#formatLabel(time: number, span: number): string {
-		let formatter = this.#formattedBySpan.get(span);
-		if (formatter === undefined) {
-			formatter = new FormattedLabelsCache((date: Date) => {
-				return this.#formatLabelImpl(date, span);
-			});
-
-			this.#formattedBySpan.set(span, formatter);
+		let cache = this.#formattedBySpan.get(span);
+		if (cache === undefined) {
+			// one formatter for each weight: it is slow to make, and fast to use
+			const formatter = new Intl.DateTimeFormat(this.#localizationOptions.locale, this.#labelFormatOptions(span));
+			cache = new FormattedLabelsCache((seconds: number) => formatter.format(seconds * 1000));
+			this.#formattedBySpan.set(span, cache);
 		}
 
-		return formatter.format(new Date(time * 1000));
+		return cache.format(time);
 	}
 
-	#formatLabelImpl(d: Date, span: number): string {
-		const formatOptions: Intl.DateTimeFormatOptions = {};
+	/** Which part of the date a tick mark with the given weight shows. */
+	#labelFormatOptions(span: number): Intl.DateTimeFormatOptions {
+		const formatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC' };
 
 		const timeVisible = this.#options.timeVisible;
 		if (span < MarkSpanBorder.Minute && timeVisible) {
@@ -669,8 +657,6 @@ export class TimeScale {
 			formatOptions.hour12 = false;
 			formatOptions.hour = '2-digit';
 			formatOptions.minute = '2-digit';
-		} else if (span < MarkSpanBorder.Week) {
-			formatOptions.day = 'numeric';
 		} else if (span < MarkSpanBorder.Month) {
 			formatOptions.day = 'numeric';
 		} else if (span < MarkSpanBorder.Year) {
@@ -679,19 +665,7 @@ export class TimeScale {
 			formatOptions.year = 'numeric';
 		}
 
-		// from given date we should use only as UTC date or timestamp
-		// but to format as locale date we can convert UTC date to local date
-		const localDateFromUtc = new Date(
-			d.getUTCFullYear(),
-			d.getUTCMonth(),
-			d.getUTCDate(),
-			d.getUTCHours(),
-			d.getUTCMinutes(),
-			d.getUTCSeconds(),
-			d.getUTCMilliseconds()
-		);
-
-		return localDateFromUtc.toLocaleString(this.#localizationOptions.locale, formatOptions);
+		return formatOptions;
 	}
 
 	#setVisibleBars(visibleBars: BarsRange | null): void {
@@ -717,21 +691,6 @@ export class TimeScale {
 	#invalidateTickMarks(): void {
 		this.#resetTimeMarksCache();
 		this.#formattedBySpan.clear();
-	}
-
-	#updateDateTimeFormatter(): void {
-		const dateFormat = this.#localizationOptions.dateFormat;
-
-		if (this.#options.timeVisible) {
-			this.#dateTimeFormatter = new DateTimeFormatter({
-				dateFormat: dateFormat,
-				timeFormat: this.#options.secondsVisible ? '%h:%m:%s' : '%h:%m',
-				dateTimeSeparator: '   ',
-				locale: this.#localizationOptions.locale,
-			});
-		} else {
-			this.#dateTimeFormatter = new DateFormatter(dateFormat, this.#localizationOptions.locale);
-		}
 	}
 
 	#fixLeftEdge(): void {

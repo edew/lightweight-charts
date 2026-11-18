@@ -9,8 +9,6 @@ import {
 	isNumber,
 	isString,
 	merge,
-	notNull,
-	undefinedIfNull,
 } from '../../src/helpers/strict-type-checks';
 
 describe('strict-type-checks', () => {
@@ -52,6 +50,25 @@ describe('strict-type-checks', () => {
 			const src = { nested: { v: 3 } };
 			merge(dst, src);
 			expect(dst).to.deep.equal({ a: 1, nested: { v: 3 } });
+		});
+
+		it('does not share nested objects with the source', () => {
+			const dst: Record<string, any> = {};
+			const src = { nested: { v: 3 }, list: [1, 2] };
+			merge(dst, src);
+			expect(dst.nested).to.not.equal(src.nested);
+			dst.nested.v = 4;
+			dst.list.push(3);
+			expect(src.nested.v).to.equal(3);
+			expect(src.list).to.deep.equal([1, 2]);
+		});
+
+		it('keeps functions and null values as they are', () => {
+			const fn = (): number => 1;
+			const dst: Record<string, any> = { a: { b: 1 } };
+			merge(dst, { fn, a: null } as Record<string, any>);
+			expect(dst.fn).to.equal(fn);
+			expect(dst.a).to.equal(null);
 		});
 	});
 
@@ -102,18 +119,6 @@ describe('strict-type-checks', () => {
 			expect(clone(5)).to.equal(5);
 			expect(clone('abc')).to.equal('abc');
 			expect(clone(null)).to.equal(null);
-		});
-	});
-
-	describe('null helpers', () => {
-		it('notNull narrows out null values', () => {
-			const values = [1, null, 3].filter(notNull);
-			expect(values).to.deep.equal([1, 3]);
-		});
-
-		it('undefinedIfNull converts null to undefined', () => {
-			expect(undefinedIfNull(10)).to.equal(10);
-			expect(undefinedIfNull(null)).to.equal(undefined);
 		});
 	});
 });

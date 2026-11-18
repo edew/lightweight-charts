@@ -37,6 +37,6 @@ export class VolumeFormatter implements IPriceFormatter {
 			res = String(value);
 
 		}
-		return res.replace(/(\.[1-9]*)0+$/, (e: string, p1: string): string => p1);
+		return res.replace(/(\.[1-9]*)0+$/, (_match: string, p1: string): string => p1);
 	}
 }

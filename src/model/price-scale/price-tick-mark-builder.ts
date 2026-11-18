@@ -1,4 +1,3 @@
-import { min } from '../../helpers/mathex';
 
 import type { Coordinate } from '../coordinate';
 import type { PriceMark, PriceScale } from './price-scale';
@@ -11,7 +10,8 @@ const TICK_DENSITY = 2.5;
 
 export class PriceTickMarkBuilder {
 	#marks: PriceMark[] = [];
-	#base: number;
+	// made one time: a tick span is calculated for each frame with a new price range
+	readonly #spanCalculators: PriceTickSpanCalculator[];
 	readonly #priceScale: PriceScale;
 	readonly #coordinateToLogicalFunc: CoordinateToLogicalConverter;
 	readonly #logicalToCoordinateFunc: LogicalToCoordinateConverter;
@@ -23,7 +23,11 @@ export class PriceTickMarkBuilder {
 		logicalToCoordinateFunc: LogicalToCoordinateConverter
 	) {
 		this.#priceScale = priceScale;
-		this.#base = base;
+		this.#spanCalculators = [
+			new PriceTickSpanCalculator(base, [2, 2.5, 2]),
+			new PriceTickSpanCalculator(base, [2, 2, 2.5]),
+			new PriceTickSpanCalculator(base, [2.5, 2, 2]),
+		];
 		this.#coordinateToLogicalFunc = coordinateToLogicalFunc;
 		this.#logicalToCoordinateFunc = logicalToCoordinateFunc;
 	}
@@ -112,17 +116,12 @@ export class PriceTickMarkBuilder {
 
 		const maxTickSpan = (high - low) * markHeight / scaleHeight;
 
-		const spanCalculator1 = new PriceTickSpanCalculator(this.#base, [2, 2.5, 2]);
-		const spanCalculator2 = new PriceTickSpanCalculator(this.#base, [2, 2, 2.5]);
-		const spanCalculator3 = new PriceTickSpanCalculator(this.#base, [2.5, 2, 2]);
-
-		const spans: number[] = [];
-
-		spans.push(spanCalculator1.tickSpan(high, low, maxTickSpan));
-		spans.push(spanCalculator2.tickSpan(high, low, maxTickSpan));
-		spans.push(spanCalculator3.tickSpan(high, low, maxTickSpan));
-
-		return min(spans);
+		const calculators = this.#spanCalculators;
+		return Math.min(
+			calculators[0].tickSpan(high, low, maxTickSpan),
+			calculators[1].tickSpan(high, low, maxTickSpan),
+			calculators[2].tickSpan(high, low, maxTickSpan)
+		);
 	}
 
 	#fontHeight(): number {

@@ -572,7 +572,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		let bitmapHeight: number;
 		const pixelRatio = window.devicePixelRatio || 1;
 
-		const exact = entry.devicePixelContentBoxSize;
+		// the type says that this field always exists, but Safari does not have it
+		const exact = entry.devicePixelContentBoxSize as ReadonlyArray<ResizeObserverSize> | undefined;
 		if (exact !== undefined && exact.length !== 0) {
 			this.#exactBitmapSize = true;
 			bitmapWidth = exact[0].inlineSize;

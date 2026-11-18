@@ -1,45 +1,32 @@
-import { ensureDefined } from '../../helpers/assertions';
+export type FormatFunction = (value: number) => string;
 
-interface CachedTick {
-	string: string;
-	tick: number;
-}
-
-export type FormatFunction = (value: Date) => string;
-
+/**
+ * Remembers the text for the last values. When the cache is full, the value that was
+ * added first is removed.
+ */
 export class FormattedLabelsCache {
 	readonly #format: FormatFunction;
 	readonly #maxSize: number;
-	#actualSize: number = 0;
-	#usageTick: number = 1;
-	#oldestTick: number = 1;
-	#cache: Map<number, CachedTick> = new Map();
-	#tick2Labels: Map<number, number> = new Map();
+	// a Map keeps the order in which the keys were added
+	readonly #cache: Map<number, string> = new Map();
 
 	public constructor(format: FormatFunction, size: number = 50) {
 		this.#format = format;
 		this.#maxSize = size;
 	}
 
-	public format(value: Date): string {
-		const tick = this.#cache.get(value.valueOf());
-		if (tick !== undefined) {
-			return tick.string;
+	public format(value: number): string {
+		let text = this.#cache.get(value);
+		if (text !== undefined) {
+			return text;
 		}
 
-		if (this.#actualSize === this.#maxSize) {
-			const oldestValue = this.#tick2Labels.get(this.#oldestTick);
-			this.#tick2Labels.delete(this.#oldestTick);
-			this.#cache.delete(ensureDefined(oldestValue));
-			this.#oldestTick++;
-			this.#actualSize--;
+		if (this.#cache.size === this.#maxSize) {
+			this.#cache.delete(this.#cache.keys().next().value as number);
 		}
 
-		const str = this.#format(value);
-		this.#cache.set(value.valueOf(), { string: str, tick: this.#usageTick });
-		this.#tick2Labels.set(this.#usageTick, value.valueOf());
-		this.#actualSize++;
-		this.#usageTick++;
-		return str;
+		text = this.#format(value);
+		this.#cache.set(value, text);
+		return text;
 	}
 }

@@ -69,7 +69,8 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 	}
 
 	public applyOptions(options: DeepPartial<TimeScaleOptions>): void {
-		this.#timeScale().applyOptions(options);
+		// through the model, so that the chart gets a new layout (the axis can become visible)
+		this.#model.applyOptions({ timeScale: options });
 	}
 
 	public options(): Readonly<TimeScaleOptions> {

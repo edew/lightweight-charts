@@ -1,52 +1,53 @@
 const defaultReplacementRe = /[2-9]/g;
 
+/**
+ * Remembers the width of the last measured texts. Digits are replaced with "0" before
+ * a measurement, so that all prices with the same number of digits share one entry.
+ * When the cache is full, the entry that was added first is removed.
+ */
 export class TextWidthCache {
 	readonly #maxSize: number;
-	#actualSize: number = 0;
-	#usageTick: number = 1;
-	#oldestTick: number = 1;
-	#tick2Labels: Record<number, string> = {};
-	#cache: Record<string, number> = {};
+	// a Map keeps the order in which the keys were added
+	readonly #cache: Map<string, number> = new Map();
+	// the last text and its width: the same label is measured many times in a row
+	#lastText: string = '';
+	#lastRe: RegExp | undefined;
+	#lastWidth: number = 0;
 
 	public constructor(size: number = 50) {
 		this.#maxSize = size;
 	}
 
 	public reset(): void {
-		this.#actualSize = 0;
-		this.#cache = {};
-		this.#usageTick = 1;
-		this.#oldestTick = 1;
-		this.#tick2Labels = {};
+		this.#cache.clear();
+		this.#lastText = '';
+		this.#lastWidth = 0;
 	}
 
 	public measureText(ctx: CanvasRenderingContext2D, text: string, optimizationReplacementRe?: RegExp): number {
-		const re = optimizationReplacementRe || defaultReplacementRe;
-		const cacheString = String(text).replace(re, '0');
-
-		if (this.#cache[cacheString]) {
-			return this.#cache[cacheString];
+		if (text === this.#lastText && optimizationReplacementRe === this.#lastRe && this.#lastWidth !== 0) {
+			return this.#lastWidth;
 		}
 
-		if (this.#actualSize === this.#maxSize) {
-			const oldestValue = this.#tick2Labels[this.#oldestTick];
-			delete this.#tick2Labels[this.#oldestTick];
-			delete this.#cache[oldestValue];
-			this.#oldestTick++;
-			this.#actualSize--;
+		const cacheString = String(text).replace(optimizationReplacementRe || defaultReplacementRe, '0');
+
+		let width = this.#cache.get(cacheString);
+		if (width === undefined) {
+			width = ctx.measureText(cacheString).width;
+			if (width === 0 && text.length !== 0) {
+				// measureText can return 0 in FF depending on a canvas size, don't cache it
+				return 0;
+			}
+
+			if (this.#cache.size === this.#maxSize) {
+				this.#cache.delete(this.#cache.keys().next().value as string);
+			}
+			this.#cache.set(cacheString, width);
 		}
 
-		const width = ctx.measureText(cacheString).width;
-
-		if (width === 0 && !!text.length) {
-			// measureText can return 0 in FF depending on a canvas size, don't cache it
-			return 0;
-		}
-
-		this.#cache[cacheString] = width;
-		this.#tick2Labels[this.#usageTick] = cacheString;
-		this.#actualSize++;
-		this.#usageTick++;
+		this.#lastText = text;
+		this.#lastRe = optimizationReplacementRe;
+		this.#lastWidth = width;
 		return width;
 	}
 }

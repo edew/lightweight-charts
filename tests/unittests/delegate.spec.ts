@@ -61,19 +61,20 @@ describe('Delegate', () => {
 		expect(countB).to.equal(1);
 	});
 
-	it('singleshot listeners are removed after first fire', () => {
+	it('a listener that unsubscribes during fire does not stop the other listeners', () => {
 		const delegate = new Delegate<void, void>();
-		let count = 0;
-
-		delegate.subscribe(() => {
-			count += 1;
-		}, undefined, true);
+		const calls: string[] = [];
+		const first = (): void => {
+			calls.push('first');
+			delegate.unsubscribe(first);
+		};
+		delegate.subscribe(first);
+		delegate.subscribe(() => calls.push('second'));
 
 		delegate.fire(undefined, undefined);
 		delegate.fire(undefined, undefined);
 
-		expect(count).to.equal(1);
-		expect(delegate.hasListeners()).to.equal(false);
+		expect(calls).to.deep.equal(['first', 'second', 'second']);
 	});
 
 	it('destroy clears all listeners', () => {
