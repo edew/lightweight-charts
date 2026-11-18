@@ -12,12 +12,20 @@
     "type": "git",
     "url": "https://github.com/tradingview/lightweight-charts.git"
   },
-  "module": "dist/lightweight-charts.esm.production.js",
-  "main": "index.js",
-  "typings": "dist/typings.d.ts",
+  "type": "module",
+  "main": "./dist/lightweight-charts.umd.cjs",
+  "module": "./dist/lightweight-charts.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/lightweight-charts.js",
+      "require": "./dist/lightweight-charts.umd.cjs"
+    }
+  },
+  "sideEffects": false,
   "files": [
-    "dist/**",
-    "index.js"
+    "dist/**"
   ],
   "keywords": [
     "financial-charting-library",
@@ -30,7 +38,7 @@
   ],
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json",
     "test": "vitest run tests/**/**.spec.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src",

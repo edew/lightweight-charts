@@ -103,7 +103,7 @@ export function precisionByMinMove(minMove: number): number {
 	return i;
 }
 
-export const enum PriceAxisLastValueMode {
+export enum PriceAxisLastValueMode {
 	LastPriceAndPercentageValue,
 	LastValueAccordingToScale,
 }

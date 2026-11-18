@@ -17,7 +17,8 @@ export const chartOptionsDefaults: ChartOptionsInternal = {
 	timeScale: timeScaleOptionsDefaults,
 	watermark: watermarkOptionsDefaults,
 	localization: {
-		locale: navigator.language,
+		// there is no navigator when the module is loaded on a server
+		locale: typeof navigator !== 'undefined' ? navigator.language : 'en-US',
 		dateFormat: 'dd MMM \'yy',
 	},
 	handleScroll: {

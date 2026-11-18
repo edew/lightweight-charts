@@ -34,7 +34,7 @@ import type { FirstValue, Series } from '../series';
  * Percentage turns the percentage mode on.
  * IndexedTo100 turns the "indexed to 100" mode on
  */
-export const enum PriceScaleMode {
+export enum PriceScaleMode {
 	Normal,
 	Logarithmic,
 	Percentage,

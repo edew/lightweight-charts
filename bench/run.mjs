@@ -20,5 +20,5 @@ await build({
 	},
 });
 
-const result = spawnSync(process.execPath, ['--expose-gc', '--max-old-space-size=8192', resolve(outDir, 'bench.mjs')], { stdio: 'inherit' });
+const result = spawnSync(process.execPath, ['--expose-gc', '--max-old-space-size=8192', resolve(outDir, 'bench.js')], { stdio: 'inherit' });
 process.exit(result.status ?? 1);

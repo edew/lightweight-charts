@@ -8,7 +8,7 @@ import type { TimePointIndex } from './time-scale/time-data';
  * Normal means that the crosshair always follows the pointer.
  * Magnet means that the vertical line of the crosshair follows the pointer, while the horizontal line is placed on the corresponding series point.
  */
-export const enum CrosshairMode {
+export enum CrosshairMode {
 	Normal,
 	Magnet,
 }

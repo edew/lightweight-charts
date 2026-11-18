@@ -7,6 +7,7 @@ export type { BarPrice } from './model/bar';
 export { CrosshairMode } from './model/crosshair';
 export { PriceScaleMode } from './model/price-scale/price-scale';
 export type { SeriesKind, SeriesSpec } from './model/series-kind';
+export { PriceAxisLastValueMode } from './model/series-options';
 export type { BusinessDay, UTCTimestamp } from './model/time-scale/time-data';
 
 export type {

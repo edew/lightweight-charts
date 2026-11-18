@@ -1,11 +1,11 @@
 export type LineWidth = 1 | 2 | 3 | 4;
 
-export const enum LineType {
+export enum LineType {
 	Simple,
 	WithSteps,
 }
 
-export const enum LineStyle {
+export enum LineStyle {
 	Solid = 0,
 	Dotted = 1,
 	Dashed = 2,
