@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Context
+## Repository context
 
-This is a pared-down fork of TradingView's `lightweight-charts` (v2.0.0), developed on the `20kb` branch with a focus on minimizing bundle size. Much of the upstream feature set (many series types, plugins, build tooling) has been stripped. Single runtime dependency: `fancy-canvas` (canvas abstraction); everything else is hand-rolled.
+This is a pared-down fork of TradingView's `lightweight-charts` (v2.0.0), developed on the `20kb` branch. The goals are minimum bundle size and maximum performance in a browser.
+
+**The code is at the start of a rewrite.** `CLEANUP.md` is the work order and the source of truth for the design. Read it before you change `src/model`, `src/views`, `src/renderers`, `src/gui` or `src/api`. If this file and `CLEANUP.md` disagree, `CLEANUP.md` is correct.
 
 ## Commands
 
@@ -16,63 +18,75 @@ This is a pared-down fork of TradingView's `lightweight-charts` (v2.0.0), develo
 | Run all tests | `npm test` (`vitest run tests/**/**.spec.ts`) |
 | Run a single test file | `npx vitest run tests/unittests/<name>.spec.ts` |
 | Filter by test name | `npx vitest run -t "<substring>"` |
+| Lint | `npm run lint` |
+| Unused code | `npm run knip` |
 
-Verify changes with `npm run typecheck && npm test` before considering work complete.
+`npm run bench` and `npm run test:visual` do not exist until Phase 0 of `CLEANUP.md` is done.
 
-## Architecture
+Verify changes with `npm run typecheck && npm test` before considering work complete. If a command is missing from `node_modules`, run `npm install` first.
 
-Five-layer architecture, top depends on bottom:
+## Target design (not built yet; see `CLEANUP.md`)
+
+- **Columnar store.** One sorted `Float64Array` of UTC seconds for the chart. One `Float64Array` for each series, with 1 or 4 values for each bar. The time index is the array position. `BusinessDay` and string times are converted at the API edge.
+- **Frame record.** One plain record for each frame: visible index range, x scale, pixel ratio, and for each pane its rectangle and price scale factors.
+- **Draw functions.** Plain functions read the store and the frame record and draw to a context. No view classes, no renderer classes, no item arrays.
+- **`SeriesKind`.** A series type is a record (`stride`, `draw`, `range`, `lastColor`). Public API: `chart.addSeries(Line({ ...options }))`.
+- **Panes.** Supported. A pane is a rectangle in the two canvases, with its own price scales and series. The time scale is shared.
+- **Two canvases.** One static, one overlay, for any number of panes. Layout is a pure function. `ResizeObserver` and Pointer Events replace `fancy-canvas` and the mouse/touch handler.
+- **Tests with no browser.** Pixel tests with a native canvas in Node, draw-call log snapshots, and unit tests on plain data.
+
+## Current code (to be replaced)
+
+Five layers, top depends on bottom:
 
 ```
-API (src/api/)            Public surface: IChartApi, ISeriesApi. ChartApi orchestrates.
- ↓                        DataLayer converts user time (UTC/BusinessDay) → internal TimePoint.
-GUI (src/gui/)            ChartWidget runs the RAF render loop. PaneWidget manages dual
- ↓                        canvases (background + top layer). Mouse/touch handling.
+API (src/api/)            Public surface: IChartApi, ISeriesApi. DataLayer converts user time.
+GUI (src/gui/)            ChartWidget runs the RAF loop. Pane, price-axis and time-axis widgets,
+                          each with two canvases.
 Model (src/model/) ↔ Views (src/views/)
- ↓                        Model: ChartModel is the central hub; Series, Pane, PriceScale,
-Renderers (src/renderers/)  TimeScale hold state and trigger invalidation. Model classes
-                            create and own their Views. Views bridge model→renderer with
-                            lazy recalc (_invalidated flag). Renderers do stateless canvas draw.
+Renderers (src/renderers/)
 ```
 
-**Data flow**: `seriesApi.setData()` → `DataLayer` (time conversion) → `Series.setData()` → `ChartModel._invalidate(InvalidateMask)` → RAF scheduled → `Pane.updateAllViews()` (lazy view recalc) → `renderer.draw(ctx, pixelRatio, isHovered)`.
+Data flow: `seriesApi.setData()` → `DataLayer` → `Series.updateData()` → `ChartModel` invalidation → RAF → views recalculate → `renderer.draw(ctx, pixelRatio)`.
 
-Renderers have no upward dependencies; data is pushed in via `setData()`. Views (`views/pane/`, `views/price-axis/`, `views/time-axis/`) read from Model and produce Renderers.
+Known facts about the current code. Older documents said the opposite for the first three:
 
-## Key Patterns
+- Append of a new bar is O(n): `PlotList.#append` uses `concat`.
+- An in-place tick is not short-circuited. It rebuilds tick marks and calls `recalculateAllPanes()`.
+- `_fillRawPoints` allocates one object for each bar on each data tick.
+- `TimePoints.indexOf` is a linear scan.
+- The model has pane arrays, but no public API makes a second pane.
 
-- **Nominal/branded types** (`src/helpers/nominal.ts`): zero-runtime type wrappers like `Coordinate`, `TimePointIndex`, `UTCTimestamp`. Always cast explicitly (`42 as Coordinate`); never mix them — this is the primary guard against coordinate/index confusion.
-- **Options & DeepPartial** (`src/helpers/strict-type-checks.ts`): user-facing options are `DeepPartial<T>`. Defaults live in `src/api/options/*-defaults.ts`, applied via `merge(clone(defaults), userOptions)` — always clone defaults first. Mutate options only through `setOptions()` so invalidation fires.
-- **Invalidation** (`src/model/invalidate-mask.ts`): levels `None < Cursor < Light < Full`. Cursor-only changes skip data recalculation. Views check `_invalidated` before recomputing.
-- **Event system** (`src/helpers/delegate.ts`): `Delegate<T1,T2>` implements `ISubscription`. Subscribe with a `linkedObject` (`delegate.subscribe(cb, this)`) to enable batch cleanup via `delegate.unsubscribeAll(this)` — do this for subscriptions made in constructors to avoid leaks.
-- **Assertions** (`src/helpers/assertions.ts`): use `ensureDefined()` / `ensureNotNull()` instead of non-null `!`; use `assert()` for invariants.
-- **Cleanup**: classes needing teardown implement `IDestroyable.destroy()`. Charts must be removed via `chart.remove()` to avoid leaks.
+## Performance rules (for all new code)
+
+- **No object for each point.** Point data is in typed arrays. No per-point `Map` entry.
+- **No allocation in a draw path or a tick path.** Reuse scratch buffers. No closures, `bind`, spread, `map` or `filter` there.
+- **Ingest:** an in-place tick writes values in place and changes nothing in the time scale. An append is amortized O(1). An older timestamp throws.
+- **Lookup:** time to index is a binary search. No linear scan over all points.
+- **Tiered invalidation** (`src/model/invalidate-mask.ts`): `None < Cursor < Light < Full`. Cursor draws only the overlay. Use the lowest level that is correct.
+- **RAF batching:** all changes in a frame merge into one draw. An invalidation does not draw synchronously. A `Full` escalation during a Light draw applies in the same frame (`perf-summary-2.md`, Deep dive A).
+- **Draw only what is visible.** Loops run over `[from, to)`. When a bar is narrower than one device pixel, draw one aggregate for each pixel column.
+- **Cheap inner loops.** Write `fillStyle` / `strokeStyle` only when the value changes. One `fill()` or `stroke()` for each color run. No `save` / `restore` in a bar loop.
+- **Pixels.** Series draw in physical bitmap pixels with rounding. Read `devicePixelRatio` one time on resize, not in a draw path.
+- **Cache behind invalidation:** text width, parsed colors, formatted labels, font strings.
 
 ## Conventions
 
-- Public API interfaces use `I` prefix (`IChartApi`); internal classes drop it (`ChartApi`). Only `I`-prefixed interfaces are exported from `src/index.ts`.
-- Private fields use `_` prefix (no `#private` syntax). `const enum` for internal flag sets.
-- **Tab indentation** throughout.
-- Target ES2022, strict mode, `moduleResolution: bundler`, `verbatimModuleSyntax`, no CommonJS. TS extensions allowed in imports.
-
-## Performance Model
-
-Performance is the reason this library exists; the design optimizes for the common case (real-time append + pan/zoom over large series). Preserve these invariants when editing — a change that "works" but breaks one of them is a regression:
-
-- **Columnar, sorted, binary-searched data.** Every point (line/area/bar/candle) is normalized at ingest into a fixed 4-tuple `PlotRow` `[open, high, low, close]` (`src/model/plot-data.ts`) — one storage path for all series types. `PlotList` (`src/model/plot-list.ts`) keeps a read-only array sorted by `TimePointIndex`; all time→index lookups go through `lowerBound`/`upperBound` binary search (`src/helpers/algorithms.ts`) for O(log n). Never introduce a linear scan over all points or a per-point map on a hot path.
-- **O(1) real-time ingest.** `DataLayer.updateSeriesData` (`src/model/data-layer.ts`) separates the streaming path from `setData`'s full O(n log n) rebuild: an in-place tick (same timestamp as last bar) overwrites the final array element; a new bar appends and binary-search-inserts into `_sortedTimePoints`, re-indexing only points after the insertion. Out-of-order *older* updates throw, so the array never re-sorts on the hot path. The `DataLayer` keeps two maps that **share** the same `PlotRow` objects (time→points and series→rows) — don't clone rows.
-- **Skip the time-scale rebuild when possible.** An in-place update returns `firstChangedPointIndex = -1` / `affectsTimeScale = false`, which bypasses tick-mark relayout and the time-axis rebuild. Keep this short-circuit intact.
-- **Tiered invalidation** (`src/model/invalidate-mask.ts`): `None < Cursor < Light < Full`. Cursor repaints only the cheap top canvas (crosshair); Light recomputes price scales + redraws series; Full rebuilds GUI structure (resize/pane add-remove, rare). Use the lowest level that reflects what actually changed.
-- **RAF batching + merge** (`src/gui/chart-widget.ts`): all model changes in a frame merge (max level, OR'd autoscale flags) into a single `requestAnimationFrame` → at most one `_drawImpl` per frame. Invalidations buffer into a field and never draw synchronously; a `Full` escalation caused re-entrantly *during* a Light draw is folded forward into the current frame to avoid painting stale geometry (see `perf-summary-2.md` Deep dive A).
-- **Lazy, flag-guarded recompute.** Autoscale price range recomputes once per invalidation (`_makeSureItIsValid` / `_invalidatedForRange`), not per coordinate lookup; visible range is derived by formula behind a `_visibleRangeInvalidated` flag. Autoscale min/max is chunked so a tick only re-scans the edges.
-- **Cache expensive work behind invalidation.** Text width (`src/model/text-width-cache.ts`, normalizes digits so `"12:34"`/`"56:78"` share a measurement), color/RGBA parsing, and axis tick-mark layout are all memoized and invalidated only on the relevant change.
-- **Draw only what's visible.** Every renderer binary-searches the visible window and bails if it's null; coordinate mapping and draw loops iterate only `[from, to)`. Streaming into a 100k-point series while showing 200 bars must transform ~200 points, not 100k.
-- **Cheap inner loops.** Write `ctx.fillStyle`/`strokeStyle` only when the color changes and flush one `fill()`/`stroke()` per color run (`src/renderers/walk-line.ts`, `candlesticks-renderer.ts`). Series draw in physical bitmap pixels (HiDPI); text/axes use CSS-pixel media space (both via `fancy-canvas`).
-
-**Known non-incremental hot spots** (candidates to profile, not yet optimized): every tick still calls `model.recalculateAllPanes()` (`src/api/chart-api.ts`) even for a pure in-place tick; and `_fillRawPoints` (`src/model/series/*-pane-view-base.ts`) reallocates the entire `_items` array per **data** tick (O(n) in series length), while pan/zoom/cursor frames only rewrite `x`/`y` in place and allocate nothing. See `perf-summary.md` and `perf-summary-2.md` for full detail.
+- Public API interfaces use the `I` prefix (`IChartApi`). Only those are exported from `src/index.ts`.
+- Private members use `#private` syntax. Protected members use the `_` prefix.
+- `const enum` for internal flag sets.
+- **Tab indentation.**
+- Target ES2022, strict mode, `moduleResolution: bundler`, `verbatimModuleSyntax`, no CommonJS.
+- **Nominal types** (`src/helpers/nominal.ts`): `Coordinate`, `TimePointIndex`, `UTCTimestamp`. Cast explicitly (`42 as Coordinate`).
+- **Assertions** (`src/helpers/assertions.ts`): `ensureDefined()` / `ensureNotNull()`, not `!`. `assert()` for invariants.
+- **Options:** user options are `DeepPartial<T>`. Defaults are in `src/api/options/*-defaults.ts`. Use `merge(clone(defaults), userOptions)`. Do not mutate the caller's object.
+- **Events** (`src/helpers/delegate.ts`): subscribe with a `linkedObject` and clean up with `unsubscribeAll(this)`.
+- **Cleanup:** classes that need teardown implement `IDestroyable.destroy()`. A chart is removed with `chart.remove()`.
+- Share code between series kinds with plain functions, not base classes.
 
 ## Testing
 
 - **Vitest** with **Chai** assertions (`expect(...).to.be.equal(...)`).
-- Tests in `tests/unittests/*.spec.ts`, named to mirror source files.
-- Use branded casts in fixtures: `1000 as UTCTimestamp`, `0 as TimePointIndex`.
+- Unit tests are in `tests/unittests/*.spec.ts`, with names that mirror the source files.
+- Use branded casts in fixtures: `1000 as UTCTimestamp`.
+- Visual tests (after Phase 0) are in `tests/visual/`. A golden image changes only in a commit that says why.
