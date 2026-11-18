@@ -1,16 +1,14 @@
 import { assert } from '../helpers/assertions';
-import type { IDestroyable } from '../helpers/idestroyable';
 import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { Coordinate } from './coordinate';
 import { createCrosshair, type Crosshair, type CrosshairOptions } from './crosshair';
 import { DataStore, UpdateKind } from './data-store';
 import type { GridOptions } from './grid';
-import { InvalidateMask, InvalidationLevel } from './invalidate-mask';
 import type { LayoutOptions } from './layout-options';
 import type { LocalizationOptions } from './localization-options';
 import { Pane } from './pane';
-import type { PriceScale, PriceScaleOptions } from './price-scale/price-scale';
+import type { PriceScaleOptions } from './price-scale/price-scale';
 import { Series } from './series';
 import type { SeriesKind } from './series-kind';
 import type { SeriesOptionsMap, SeriesType } from './series-options';
@@ -32,7 +30,19 @@ export interface HandleScaleOptions {
 	axisDoubleClickReset: boolean;
 }
 
-type InvalidateHandler = (mask: InvalidateMask) => void;
+/** How much of the chart a change makes out of date. A frame draws for the highest level since the last frame. */
+export const enum InvalidationLevel {
+	None = 0,
+	/** Only the overlay: crosshair lines, markers and labels. */
+	Cursor = 1,
+	/** All content. The price axis keeps its width or becomes wider. */
+	Light = 2,
+	/** All content, with a new width of the price axis. */
+	Full = 3,
+}
+
+/** Called for each change. It must not draw: it schedules a frame. */
+type InvalidateHandler = (level: InvalidationLevel) => void;
 
 /**
  * Structure describing options of the chart. Series options are to be set separately
@@ -69,7 +79,7 @@ export type ChartOptionsInternal =
 		handleScale: HandleScaleOptions;
 	};
 
-export class ChartModel implements IDestroyable {
+export class ChartModel {
 	readonly #options: ChartOptionsInternal;
 	readonly #invalidateHandler: InvalidateHandler;
 
@@ -80,8 +90,9 @@ export class ChartModel implements IDestroyable {
 	readonly #crosshair: Crosshair = createCrosshair();
 	#crosshairDirty: boolean = false;
 
-	#width: number = 0;
-	#initialTimeScrollPos: number | null = null;
+	// requests that the next frame applies before it draws
+	#fitContentRequest: boolean = false;
+	#timeRangeRequest: TimeSecondsRange | null = null;
 
 	public constructor(invalidateHandler: InvalidateHandler, options: ChartOptionsInternal) {
 		this.#invalidateHandler = invalidateHandler;
@@ -91,23 +102,14 @@ export class ChartModel implements IDestroyable {
 		this.#createPane();
 	}
 
-	public destroy(): void {
-		this.#panes.length = 0;
-		this.#serieses.length = 0;
-
-		// to avoid memleaks
-		this.#options.localization.priceFormatter = undefined;
-		this.#options.localization.timeFormatter = undefined;
-	}
-
 	// ---- invalidation
 
 	public fullUpdate(): void {
-		this.#invalidate(new InvalidateMask(InvalidationLevel.Full));
+		this.#invalidateHandler(InvalidationLevel.Full);
 	}
 
 	public lightUpdate(): void {
-		this.#invalidate(new InvalidateMask(InvalidationLevel.Light));
+		this.#invalidateHandler(InvalidationLevel.Light);
 	}
 
 	// ---- options
@@ -130,7 +132,7 @@ export class ChartModel implements IDestroyable {
 		}
 
 		if (options.localization !== undefined) {
-			this.#timeScale.applyLocalizationOptions(options.localization);
+			this.#timeScale.resetLabels();
 			for (const pane of this.#panes) {
 				pane.priceScale.updateFormatter();
 			}
@@ -163,13 +165,8 @@ export class ChartModel implements IDestroyable {
 
 	// ---- size
 
-	public width(): number {
-		return this.#width;
-	}
-
 	/** Sets the width of the panes and the height of each pane, then calculates the scales again. */
 	public setSize(width: number, paneHeights: ArrayLike<number>): void {
-		this.#width = width;
 		this.#timeScale.setWidth(width);
 		for (let i = 0; i < this.#panes.length; i++) {
 			this.#panes[i].setHeight(paneHeights[i]);
@@ -252,7 +249,7 @@ export class ChartModel implements IDestroyable {
 			// the time scale does not change: only the pane of the series needs new prices
 			series.pane().recalculate();
 			this.updateCrosshair();
-			this.#invalidatePane(series.pane(), InvalidationLevel.Light);
+			this.lightUpdate();
 			return;
 		}
 
@@ -263,130 +260,50 @@ export class ChartModel implements IDestroyable {
 		this.#updateTimeScaleBaseIndex();
 	}
 
-	// ---- price scale interaction
+	// ---- requests
 
-	public startScalePrice(priceScale: PriceScale, y: number): void {
-		priceScale.startScale(y);
-	}
-
-	public scalePriceTo(pane: Pane, priceScale: PriceScale, y: number): void {
-		priceScale.scaleTo(y);
+	/** Call after a drag changed a price scale. */
+	public priceScaleChanged(): void {
 		this.updateCrosshair();
-		this.#invalidatePane(pane, InvalidationLevel.Light);
+		this.lightUpdate();
 	}
 
-	public endScalePrice(pane: Pane, priceScale: PriceScale): void {
-		priceScale.endScale();
-		this.#invalidatePane(pane, InvalidationLevel.Light);
+	/** The next frame shows all time points. */
+	public fitContent(): void {
+		this.#fitContentRequest = true;
+		this.#timeRangeRequest = null;
+		this.lightUpdate();
 	}
 
-	public startScrollPrice(priceScale: PriceScale, y: number): void {
-		priceScale.startScroll(y);
-	}
-
-	public scrollPriceTo(pane: Pane, priceScale: PriceScale, y: number): void {
-		if (priceScale.isAutoScale()) {
-			return;
-		}
-
-		priceScale.scrollTo(y);
-		this.updateCrosshair();
-		this.#invalidatePane(pane, InvalidationLevel.Light);
-	}
-
-	public endScrollPrice(pane: Pane, priceScale: PriceScale): void {
-		priceScale.endScroll();
-		this.#invalidatePane(pane, InvalidationLevel.Light);
-	}
-
-	public setPriceAutoScale(pane: Pane, priceScale: PriceScale, autoScale: boolean): void {
-		pane.setPriceAutoScale(priceScale, autoScale);
-		this.#invalidatePane(pane, InvalidationLevel.Light);
-	}
-
-	public resetPriceScale(pane: Pane, priceScale: PriceScale): void {
-		pane.resetPriceScale(priceScale);
-		this.#invalidatePane(pane, InvalidationLevel.Light);
-	}
-
-	// ---- time scale interaction
-
-	public startScaleTime(position: Coordinate): void {
-		this.#timeScale.startScale(position);
+	/** The next frame shows the given range of time. */
+	public setTargetTimeRange(range: TimeSecondsRange): void {
+		this.#fitContentRequest = false;
+		this.#timeRangeRequest = range;
+		this.lightUpdate();
 	}
 
 	/**
-	 * Zoom in/out the chart (depends on scale value).
-	 * @param pointX - X coordinate of the point to apply the zoom (the point which should stay on its place)
-	 * @param scale - Zoom value. Negative value means zoom out, positive - zoom in.
+	 * Applies the requests for the next frame: the one-time autoscale of a pane,
+	 * "fit content" and a time range. A frame calls this before the layout.
 	 */
-	public zoomTime(pointX: Coordinate, scale: number): void {
-		const timeScale = this.#timeScale;
-		if (timeScale.isEmpty() || scale === 0) {
-			return;
+	public applyRequests(): void {
+		for (const pane of this.#panes) {
+			if (pane.autoScaleRequest) {
+				pane.autoScaleRequest = false;
+				pane.momentaryAutoScale();
+			}
 		}
 
-		const timeScaleWidth = timeScale.width();
-		pointX = Math.max(1, Math.min(pointX, timeScaleWidth)) as Coordinate;
-
-		timeScale.zoom(pointX, scale);
-		this.#onTimeScaleMoved();
-	}
-
-	public scrollChart(x: Coordinate): void {
-		this.startScrollTime(0 as Coordinate);
-		this.scrollTimeTo(x);
-		this.endScrollTime();
-	}
-
-	public scaleTimeTo(x: Coordinate): void {
-		this.#timeScale.scaleTo(x);
-		this.#onTimeScaleMoved();
-	}
-
-	public endScaleTime(): void {
-		this.#timeScale.endScale();
-		this.lightUpdate();
-	}
-
-	public startScrollTime(x: Coordinate): void {
-		this.#initialTimeScrollPos = x;
-		this.#timeScale.startScroll(x);
-	}
-
-	public scrollTimeTo(x: Coordinate): boolean {
-		let res = false;
-		if (this.#initialTimeScrollPos !== null && Math.abs(x - this.#initialTimeScrollPos) > 20) {
-			this.#initialTimeScrollPos = null;
-			res = true;
+		if (this.#fitContentRequest) {
+			this.#fitContentRequest = false;
+			this.#timeScale.fitContent();
 		}
 
-		this.#timeScale.scrollTo(x);
-		this.#onTimeScaleMoved();
-		return res;
-	}
-
-	public endScrollTime(): void {
-		this.#timeScale.endScroll();
-		this.lightUpdate();
-		this.#initialTimeScrollPos = null;
-	}
-
-	public resetTimeScale(): void {
-		this.#timeScale.restoreDefault();
-		this.#onTimeScaleMoved();
-	}
-
-	public fitContent(): void {
-		const mask = new InvalidateMask(InvalidationLevel.Light);
-		mask.setFitContent();
-		this.#invalidate(mask);
-	}
-
-	public setTargetTimeRange(range: TimeSecondsRange): void {
-		const mask = new InvalidateMask(InvalidationLevel.Light);
-		mask.setTargetTimeRange(range);
-		this.#invalidate(mask);
+		const range = this.#timeRangeRequest;
+		if (range !== null) {
+			this.#timeRangeRequest = null;
+			this.#timeScale.setTimeRange(range);
+		}
 	}
 
 	/** Marks the price range of all price scales with autoscale for a new calculation. */
@@ -407,7 +324,7 @@ export class ChartModel implements IDestroyable {
 		crosshair.pane = pane;
 		crosshair.visible = true;
 		this.#crosshairDirty = true;
-		this.#invalidate(new InvalidateMask(InvalidationLevel.Cursor));
+		this.#invalidateHandler(InvalidationLevel.Cursor);
 	}
 
 	public clearCrosshairPosition(): void {
@@ -417,7 +334,7 @@ export class ChartModel implements IDestroyable {
 		crosshair.originX = NaN;
 		crosshair.originY = NaN;
 		this.#crosshairDirty = true;
-		this.#invalidate(new InvalidateMask(InvalidationLevel.Cursor));
+		this.#invalidateHandler(InvalidationLevel.Cursor);
 	}
 
 	/** Call when a scale changed: the crosshair must be calculated again from the pointer position. */
@@ -454,7 +371,7 @@ export class ChartModel implements IDestroyable {
 		let index = timeScale.coordinateToIndex(crosshair.originX as Coordinate);
 		const visibleBars = timeScale.visibleBars();
 		if (visibleBars !== null) {
-			index = Math.min(Math.max(visibleBars.firstBar(), index), visibleBars.lastBar()) as TimePointIndex;
+			index = Math.min(Math.max(visibleBars.first, index), visibleBars.last) as TimePointIndex;
 		}
 
 		crosshair.index = index;
@@ -476,23 +393,11 @@ export class ChartModel implements IDestroyable {
 	// ---- private
 
 	#createPane(): Pane {
+		// a new pane always gets one autoscale, also if the autoscale option is off
 		const pane = new Pane(this);
 		this.#panes.push(pane);
-
-		// we always do autoscaling on the creation:
-		// if the autoscale option is false, autoscale anyway on the first draw
-		const mask = new InvalidateMask(InvalidationLevel.Full);
-		mask.invalidatePane(this.#panes.length - 1, {
-			level: InvalidationLevel.None,
-			autoScale: true,
-		});
-		this.#invalidate(mask);
+		this.fullUpdate();
 		return pane;
-	}
-
-	#onTimeScaleMoved(): void {
-		this.recalculateAllPanes();
-		this.lightUpdate();
 	}
 
 	#onAllTimePointsChanged(): void {
@@ -514,13 +419,5 @@ export class ChartModel implements IDestroyable {
 		this.lightUpdate();
 	}
 
-	#invalidatePane(pane: Pane, level: InvalidationLevel): void {
-		const mask = new InvalidateMask(level);
-		mask.invalidatePane(this.#panes.indexOf(pane), { level });
-		this.#invalidate(mask);
-	}
 
-	#invalidate(mask: InvalidateMask): void {
-		this.#invalidateHandler(mask);
-	}
 }

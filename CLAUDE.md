@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a rewrite of TradingView's `lightweight-charts` (v2.0.0) on the `20kb` branch. The goals are minimum bundle size and maximum performance in a browser. The design is data-oriented: point data is in typed arrays, and drawing is done by plain functions that read those arrays.
 
-The package has no runtime dependency. `CLEANUP.md` has the history of the rewrite, the benchmark log, and the items that are still open.
+The package has no runtime dependency. The UMD bundle must stay below 20 kB gzip. `CLEANUP.md` has the measured numbers (bundle size, benchmark) and the items that are still open.
 
 ## Commands
 
@@ -23,7 +23,7 @@ The package has no runtime dependency. `CLEANUP.md` has the history of the rewri
 | Lint | `npm run lint` |
 | Unused code | `npm run knip` |
 
-Verify changes with `npm run typecheck && npm test && npm run lint` before considering work complete. For a change in a data path or a draw path, also run `npm run bench` and compare with the last block in `CLEANUP.md`.
+Verify changes with `npm run typecheck && npm test && npm run lint` before considering work complete. Then run `npm run build` and compare the gzip size of the UMD file with the limit. For a change in a data path or a draw path, also run `npm run bench` and compare with the table in `CLEANUP.md`.
 
 Use `npm ci` for a clean install; `package-lock.json` is committed.
 
@@ -35,6 +35,8 @@ src/gui/      The only DOM code: two canvases, size, frame loop, pointer input.
 src/draw/     Plain functions that draw the chart on a context. No DOM.
 src/series/   One file for each series type (a SeriesKind record).
 src/model/    State: data store, scales, panes, series, crosshair, invalidation.
+src/formatters/  Functions that make the text of a price or a date.
+src/helpers/     Assertions, `Delegate`, `merge` / `clone`, nominal types.
 ```
 
 Dependencies go down only. `src/model` does not import `src/draw`, `src/series` or `src/gui` (one exception: the `LineStyle` types in `src/draw/line-style.ts`). The chart core does not import a series kind: the user imports `Line` or `Candlestick`, so a bundler removes the kinds that are not used.
@@ -50,7 +52,7 @@ Dependencies go down only. `src/model` does not import `src/draw`, `src/series` 
 
 One frame, for an invalidation level above Cursor:
 
-1. Apply requests from the mask (autoscale, fit content, time range).
+1. `model.applyRequests()`: the one-time autoscale of a pane, "fit content", a time range.
 2. `layoutChart()`: measure the price axis, calculate the rectangles (`computeLayout()`), give the pane sizes to the model. It does this two times, because the axis width depends on the price range.
 3. `model.resolveCrosshair()`: one calculation of the crosshair for each frame.
 4. `drawStatic()` on the static canvas: background, and for each pane the grid, series and price axis; then separators and the time axis.
@@ -66,6 +68,13 @@ A series type is a record with `stride`, `defaults`, `draw()`, `range()` and `ba
 
 To add a series type: add one file in `src/series/` with the kind record and a function that returns a `SeriesSpec`, add its options to `SeriesOptionsMap` in `src/model/series-options.ts`, and export the function from `src/index.ts`. Share code between kinds with plain functions, not base classes.
 
+### Scales
+
+- `PriceScale` (`src/model/price-scale/price-scale.ts`): one file with the conversions for the four modes (normal, logarithmic, percentage, indexed to 100), autoscale, the tick marks and the drag state. A `PriceRange` is a plain `{ min, max }` that is not changed after it is made. The range is in the values that the scale shows (for example logarithms in the logarithmic mode).
+- `TimeScale` (`src/model/time-scale/time-scale.ts`): bar spacing, right offset, visible bars (`BarsRange`, a plain `{ first, last }`), tick mark labels and the drag state. A method that changes the visible range also requests the autoscale of the panes and a Light frame.
+- The widget calls the drag methods of the scales directly (`startScale` / `scaleTo`, `startScroll` / `scrollTo`, `endDrag`).
+- A price formatter is a function `(price) => string` (`src/formatters/price-formatter.ts`).
+
 ### Panes
 
 `ChartModel.panes()` is a list of `Pane` (stretch factor, one price scale for the axis, series). The series option `pane` selects the pane when the series is added; an index equal to the number of panes makes a new pane. An overlay series (`overlay: true`) gets its own price scale with no axis. The time scale, the time axis and the vertical crosshair line are shared.
@@ -78,19 +87,26 @@ These are the reason this library exists. A change that works but breaks one of 
 - **No allocation in a draw path or a tick path.** Reuse scratch buffers (see `drawData` in `src/draw/pane.ts`). No closures, `bind`, spread, `map` or `filter` there.
 - **Ingest.** An in-place tick writes values in place and does not touch the time scale (`UpdateKind.InPlace`). An append is amortized O(1). An update that is older than the last bar of the series throws.
 - **Lookup.** Time to index is a binary search, or arithmetic for a series with consecutive time points. No linear scan over all points.
-- **Tiered invalidation** (`src/model/invalidate-mask.ts`): `None < Cursor < Light < Full`. Cursor draws only the overlay. Light keeps the width of the price axis or makes it wider; Full calculates it again. Use the lowest level that is correct.
-- **One frame for all changes.** Invalidations merge into one mask and one `requestAnimationFrame`. An invalidation does not draw. The frame takes the mask before it draws; changes that the frame's own prepare step makes in the model are drawn by that frame.
+- **Tiered invalidation** (`InvalidationLevel` in `src/model/chart-model.ts`): `None < Cursor < Light < Full`. Cursor draws only the overlay. Light keeps the width of the price axis or makes it wider; Full calculates it again. Use the lowest level that is correct.
+- **One frame for all changes.** An invalidation is one number: the widget keeps the highest level and one `requestAnimationFrame`. An invalidation does not draw and does not allocate. The frame takes the level before it draws; changes that the frame's own prepare step makes in the model are drawn by that frame.
 - **Draw only what is visible.** `drawSeries()` finds the visible rows with a search; loops run over those rows only.
 - **Tick marks** (`src/model/time-scale/tick-marks.ts`) are cached. New time points at the end build only the end again. A change of the minimum distance between marks (a zoom) builds all marks again: this is the one cost that is linear in the number of time points during interaction.
 - **Cheap inner loops.** Write `fillStyle` / `strokeStyle` only when the value changes. One `stroke()` for a line. No `save` / `restore` in a bar loop. `tests/unittests/draw-calls.spec.ts` checks these rules.
 - **Pixels.** Series draw in device pixels with rounding. The device pixel ratio is stored when the canvas size changes, not read in a draw path.
 - **Cache behind invalidation:** text width, parsed colors, formatted labels, label metrics.
 
+## Bundle size rules
+
+- A public method of an internal class keeps its name in the bundle; a `#private` member and a module-level function do not. Thus a small module-level function costs less than a class, and a method that only calls a different object is cost with no function.
+- No message text for a condition that cannot occur. `ensureNotNull()` is sufficient.
+- No per-change object where a number or a field is sufficient (see `InvalidationLevel`).
+- An exported `const enum` must give each member a number value in the declaration (`Pane = 1`). The plugin `inlineConstEnums` in `vite.config.ts` replaces each use with the value, because the bundler compiles each file alone and does not do this for an enum from a different file. Vitest uses the same plugin.
+
 ## Conventions
 
 - Public API interfaces use the `I` prefix (`IChartApi`). `src/index.ts` is the only public entry.
 - Private members use `#private` syntax. Protected members use the `_` prefix.
-- `const enum` for internal flag sets. Enums that the user can import are normal enums.
+- `const enum` for internal flag sets (see "Bundle size rules"). Enums that the user can import are normal enums.
 - **Tab indentation.**
 - Target ES2022, strict mode, `moduleResolution: bundler`, `verbatimModuleSyntax`, ES modules only.
 - **Nominal types** (`src/helpers/nominal.ts`): `Coordinate`, `TimePointIndex`, `UTCTimestamp`. Cast explicitly (`42 as Coordinate`).

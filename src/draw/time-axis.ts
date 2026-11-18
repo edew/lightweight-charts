@@ -3,7 +3,7 @@
 
 import type { ChartModel } from '../model/chart-model';
 
-import { contrastTextColor, labelMetrics, textWidthCache } from './labels';
+import { contrastTextColor, LabelSize, labelMetrics, textWidth } from './labels';
 
 /** Height of the time axis in CSS pixels, or 0 if it is not visible. */
 export function timeAxisHeight(model: ChartModel): number {
@@ -19,7 +19,7 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 
 	if (borderVisible) {
 		ctx.fillStyle = borderColor;
-		ctx.fillRect(0, 0, Math.ceil(width * pixelRatio), Math.max(1, Math.floor(metrics.borderSize * pixelRatio)));
+		ctx.fillRect(0, 0, Math.ceil(width * pixelRatio), Math.max(1, Math.floor(LabelSize.Border * pixelRatio)));
 	}
 
 	const marks = model.timeScale().marks();
@@ -40,17 +40,17 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 	}
 
 	if (borderVisible) {
-		const borderSize = Math.floor(metrics.borderSize * pixelRatio);
+		const borderSize = Math.floor(LabelSize.Border * pixelRatio);
 		const tickWidth = Math.max(1, Math.floor(pixelRatio));
 		const tickOffset = Math.floor(pixelRatio * 0.5);
-		const tickLength = Math.round(metrics.timeTickLength * pixelRatio);
+		const tickLength = Math.round(LabelSize.TimeTick * pixelRatio);
 		ctx.fillStyle = borderColor;
 		for (let i = 0; i < marks.length; i++) {
 			ctx.fillRect(Math.round(marks[i].coord * pixelRatio) - tickOffset, borderSize, tickWidth, tickLength);
 		}
 	}
 
-	const yText = metrics.borderSize + metrics.timeTickLength + metrics.timePaddingTop + metrics.fontSize - metrics.timeBaselineOffset;
+	const yText = LabelSize.Border + LabelSize.TimeTick + metrics.timePadding + metrics.fontSize - metrics.timeBaselineOffset;
 
 	ctx.save();
 	ctx.scale(pixelRatio, pixelRatio);
@@ -91,13 +91,13 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	const metrics = labelMetrics(options.layout);
 	const text = timeScale.formatDateTime(time);
 	ctx.font = metrics.font;
-	const textWidth = Math.round(textWidthCache.measureText(ctx, text));
-	if (textWidth <= 0) {
+	const labelTextWidth = Math.round(textWidth(ctx, text));
+	if (labelTextWidth <= 0) {
 		return;
 	}
 
 	const horzMargin = metrics.timePaddingHorizontal;
-	const labelWidth = textWidth + 2 * horzMargin;
+	const labelWidth = labelTextWidth + 2 * horzMargin;
 	const labelWidthHalf = labelWidth / 2;
 
 	// keep the label inside the axis
@@ -112,7 +112,7 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	}
 
 	const x2 = x1 + labelWidth;
-	const y2 = metrics.borderSize + metrics.timePaddingTop + metrics.fontSize + metrics.timePaddingBottom;
+	const y2 = LabelSize.Border + metrics.timePadding + metrics.fontSize + metrics.timePadding;
 
 	const x1scaled = Math.round(x1 * pixelRatio);
 	const x2scaled = Math.round(x2 * pixelRatio);
@@ -129,12 +129,12 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 		Math.round(crosshair.x * pixelRatio) - tickOffset,
 		0,
 		tickWidth,
-		Math.round((metrics.borderSize + metrics.timeTickLength) * pixelRatio)
+		Math.round((LabelSize.Border + LabelSize.TimeTick) * pixelRatio)
 	);
 
 	ctx.save();
 	ctx.scale(pixelRatio, pixelRatio);
 	ctx.textAlign = 'left';
-	ctx.fillText(text, x1 + horzMargin, y2 - metrics.timeBaselineOffset - metrics.timePaddingBottom);
+	ctx.fillText(text, x1 + horzMargin, y2 - metrics.timeBaselineOffset - metrics.timePadding);
 	ctx.restore();
 }

@@ -3,31 +3,31 @@
 import { makeFont } from '../helpers/make-font';
 
 import type { LayoutOptions } from '../model/layout-options';
-import { TextWidthCache } from '../model/text-width-cache';
 
-const BORDER_SIZE = 1;
-const PRICE_TICK_LENGTH = 4;
-const TIME_TICK_LENGTH = 3;
+/** Sizes that do not depend on the font, CSS pixels. */
+export const enum LabelSize {
+	/** Width of the border line of an axis. */
+	Border = 1,
+	PriceTick = 4,
+	TimeTick = 3,
+}
 
 /** Sizes that depend on the font. They change only when the layout options change. */
 export interface LabelMetrics {
 	font: string;
 	boldFont: string;
 	fontSize: number;
-	borderSize: number;
 	// price axis
-	priceTickLength: number;
-	pricePaddingTop: number;
-	pricePaddingBottom: number;
+	/** Space above and below the text of a label. */
+	pricePadding: number;
 	pricePaddingInner: number;
 	pricePaddingOuter: number;
 	priceBaselineOffset: number;
 	/** Height of a label on the price axis. */
 	priceLabelHeight: number;
 	// time axis
-	timeTickLength: number;
-	timePaddingTop: number;
-	timePaddingBottom: number;
+	/** Space above and below the text. */
+	timePadding: number;
 	timePaddingHorizontal: number;
 	timeBaselineOffset: number;
 	timeAxisHeight: number;
@@ -37,8 +37,34 @@ let cachedMetrics: LabelMetrics | null = null;
 let cachedFontSize = NaN;
 let cachedFontFamily = '';
 
-/** Text widths for the font of the last `labelMetrics()` result. */
-export const textWidthCache = new TextWidthCache(200);
+// text widths for the font of the last `labelMetrics()` result
+const textWidths = new Map<string, number>();
+
+/**
+ * Width of a text in the font of the context. Digits are replaced with "0" before a
+ * measurement, so that all prices with the same number of digits have the same width
+ * and need one measurement.
+ */
+export function textWidth(ctx: CanvasRenderingContext2D, text: string): number {
+	let width = textWidths.get(text);
+	if (width === undefined) {
+		const key = text.replace(/[2-9]/g, '0');
+		width = textWidths.get(key);
+		if (width === undefined) {
+			width = ctx.measureText(key).width;
+			if (width === 0) {
+				// Firefox can give 0 for a canvas with no size: do not keep it
+				return 0;
+			}
+			if (textWidths.size > 500) {
+				textWidths.clear();
+			}
+			textWidths.set(key, width);
+		}
+		textWidths.set(text, width);
+	}
+	return width;
+}
 
 export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 	if (cachedMetrics !== null && cachedFontSize === layout.fontSize && cachedFontFamily === layout.fontFamily) {
@@ -48,7 +74,7 @@ export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 	const fontSize = layout.fontSize;
 	cachedFontSize = fontSize;
 	cachedFontFamily = layout.fontFamily;
-	textWidthCache.reset();
+	textWidths.clear();
 
 	const pricePadding = Math.floor(fontSize / 3.5);
 	const timePadding = Math.ceil(fontSize / 2.5);
@@ -57,20 +83,15 @@ export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 		font: makeFont(fontSize, layout.fontFamily),
 		boldFont: makeFont(fontSize, layout.fontFamily, 'bold'),
 		fontSize,
-		borderSize: BORDER_SIZE,
-		priceTickLength: PRICE_TICK_LENGTH,
-		pricePaddingTop: pricePadding,
-		pricePaddingBottom: pricePadding,
-		pricePaddingInner: Math.max(Math.ceil(fontSize / 2 - PRICE_TICK_LENGTH / 2), 0),
-		pricePaddingOuter: Math.ceil(fontSize / 2 + PRICE_TICK_LENGTH / 2),
+		pricePadding,
+		pricePaddingInner: Math.max(Math.ceil(fontSize / 2 - LabelSize.PriceTick / 2), 0),
+		pricePaddingOuter: Math.ceil(fontSize / 2 + LabelSize.PriceTick / 2),
 		priceBaselineOffset: Math.round(fontSize / 10),
 		priceLabelHeight: fontSize + pricePadding * 2,
-		timeTickLength: TIME_TICK_LENGTH,
-		timePaddingTop: timePadding,
-		timePaddingBottom: timePadding,
+		timePadding,
 		timePaddingHorizontal: Math.ceil(fontSize / 2),
 		timeBaselineOffset: Math.round(fontSize / 5),
-		timeAxisHeight: Math.ceil(BORDER_SIZE + TIME_TICK_LENGTH + fontSize + timePadding * 2),
+		timeAxisHeight: Math.ceil(LabelSize.Border + LabelSize.TimeTick + fontSize + timePadding * 2),
 	};
 	return cachedMetrics;
 }
@@ -154,12 +175,12 @@ export function drawPriceLabel(
 
 	ctx.font = metrics.font;
 
-	const tickSize = tickVisible ? metrics.priceTickLength : 0;
-	const horzBorder = metrics.borderSize;
-	const textWidth = Math.ceil(textWidthCache.measureText(ctx, text));
+	const tickSize = tickVisible ? LabelSize.PriceTick : 0;
+	const horzBorder = LabelSize.Border;
+	const labelTextWidth = Math.ceil(textWidth(ctx, text));
 	const totalHeight = metrics.priceLabelHeight;
 	const halfHeight = Math.ceil(totalHeight * 0.5);
-	const totalWidth = horzBorder + textWidth + metrics.pricePaddingInner + metrics.pricePaddingOuter + tickSize;
+	const totalWidth = horzBorder + labelTextWidth + metrics.pricePaddingInner + metrics.pricePaddingOuter + tickSize;
 
 	const yMid = Math.round(coordinate);
 	const yTop = yMid - halfHeight;
@@ -209,6 +230,6 @@ export function drawPriceLabel(
 	ctx.textAlign = 'left';
 	ctx.save();
 	ctx.scale(pixelRatio, pixelRatio);
-	ctx.fillText(text, xText, yBottom - metrics.pricePaddingBottom - metrics.priceBaselineOffset);
+	ctx.fillText(text, xText, yBottom - metrics.pricePadding - metrics.priceBaselineOffset);
 	ctx.restore();
 }

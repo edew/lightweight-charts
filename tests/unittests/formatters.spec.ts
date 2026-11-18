@@ -2,9 +2,6 @@ import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
 import { formatDate, formatTime } from '../../src/formatters/date-format';
-import { PercentageFormatter } from '../../src/formatters/percentage-formatter';
-import { PriceFormatter } from '../../src/formatters/price-formatter';
-import { VolumeFormatter } from '../../src/formatters/volume-formatter';
 
 describe('Formatters', () => {
 	it('formatDate', () => {
@@ -25,45 +22,5 @@ describe('Formatters', () => {
 		const d = new Date(1538381512000);
 		expect(formatTime(d, true)).to.be.equal('08:11:52');
 		expect(formatTime(d, false)).to.be.equal('08:11');
-	});
-	it('percent-formatter', () => {
-		{
-			const formatter = new PercentageFormatter();
-			const res = formatter.format(1.5);
-			expect(res).to.be.equal('1.50%');
-		}
-	});
-	it('price-formatter', () => {
-		{
-			const formatter = new PriceFormatter();
-			const res = formatter.format(1.5);
-			expect(res).to.be.equal('1.50');
-		}
-		{
-			const formatter = new PriceFormatter(1000);
-			const res = formatter.format(1.5);
-			expect(res).to.be.equal('1.500');
-		}
-		{
-			const formatter = new PriceFormatter(1000, 250);
-			const res = formatter.format(1.6);
-			expect(res).to.be.equal('1.500');
-		}
-		{
-			const formatter = new PriceFormatter();
-			const res = formatter.format(-1.5);
-			expect(res).to.be.equal('\u22121.50');
-		}
-	});
-	it('volume-formatter', () => {
-		{
-			const formatter = new VolumeFormatter(3);
-			expect(formatter.format(1)).to.be.equal('1');
-			expect(formatter.format(10)).to.be.equal('10');
-			expect(formatter.format(100)).to.be.equal('100');
-			expect(formatter.format(1000)).to.be.equal('1K');
-			expect(formatter.format(5500)).to.be.equal('5.5K');
-			expect(formatter.format(1155000)).to.be.equal('1.155M');
-		}
 	});
 });

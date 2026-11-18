@@ -8,7 +8,6 @@ import { drawOverlay, drawStatic, layoutChart } from '../../src/draw/chart';
 import type { Layout } from '../../src/draw/layout';
 import { clone, type DeepPartial, merge } from '../../src/helpers/strict-type-checks';
 import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
-import type { Coordinate } from '../../src/model/coordinate';
 import type { Series } from '../../src/model/series';
 import type { SeriesSpec } from '../../src/model/series-kind';
 import type { SeriesPartialOptionsMap, SeriesType } from '../../src/model/series-options';
@@ -83,7 +82,7 @@ export function createHeadlessChart(params: HeadlessChartParams): HeadlessChart 
 		},
 
 		scrollBy(pixels: number): void {
-			model.scrollChart(pixels as Coordinate);
+			model.timeScale().scrollBy(pixels);
 		},
 
 		setPaneStretch(paneIndex: number, stretch: number): void {

@@ -103,11 +103,11 @@ export function computeLayout(
 }
 
 export const enum Region {
-	None,
-	Pane,
-	PriceAxis,
-	TimeAxis,
-	Separator,
+	None = 0,
+	Pane = 1,
+	PriceAxis = 2,
+	TimeAxis = 3,
+	Separator = 4,
 }
 
 export interface HitResult {

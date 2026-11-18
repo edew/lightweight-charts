@@ -1,4 +1,3 @@
-import type { IPriceFormatter } from '../formatters/iformatter';
 
 import { clone, type DeepPartial, merge } from '../helpers/strict-type-checks';
 
@@ -17,7 +16,7 @@ import {
 
 import type { BarData, LineData, SeriesDataItemTypeMap } from './data-consumer';
 import { convertSeriesData, isBusinessDayTime, itemTimeToSeconds } from './data-convert';
-import type { ISeriesApi } from './iseries-api';
+import type { IPriceFormatter, ISeriesApi } from './iseries-api';
 import { seriesOptionsDefaults } from './options/series-options-defaults';
 
 function patchPriceFormat(priceFormat?: DeepPartial<PriceFormat>): void {
@@ -82,7 +81,7 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 	}
 
 	public priceFormatter(): IPriceFormatter {
-		return this.#series.formatter();
+		return { format: this.#series.formatter() };
 	}
 
 	public priceToCoordinate(price: BarPrice): Coordinate | null {

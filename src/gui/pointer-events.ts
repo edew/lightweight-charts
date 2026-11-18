@@ -35,8 +35,8 @@ interface ActivePointer {
 	y: number;
 }
 
-/** Adds the listeners. Returns a function that removes them. */
-export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers): () => void {
+/** Adds the listeners. An abort of `signal` removes them. */
+export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers, signal: AbortSignal): void {
 	const pointers: ActivePointer[] = [];
 	let downX = 0;
 	let downY = 0;
@@ -174,18 +174,11 @@ export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers
 		}
 	}
 
-	target.addEventListener('pointerdown', onDown);
-	target.addEventListener('pointermove', onMove);
-	target.addEventListener('pointerup', onUp);
-	target.addEventListener('pointercancel', onUp);
-	target.addEventListener('pointerleave', onLeave);
-
-	return () => {
-		clearLongTap();
-		target.removeEventListener('pointerdown', onDown);
-		target.removeEventListener('pointermove', onMove);
-		target.removeEventListener('pointerup', onUp);
-		target.removeEventListener('pointercancel', onUp);
-		target.removeEventListener('pointerleave', onLeave);
-	};
+	const options = { signal };
+	target.addEventListener('pointerdown', onDown, options);
+	target.addEventListener('pointermove', onMove, options);
+	target.addEventListener('pointerup', onUp, options);
+	target.addEventListener('pointercancel', onUp, options);
+	target.addEventListener('pointerleave', onLeave, options);
+	signal.addEventListener('abort', clearLongTap);
 }

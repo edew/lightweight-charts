@@ -6,7 +6,7 @@ import type { Pane } from '../model/pane';
 import type { Series } from '../model/series';
 import { PriceAxisLastValueMode } from '../model/series-options';
 
-import { contrastTextColor, drawPriceLabel, type LabelMetrics, labelMetrics, textWidthCache } from './labels';
+import { contrastTextColor, drawPriceLabel, type LabelMetrics, LabelSize, labelMetrics, textWidth } from './labels';
 
 interface AxisLabel {
 	text: string;
@@ -116,8 +116,8 @@ export function priceAxisOptimalWidth(ctx: CanvasRenderingContext2D, model: Char
 		const marks = panes[p].priceScale.marks();
 		if (marks.length > 0) {
 			const width = Math.max(
-				textWidthCache.measureText(ctx, marks[0].label),
-				textWidthCache.measureText(ctx, marks[marks.length - 1].label)
+				textWidth(ctx, marks[0].label),
+				textWidth(ctx, marks[marks.length - 1].label)
 			);
 			maxTextWidth = measured ? Math.max(maxTextWidth, width) : width;
 			measured = true;
@@ -125,13 +125,13 @@ export function priceAxisOptimalWidth(ctx: CanvasRenderingContext2D, model: Char
 
 		collectLabels(panes[p]);
 		for (let i = 0; i < labelCount; i++) {
-			maxTextWidth = Math.max(maxTextWidth, textWidthCache.measureText(ctx, labels[i].text));
+			maxTextWidth = Math.max(maxTextWidth, textWidth(ctx, labels[i].text));
 		}
 	}
 
 	return Math.ceil(
-		metrics.borderSize +
-		metrics.priceTickLength +
+		LabelSize.Border +
+		LabelSize.PriceTick +
 		metrics.pricePaddingInner +
 		metrics.pricePaddingOuter +
 		maxTextWidth
@@ -150,20 +150,20 @@ export function drawPriceAxis(ctx: CanvasRenderingContext2D, model: ChartModel, 
 
 	if (borderVisible) {
 		ctx.fillStyle = borderColor;
-		const borderSize = Math.max(1, Math.floor(metrics.borderSize * pixelRatio));
+		const borderSize = Math.max(1, Math.floor(LabelSize.Border * pixelRatio));
 		ctx.fillRect(isLeft ? bitmapWidth - borderSize : 0, 0, borderSize, Math.ceil(pane.height() * pixelRatio));
 	}
 
 	const marks = priceScale.marks();
 	if (marks.length !== 0) {
 		const tickLeft = isLeft
-			? Math.floor((width - metrics.priceTickLength) * pixelRatio - metrics.borderSize * pixelRatio)
-			: Math.floor(metrics.borderSize * pixelRatio);
+			? Math.floor((width - LabelSize.PriceTick) * pixelRatio - LabelSize.Border * pixelRatio)
+			: Math.floor(LabelSize.Border * pixelRatio);
 
 		if (borderVisible) {
 			const tickHeight = Math.max(1, Math.floor(pixelRatio));
 			const tickOffset = Math.floor(pixelRatio * 0.5);
-			const tickLength = Math.round(metrics.priceTickLength * pixelRatio);
+			const tickLength = Math.round(LabelSize.PriceTick * pixelRatio);
 			ctx.fillStyle = borderColor;
 			for (let i = 0; i < marks.length; i++) {
 				ctx.fillRect(tickLeft, Math.round(marks[i].coord * pixelRatio) - tickOffset, tickLength, tickHeight);
@@ -173,7 +173,7 @@ export function drawPriceAxis(ctx: CanvasRenderingContext2D, model: ChartModel, 
 		// the text is drawn in CSS pixels; the middle of the text is at the tick
 		const textX = isLeft
 			? tickLeft / pixelRatio - metrics.pricePaddingInner
-			: tickLeft / pixelRatio + metrics.priceTickLength + metrics.pricePaddingInner;
+			: tickLeft / pixelRatio + LabelSize.PriceTick + metrics.pricePaddingInner;
 		ctx.save();
 		ctx.scale(pixelRatio, pixelRatio);
 		ctx.font = metrics.font;

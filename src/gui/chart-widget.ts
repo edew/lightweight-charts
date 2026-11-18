@@ -8,9 +8,8 @@ import type { DeepPartial } from '../helpers/strict-type-checks';
 import { drawOverlay, drawStatic, layoutChart, layoutPriceAxisWidth } from '../draw/chart';
 import { type HitResult, hitTest, type Layout, Region } from '../draw/layout';
 
-import { ChartModel, type ChartOptionsInternal } from '../model/chart-model';
+import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../model/chart-model';
 import type { Coordinate } from '../model/coordinate';
-import { InvalidateMask, InvalidationLevel } from '../model/invalidate-mask';
 import type { Pane } from '../model/pane';
 import type { TimePointIndex } from '../model/time-scale/time-data';
 
@@ -32,17 +31,8 @@ export type ChartPointerCallback = (index: TimePointIndex | null, point: Point |
 
 function createCanvas(zIndex: string): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
-	const style = canvas.style;
-	style.position = 'absolute';
-	style.left = '0';
-	style.top = '0';
-	style.width = '100%';
-	style.height = '100%';
-	style.zIndex = zIndex;
 	// the chart does all selection and scroll handling itself
-	style.userSelect = 'none';
-	style.setProperty('-webkit-user-select', 'none');
-	style.setProperty('-webkit-tap-highlight-color', 'transparent');
+	canvas.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;z-index:' + zIndex;
 	return canvas;
 }
 
@@ -59,8 +49,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 	readonly #staticCtx: CanvasRenderingContext2D;
 	readonly #overlayCtx: CanvasRenderingContext2D;
 	readonly #resizeObserver: ResizeObserver;
-	readonly #unbindPointerEvents: () => void;
-	readonly #onWheelBound: (event: WheelEvent) => void;
+	/** Removes the event listeners of the element. */
+	readonly #listeners: AbortController = new AbortController();
 
 	// size in CSS pixels, and the size of the canvas bitmaps in device pixels
 	#width: number = 0;
@@ -73,7 +63,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 	#layout: Layout;
 
 	// frame loop
-	#invalidateMask: InvalidateMask | null = null;
+	#invalidLevel: InvalidationLevel = InvalidationLevel.None;
 	#rafId: number = 0;
 	/** True while a frame prepares the model: invalidations from that step need no new frame. */
 	#preparing: boolean = false;
@@ -110,7 +100,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		this.#staticCtx = ensureNotNull(this.#staticCanvas.getContext('2d'));
 		this.#overlayCtx = ensureNotNull(this.#overlayCanvas.getContext('2d'));
 
-		this.#model = new ChartModel((mask: InvalidateMask) => this.#invalidate(mask), options);
+		this.#model = new ChartModel((level: InvalidationLevel) => this.#invalidate(level), options);
 		this.#applyTouchAction();
 
 		let width = options.width;
@@ -134,9 +124,9 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 			this.#resizeObserver.observe(this.#staticCanvas);
 		}
 
-		this.#unbindPointerEvents = bindPointerEvents(element, this);
-		this.#onWheelBound = this.#onWheel.bind(this);
-		element.addEventListener('wheel', this.#onWheelBound, { passive: false });
+		const signal = this.#listeners.signal;
+		bindPointerEvents(element, this, signal);
+		element.addEventListener('wheel', (event: WheelEvent) => this.#onWheel(event), { passive: false, signal });
 	}
 
 	public destroy(): void {
@@ -146,9 +136,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		}
 
 		this.#resizeObserver.disconnect();
-		this.#unbindPointerEvents();
-		this.#element.removeEventListener('wheel', this.#onWheelBound);
-		this.#model.destroy();
+		this.#listeners.abort();
 		this.#element.remove();
 		this.onClick = null;
 		this.onCrosshairMove = null;
@@ -185,7 +173,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		this.#layout = layoutChart(this.#staticCtx, this.#model, width, height, 0);
 
 		if (forceRepaint) {
-			this.#draw(new InvalidateMask(InvalidationLevel.Full));
+			this.#invalidLevel = InvalidationLevel.Full;
+			this.#flush();
 		} else {
 			this.#model.fullUpdate();
 		}
@@ -259,14 +248,14 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 			case Region.PriceAxis: {
 				const priceScale = model.panes()[hit.index].priceScale;
 				if (this.#options.handleScale.axisPressedMouseMove && !priceScale.isEmpty()) {
-					model.startScalePrice(priceScale, hit.y);
+					priceScale.startScale(hit.y);
 				}
 				break;
 			}
 
 			case Region.TimeAxis:
 				if (this.#options.handleScale.axisPressedMouseMove && !model.timeScale().isEmpty()) {
-					model.startScaleTime(hit.x as Coordinate);
+					model.timeScale().startScale(hit.x as Coordinate);
 				}
 				break;
 
@@ -291,14 +280,14 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 			case Region.PriceAxis:
 				if (this.#options.handleScale.axisPressedMouseMove) {
-					const pane = model.panes()[index];
-					model.scalePriceTo(pane, pane.priceScale, y - this.#layout.priceAxes[index].top);
+					model.panes()[index].priceScale.scaleTo(y - this.#layout.priceAxes[index].top);
+					model.priceScaleChanged();
 				}
 				break;
 
 			case Region.TimeAxis:
-				if (this.#options.handleScale.axisPressedMouseMove && !model.timeScale().isEmpty()) {
-					model.scaleTimeTo(x - ensureNotNull(this.#layout.timeAxis).left as Coordinate);
+				if (this.#options.handleScale.axisPressedMouseMove) {
+					model.timeScale().scaleTo(x - ensureNotNull(this.#layout.timeAxis).left as Coordinate);
 				}
 				break;
 
@@ -309,31 +298,16 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 	}
 
 	public up(): void {
-		const model = this.#model;
-		const pane = this.#dragIndex >= 0 ? model.panes()[this.#dragIndex] : undefined;
-
-		switch (this.#dragRegion) {
-			case Region.Pane:
-				this.#longTap = false;
-				if (this.#isScrolling && pane !== undefined) {
-					model.endScrollPrice(pane, pane.priceScale);
-					model.endScrollTime();
-				}
-				this.#isScrolling = false;
-				this.#scrollStartX = NaN;
-				break;
-
-			case Region.PriceAxis:
-				if (pane !== undefined) {
-					model.endScalePrice(pane, pane.priceScale);
-				}
-				break;
-
-			case Region.TimeAxis:
-				model.endScaleTime();
-				break;
+		// the pane can be removed during a drag
+		const pane = this.#model.panes()[this.#dragIndex] as Pane | undefined;
+		if (pane !== undefined) {
+			pane.priceScale.endDrag();
 		}
+		this.#model.timeScale().endDrag();
 
+		this.#longTap = false;
+		this.#isScrolling = false;
+		this.#scrollStartX = NaN;
 		this.#dragRegion = Region.None;
 		this.#dragIndex = -1;
 	}
@@ -364,9 +338,11 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		const hit = this.#hitTest(x, y);
 		if (hit.region === Region.PriceAxis) {
 			const pane = this.#model.panes()[hit.index];
-			this.#model.resetPriceScale(pane, pane.priceScale);
+			pane.priceScale.setAutoScale(true);
+			pane.momentaryAutoScale();
+			this.#model.lightUpdate();
 		} else if (hit.region === Region.TimeAxis) {
-			this.#model.resetTimeScale();
+			this.#model.timeScale().restoreDefault();
 		}
 	}
 
@@ -401,7 +377,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 		const zoomScale = (scale - this.#prevPinchScale) * 5;
 		this.#prevPinchScale = scale;
-		this.#model.zoomTime(centerX - this.#paneLeft() as Coordinate, zoomScale);
+		this.#model.timeScale().zoom(centerX - this.#paneLeft() as Coordinate, zoomScale);
 	}
 
 	// ---- pointer helpers
@@ -477,18 +453,15 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		}
 
 		if (!this.#isScrolling && !Number.isNaN(this.#scrollStartX) && (this.#scrollStartX !== x || this.#scrollStartY !== y)) {
-			if (!priceScale.isEmpty()) {
-				model.startScrollPrice(priceScale, y);
-			}
-			model.startScrollTime(x as Coordinate);
+			priceScale.startScroll(y);
+			model.timeScale().startScroll(x as Coordinate);
 			this.#isScrolling = true;
 		}
 
 		if (this.#isScrolling) {
-			if (!priceScale.isEmpty()) {
-				model.scrollPriceTo(pane, priceScale, y);
-			}
-			model.scrollTimeTo(x as Coordinate);
+			priceScale.scrollTo(y);
+			model.updateCrosshair();
+			model.timeScale().scrollTo(x as Coordinate);
 		}
 	}
 
@@ -542,12 +515,12 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		if (deltaY !== 0 && options.handleScale.mouseWheel) {
 			const zoomScale = Math.sign(deltaY) * Math.min(1, Math.abs(deltaY));
 			const scrollPosition = event.clientX - this.#element.getBoundingClientRect().left - this.#paneLeft();
-			this.#model.zoomTime(scrollPosition as Coordinate, zoomScale);
+			this.#model.timeScale().zoom(scrollPosition as Coordinate, zoomScale);
 		}
 
 		if (deltaX !== 0 && options.handleScroll.mouseWheel) {
 			// 80 is a made up coefficient, and minus is for the "natural" scroll
-			this.#model.scrollChart(deltaX * -80 as Coordinate);
+			this.#model.timeScale().scrollBy(deltaX * -80);
 		}
 	}
 
@@ -593,18 +566,13 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 	// ---- frame loop
 
-	#invalidate(mask: InvalidateMask): void {
+	#invalidate(level: InvalidationLevel): void {
 		if (this.#preparing) {
 			// the frame that is in progress draws after this change
 			return;
 		}
 
-		if (this.#invalidateMask !== null) {
-			this.#invalidateMask.merge(mask);
-		} else {
-			this.#invalidateMask = mask;
-		}
-
+		this.#invalidLevel = Math.max(this.#invalidLevel, level);
 		if (this.#rafId === 0) {
 			this.#rafId = requestAnimationFrame(() => {
 				this.#rafId = 0;
@@ -615,37 +583,22 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 	/** Draws the pending changes now, if there are some. */
 	#flush(): void {
-		// take ownership of the mask before the draw: a change during the draw makes a new mask
-		const mask = this.#invalidateMask;
-		if (mask !== null) {
-			this.#invalidateMask = null;
-			this.#draw(mask);
+		// take the level before the draw: a change during the draw is for the next frame
+		const level = this.#invalidLevel;
+		if (level !== InvalidationLevel.None) {
+			this.#invalidLevel = InvalidationLevel.None;
+			this.#draw(level);
 		}
 	}
 
-	#draw(mask: InvalidateMask): void {
-		const level = mask.fullInvalidation();
+	#draw(level: InvalidationLevel): void {
 		const model = this.#model;
 
 		if (level > InvalidationLevel.Cursor) {
 			// changes that this step makes in the model are drawn by this frame
 			this.#preparing = true;
 			try {
-				const panes = model.panes();
-				for (let i = 0; i < panes.length; i++) {
-					if (mask.invalidateForPane(i).autoScale) {
-						panes[i].momentaryAutoScale();
-					}
-				}
-
-				if (mask.getFitContent()) {
-					model.timeScale().fitContent();
-				}
-
-				const targetTimeRange = mask.getTargetTimeRange();
-				if (targetTimeRange !== null) {
-					model.timeScale().setTimeRange(targetTimeRange);
-				}
+				model.applyRequests();
 
 				// between full updates the price axis only grows, so that it does not jump during a scroll
 				const minAxisWidth = level === InvalidationLevel.Full ? 0 : layoutPriceAxisWidth(this.#layout);

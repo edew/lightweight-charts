@@ -48,8 +48,8 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 		const store = this.#model.dataStore();
 		const businessDay = store.businessDay === true;
 		return {
-			from: secondsToTime(store.times[Math.max(0, visibleBars.firstBar())], businessDay),
-			to: secondsToTime(store.times[Math.min(store.length - 1, visibleBars.lastBar())], businessDay),
+			from: secondsToTime(store.times[Math.max(0, visibleBars.first)], businessDay),
+			to: secondsToTime(store.times[Math.min(store.length - 1, visibleBars.last)], businessDay),
 		};
 	}
 
@@ -61,7 +61,7 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 	}
 
 	public resetTimeScale(): void {
-		this.#model.resetTimeScale();
+		this.#timeScale().restoreDefault();
 	}
 
 	public fitContent(): void {

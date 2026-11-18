@@ -4,17 +4,16 @@ import { beforeEach, describe, it } from 'vitest';
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import { seriesOptionsFromSpec } from '../../src/api/series-api';
 import { clone } from '../../src/helpers/strict-type-checks';
-import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
-import { InvalidateMask, InvalidationLevel } from '../../src/model/invalidate-mask';
+import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../../src/model/chart-model';
 import type { Series } from '../../src/model/series';
 import type { TimePointIndex } from '../../src/model/time-scale/time-data';
 import { Candlestick } from '../../src/series/candlestick';
 import { Line } from '../../src/series/line';
 
-function createModel(): { model: ChartModel; invalidations: InvalidateMask[] } {
-	const invalidations: InvalidateMask[] = [];
+function createModel(): { model: ChartModel; invalidations: InvalidationLevel[] } {
+	const invalidations: InvalidationLevel[] = [];
 	const options: ChartOptionsInternal = clone(chartOptionsDefaults);
-	return { model: new ChartModel((mask: InvalidateMask) => invalidations.push(mask), options), invalidations };
+	return { model: new ChartModel((level: InvalidationLevel) => invalidations.push(level), options), invalidations };
 }
 
 function addLine(model: ChartModel, pane: number = 0, overlay: boolean = false): Series {
@@ -29,7 +28,7 @@ function setLine(model: ChartModel, series: Series, times: number[], values: num
 
 describe('ChartModel', () => {
 	let model: ChartModel;
-	let invalidations: InvalidateMask[];
+	let invalidations: InvalidationLevel[];
 
 	beforeEach(() => {
 		const result = createModel();
@@ -40,16 +39,16 @@ describe('ChartModel', () => {
 
 	it('has one pane after construction and asks for a full update', () => {
 		expect(model.panes().length).to.equal(1);
-		expect(invalidations[0].fullInvalidation()).to.equal(InvalidationLevel.Full);
-		expect(invalidations[0].invalidateForPane(0).autoScale).to.equal(true);
+		expect(invalidations[0]).to.equal(InvalidationLevel.Full);
+		expect(model.panes()[0].autoScaleRequest).to.equal(true);
 	});
 
 	it('fullUpdate and lightUpdate call the invalidate handler with the level', () => {
 		invalidations.length = 0;
 		model.fullUpdate();
-		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Full);
+		expect(invalidations.pop()).to.equal(InvalidationLevel.Full);
 		model.lightUpdate();
-		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Light);
+		expect(invalidations.pop()).to.equal(InvalidationLevel.Light);
 	});
 
 	it('applyOptions gives price scale options to all panes and asks for a full update', () => {
@@ -58,7 +57,7 @@ describe('ChartModel', () => {
 		model.applyOptions({ priceScale: { invertScale: true } });
 		expect(model.panes()[0].priceScale.options().invertScale).to.equal(true);
 		expect(model.panes()[1].priceScale.options().invertScale).to.equal(true);
-		expect(invalidations.pop()?.fullInvalidation()).to.equal(InvalidationLevel.Full);
+		expect(invalidations.pop()).to.equal(InvalidationLevel.Full);
 	});
 
 	describe('panes', () => {
@@ -102,7 +101,7 @@ describe('ChartModel', () => {
 		it('setSize gives each pane its height', () => {
 			addLine(model, 1);
 			model.setSize(200, [60, 40]);
-			expect(model.width()).to.equal(200);
+			expect(model.timeScale().width()).to.equal(200);
 			expect(model.panes()[0].height()).to.equal(60);
 			expect(model.panes()[1].height()).to.equal(40);
 			expect(model.panes()[1].priceScale.height()).to.equal(40);
@@ -134,7 +133,7 @@ describe('ChartModel', () => {
 			model.updateSeriesData(second, 20, 7, 0, 0, 0);
 
 			expect(invalidations.length).to.equal(1);
-			expect(invalidations[0].fullInvalidation()).to.equal(InvalidationLevel.Light);
+			expect(invalidations[0]).to.equal(InvalidationLevel.Light);
 			model.timeScale().visibleBars();
 			expect(visibleBarsChanged).to.equal(0);
 			expect(model.timeScale().baseIndex()).to.equal(1 as TimePointIndex);
@@ -155,8 +154,8 @@ describe('ChartModel', () => {
 			const series = model.createSeries(spec.kind, seriesOptionsFromSpec(spec)) as unknown as Series;
 			model.setSeriesData(series, new Float64Array([10, 20]), new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), 2, false);
 			const range = series.autoscaleRange(0 as TimePointIndex, 1 as TimePointIndex);
-			expect(range?.minValue()).to.equal(2);
-			expect(range?.maxValue()).to.equal(9);
+			expect(range?.min).to.equal(2);
+			expect(range?.max).to.equal(9);
 			expect(series.autoscaleRange(5 as TimePointIndex, 9 as TimePointIndex)).to.equal(null);
 		});
 	});
@@ -169,7 +168,7 @@ describe('ChartModel', () => {
 
 			model.setCrosshairPosition(10, 10, model.panes()[0]);
 			model.setCrosshairPosition(97, 50, model.panes()[0]);
-			expect(invalidations.every((mask: InvalidateMask) => mask.fullInvalidation() === InvalidationLevel.Cursor)).to.equal(true);
+			expect(invalidations.every((level: InvalidationLevel) => level === InvalidationLevel.Cursor)).to.equal(true);
 
 			expect(model.resolveCrosshair()).to.equal(true);
 			const crosshair = model.crosshair();
@@ -208,13 +207,42 @@ describe('ChartModel', () => {
 		});
 	});
 
-	it('fitContent and setTargetTimeRange put the request in the mask', () => {
-		invalidations.length = 0;
-		model.fitContent();
-		expect(invalidations.pop()?.getFitContent()).to.equal(true);
+	describe('requests', () => {
+		it('applies the one-time autoscale of a pane, also when autoscale is off', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			const pane = model.panes()[0];
+			pane.priceScale.setAutoScale(false);
+			pane.priceScale.setPriceRange({ min: 100, max: 200 });
 
-		const range = { from: 0, to: 10 };
-		model.setTargetTimeRange(range);
-		expect(invalidations.pop()?.getTargetTimeRange()).to.deep.equal(range);
+			model.applyRequests();
+			expect(pane.autoScaleRequest).to.equal(false);
+			expect(pane.priceScale.priceRange()).to.deep.equal({ min: 1, max: 3 });
+		});
+
+		it('fitContent shows all time points in the next frame', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30, 40, 50], [1, 2, 3, 4, 5]);
+			model.timeScale().setBarSpacing(50);
+			invalidations.length = 0;
+
+			model.fitContent();
+			expect(invalidations.pop()).to.equal(InvalidationLevel.Light);
+			expect(model.timeScale().barSpacing()).to.equal(50);
+
+			model.applyRequests();
+			expect(model.timeScale().barSpacing()).to.equal(20);
+			expect(model.timeScale().visibleBars()).to.deep.equal({ first: 0, last: 4 });
+		});
+
+		it('the last request for the time range is the one that is applied', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30, 40, 50], [1, 2, 3, 4, 5]);
+
+			model.fitContent();
+			model.setTargetTimeRange({ from: 20, to: 30 });
+			model.applyRequests();
+			expect(model.timeScale().visibleBars()).to.deep.equal({ first: 1, last: 2 });
+		});
 	});
 });

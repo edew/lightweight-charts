@@ -1,17 +1,13 @@
-import type { IPriceFormatter } from '../formatters/iformatter';
-import { PercentageFormatter } from '../formatters/percentage-formatter';
-import { PriceFormatter } from '../formatters/price-formatter';
-import { VolumeFormatter } from '../formatters/volume-formatter';
+import { priceFormat, type PriceFormatter, volumeFormat } from '../formatters/price-formatter';
 
 import { ensureNotNull } from '../helpers/assertions';
-import { isInteger, merge } from '../helpers/strict-type-checks';
+import { merge } from '../helpers/strict-type-checks';
 
 import type { BarPrice, BarPrices } from './bar';
 import type { ChartModel } from './chart-model';
 import { SearchMode, type SeriesStore } from './data-store';
 import type { Pane } from './pane';
-import { PriceRange } from './price-range';
-import type { PriceScale } from './price-scale/price-scale';
+import type { PriceRange, PriceScale } from './price-scale/price-scale';
 import type { SeriesKind } from './series-kind';
 import type { LineStyleOptions, SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from './series-options';
 import type { TimePointIndex } from './time-scale/time-data';
@@ -45,7 +41,7 @@ export class Series<T extends SeriesType = SeriesType> {
 	readonly #model: ChartModel;
 	readonly #options: SeriesOptionsMap[T];
 	readonly #store: SeriesStore;
-	#formatter!: IPriceFormatter;
+	#formatter!: PriceFormatter;
 	#priceScale: PriceScale | null = null;
 	#pane: Pane | null = null;
 
@@ -68,10 +64,6 @@ export class Series<T extends SeriesType = SeriesType> {
 
 	public store(): SeriesStore {
 		return this.#store;
-	}
-
-	public seriesType(): T {
-		return this.kind.type;
 	}
 
 	public options(): Readonly<SeriesOptionsMap[T]> {
@@ -116,7 +108,7 @@ export class Series<T extends SeriesType = SeriesType> {
 		return this.#options.priceFormat.minMove;
 	}
 
-	public formatter(): IPriceFormatter {
+	public formatter(): PriceFormatter {
 		return this.#formatter;
 	}
 
@@ -135,7 +127,7 @@ export class Series<T extends SeriesType = SeriesType> {
 			return null;
 		}
 
-		const row = this.#store.rowAt(visibleBars.firstBar(), SearchMode.NearestRight);
+		const row = this.#store.rowAt(visibleBars.first, SearchMode.NearestRight);
 		if (row < 0) {
 			return null;
 		}
@@ -162,7 +154,7 @@ export class Series<T extends SeriesType = SeriesType> {
 			return null;
 		}
 
-		const row = store.rowAt(visibleBars.lastBar(), SearchMode.NearestLeft);
+		const row = store.rowAt(visibleBars.last, SearchMode.NearestLeft);
 		if (row < 0) {
 			return null;
 		}
@@ -181,7 +173,7 @@ export class Series<T extends SeriesType = SeriesType> {
 	/** The price range of the bars with a time index in `[start, end]`, or null if there is none. */
 	public autoscaleRange(start: TimePointIndex, end: TimePointIndex): PriceRange | null {
 		const store = this.#store;
-		if (!isInteger(start) || !isInteger(end) || store.length === 0) {
+		if (store.length === 0) {
 			return null;
 		}
 
@@ -193,11 +185,11 @@ export class Series<T extends SeriesType = SeriesType> {
 
 		// a plain scan of the visible rows
 		this.kind.range(store.values, from, to, rangeOut);
-		return rangeOut[0] <= rangeOut[1] ? new PriceRange(rangeOut[0], rangeOut[1]) : null;
+		return rangeOut[0] <= rangeOut[1] ? { min: rangeOut[0], max: rangeOut[1] } : null;
 	}
 
 	public dataAt(time: TimePointIndex): SeriesDataAtTypeMap[SeriesType] | null {
-		const row = isInteger(time) ? this.#store.rowAt(time) : -1;
+		const row = Number.isInteger(time) ? this.#store.rowAt(time) : -1;
 		if (row < 0) {
 			return null;
 		}
@@ -223,25 +215,12 @@ export class Series<T extends SeriesType = SeriesType> {
 	}
 
 	#recreateFormatter(): void {
-		const priceFormat = this.#options.priceFormat;
-		switch (priceFormat.type) {
-			case 'custom': {
-				this.#formatter = { format: priceFormat.formatter };
-				break;
-			}
-			case 'volume': {
-				this.#formatter = new VolumeFormatter(priceFormat.precision);
-				break;
-			}
-			case 'percent': {
-				this.#formatter = new PercentageFormatter(priceFormat.precision);
-				break;
-			}
-			default: {
-				const priceScale = Math.pow(10, priceFormat.precision);
-				this.#formatter = new PriceFormatter(priceScale, priceFormat.minMove * priceScale);
-			}
-		}
+		const format = this.#options.priceFormat;
+		this.#formatter = format.type === 'custom'
+			? format.formatter as PriceFormatter
+			: format.type === 'volume'
+				? volumeFormat(format.precision)
+				: priceFormat(format.precision, format.minMove, format.type === 'percent' ? '%' : '');
 
 		if (this.#priceScale !== null) {
 			this.#priceScale.updateFormatter();

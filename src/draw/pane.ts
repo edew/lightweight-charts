@@ -38,7 +38,7 @@ function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, 
 
 	const lineWidth = Math.max(1, Math.floor(pixelRatio));
 	const height = Math.ceil(pane.height() * pixelRatio);
-	const width = Math.ceil(model.width() * pixelRatio);
+	const width = Math.ceil(model.timeScale().width() * pixelRatio);
 
 	ctx.save();
 	ctx.lineWidth = lineWidth;
@@ -83,7 +83,7 @@ function drawWatermark(ctx: CanvasRenderingContext2D, model: ChartModel, pane: P
 		return;
 	}
 
-	const width = model.width();
+	const width = model.timeScale().width();
 	const height = pane.height();
 	const lineHeight = options.fontSize * 1.2;
 
@@ -133,8 +133,8 @@ function drawSeries(ctx: CanvasRenderingContext2D, series: Series, timeScale: Ti
 		return;
 	}
 
-	const firstBar = visibleBars.firstBar();
-	const lastBar = visibleBars.lastBar();
+	const firstBar = visibleBars.first;
+	const lastBar = visibleBars.last;
 	let from = store.lowerBound(firstBar);
 	let to = store.lowerBound(lastBar + 1);
 
@@ -194,7 +194,7 @@ function drawSeries(ctx: CanvasRenderingContext2D, series: Series, timeScale: Ti
 /** In the percentage modes: a horizontal line at the base value of the series. */
 function drawBaseLine(ctx: CanvasRenderingContext2D, series: Series, width: number, height: number, pixelRatio: number): void {
 	const priceScale = series.priceScale();
-	const mode = priceScale.mode().mode;
+	const mode = priceScale.options().mode;
 	if (mode !== PriceScaleMode.Percentage && mode !== PriceScaleMode.IndexedTo100) {
 		return;
 	}
@@ -254,7 +254,7 @@ function drawSeriesTitleLabel(ctx: CanvasRenderingContext2D, model: ChartModel, 
 		contrastTextColor(ctx, lastValue.color),
 		layout.backgroundColor,
 		false,
-		model.width(),
+		model.timeScale().width(),
 		position === 'right'
 	);
 }
@@ -271,7 +271,7 @@ export function drawPane(ctx: CanvasRenderingContext2D, model: ChartModel, pane:
 	const series = pane.series;
 	for (let i = series.length - 1; i >= 0; i--) {
 		if (series[i].priceScale() === pane.priceScale) {
-			drawBaseLine(ctx, series[i], model.width(), pane.height(), pixelRatio);
+			drawBaseLine(ctx, series[i], model.timeScale().width(), pane.height(), pixelRatio);
 		}
 		drawSeries(ctx, series[i], timeScale, pixelRatio);
 		drawSeriesTitleLabel(ctx, model, series[i], pixelRatio);
@@ -288,7 +288,7 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 	const options = model.options().crosshair;
 	const x = Math.round(crosshair.x * pixelRatio);
 	const y = Math.round(crosshair.y * pixelRatio);
-	const w = Math.ceil(model.width() * pixelRatio);
+	const w = Math.ceil(model.timeScale().width() * pixelRatio);
 	const h = Math.ceil(pane.height() * pixelRatio);
 
 	if (crosshair.visible) {
