@@ -1,11 +1,11 @@
-import { isNumber, isString } from '../helpers/strict-type-checks';
+import { isNumber } from '../helpers/strict-type-checks';
 
 import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
 export type Time = UTCTimestamp | BusinessDay | string;
 
 export function isBusinessDay(time: Time): time is BusinessDay {
-	return !isNumber(time) && !isString(time);
+	return typeof time === 'object';
 }
 
 export function isUTCTimestamp(time: Time): time is UTCTimestamp {

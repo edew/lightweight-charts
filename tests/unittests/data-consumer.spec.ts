@@ -13,6 +13,7 @@ describe('data-consumer time guards', () => {
 	it('detects business day objects', () => {
 		const day = { year: 2026, month: 3, day: 3 } as Time;
 		expect(isBusinessDay(day)).to.equal(true);
+		expect(isBusinessDay(NaN as Time)).to.equal(false);
 		expect(isUTCTimestamp(day)).to.equal(false);
 	});
 
