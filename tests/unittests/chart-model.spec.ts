@@ -161,6 +161,15 @@ describe('ChartModel', () => {
 		});
 	});
 
+	it('the base index of the time scale follows the number of time points', () => {
+		const series = addLine(model);
+		setLine(model, series, [10, 20, 30], [1, 2, 3]);
+		expect(model.timeScale().baseIndex()).to.equal(2);
+
+		setLine(model, series, [], []);
+		expect(model.timeScale().baseIndex()).to.equal(0);
+	});
+
 	describe('crosshair', () => {
 		it('is calculated one time for each frame, from the last pointer position', () => {
 			const series = addLine(model);

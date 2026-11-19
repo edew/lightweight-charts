@@ -225,7 +225,6 @@ export class ChartModel {
 	/** Streaming update: new values for the last bar of the series, or a new bar. */
 	public updateSeriesData(series: Series, time: number, v0: number, v1: number, v2: number, v3: number): void {
 		const store = this.#dataStore;
-		const oldSize = store.length;
 		const kind = store.updateSeries(series.store(), time, v0, v1, v2, v3);
 
 		if (kind === UpdateKind.Rebuild) {
@@ -242,10 +241,10 @@ export class ChartModel {
 		}
 
 		if (kind === UpdateKind.AppendTime) {
-			this.#timeScale.update(oldSize);
+			this.#timeScale.timePointAdded();
 		}
 
-		this.#updateTimeScaleBaseIndex();
+		this.#timePointsChanged();
 	}
 
 	// ---- requests
@@ -388,19 +387,10 @@ export class ChartModel {
 
 	#onAllTimePointsChanged(): void {
 		this.#timeScale.reset();
-		this.#timeScale.update(0);
-		this.#updateTimeScaleBaseIndex();
+		this.#timePointsChanged();
 	}
 
-	#updateTimeScaleBaseIndex(): void {
-		// the time points are the union of the times of all series,
-		// so the last time point is the last bar of at least one series
-		const count = this.#dataStore.length;
-		if (count !== 0) {
-			// when the user looks at history, TimeScale.update() keeps the visible bars in place
-			this.#timeScale.setBaseIndex(count - 1 as TimePointIndex);
-		}
-
+	#timePointsChanged(): void {
 		this.recalculateAllPanes();
 		this.lightUpdate();
 	}

@@ -57,7 +57,6 @@ export class TimeScale {
 
 	#width: number = 0;
 	/** Index of the last time point, or null before the first data. */
-	#baseIndex: TimePointIndex | null = null;
 	/** Distance in bars from the last time point to the right edge. */
 	#rightOffset: number;
 	#barSpacing: number;
@@ -260,9 +259,9 @@ export class TimeScale {
 
 	/** Call when all time points of the data store changed. */
 	public reset(): void {
-		this.#visibleBarsValid = false;
 		this.endDrag();
 		this.#leftEdgeFixed = false;
+		this.#dataChanged();
 	}
 
 	public restoreDefault(): void {
@@ -270,15 +269,9 @@ export class TimeScale {
 		this.setRightOffset(this.#options.rightOffset);
 	}
 
+	/** The index of the last time point, or 0 with no data. The right offset is relative to it. */
 	public baseIndex(): TimePointIndex {
-		return this.#baseIndex ?? 0 as TimePointIndex;
-	}
-
-	public setBaseIndex(baseIndex: TimePointIndex): void {
-		this.#visibleBarsValid = false;
-		this.#baseIndex = baseIndex;
-		this.#correctOffset();
-		this.#fixLeftEdge();
+		return Math.max(0, this.#store.length - 1) as TimePointIndex;
 	}
 
 	/**
@@ -367,17 +360,13 @@ export class TimeScale {
 		step();
 	}
 
-	/**
-	 * Call after the time points of the data store changed.
-	 * @param oldSize - number of time points before the change
-	 */
-	public update(oldSize: number): void {
-		this.#visibleBarsValid = false;
-		if (this.#rightOffset < 0 && this.#store.length === oldSize + 1) {
-			// one new time point while the user looks at history: keep the visible bars in place
+	/** Call after one time point was added at the end of the data store. */
+	public timePointAdded(): void {
+		if (this.#rightOffset < 0) {
+			// the user looks at history: keep the visible bars in place
 			this.#rightOffset -= 1;
 		}
-		this.#correctOffset();
+		this.#dataChanged();
 	}
 
 	public visibleBarsChanged(): ISubscription {
@@ -450,14 +439,14 @@ export class TimeScale {
 	/** Keeps the right offset in its limits: at least some bars stay visible. */
 	#correctOffset(): void {
 		const count = this.#store.length;
-		const base = this.#baseIndex;
+		const base = count - 1;
 		const bars = this.#width / this.#barSpacing;
 		const minVisible = Math.min(Constants.MinVisibleBarsCount, count);
 
 		// no scroll into the future
 		let offset = Math.min(this.#rightOffset, bars - minVisible);
 		// no scroll into the past
-		if (count !== 0 && base !== null) {
+		if (count !== 0) {
 			offset = Math.max(offset, this.#leftEdgeFixed ? bars - 1 - base : minVisible - 1 - base);
 		}
 
@@ -509,6 +498,12 @@ export class TimeScale {
 		}
 
 		return formatOptions;
+	}
+
+	#dataChanged(): void {
+		this.#visibleBarsValid = false;
+		this.#correctOffset();
+		this.#fixLeftEdge();
 	}
 
 	#fixLeftEdge(): void {
