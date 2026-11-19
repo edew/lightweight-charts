@@ -210,6 +210,15 @@ describe('ChartModel', () => {
 		expect(changes).to.equal(1);
 	});
 
+	it('does not accept a stretch factor of a pane that is not a positive number', () => {
+		const pane = model.panes()[0];
+		for (const factor of [0, -1, NaN]) {
+			expect(() => { pane.stretch = factor; }, String(factor)).to.throw();
+		}
+		pane.stretch = 2;
+		expect(pane.stretch).to.equal(2);
+	});
+
 	describe('crosshair', () => {
 		it('is calculated one time for each frame, from the last pointer position', () => {
 			const series = addLine(model);

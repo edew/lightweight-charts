@@ -11,8 +11,7 @@ import type { SeriesOptionsMap, SeriesType } from './series-options';
  * All panes share the time scale.
  */
 export class Pane {
-	/** Relative height of the pane. */
-	public stretch: number = 1;
+	#stretch: number = 1;
 	/** The price scale that the price axis shows. */
 	public readonly priceScale: PriceScale;
 	/** The series of the pane, in the order in which they were added. The last one is drawn first. */
@@ -24,6 +23,19 @@ export class Pane {
 	public constructor(model: ChartModel) {
 		this.#model = model;
 		this.priceScale = this.#createPriceScale(false);
+	}
+
+	/** Relative height of the pane: a positive number. */
+	public get stretch(): number {
+		return this.#stretch;
+	}
+
+	public set stretch(factor: number) {
+		// zero, a negative number or NaN gives a layout with no valid heights
+		if (!(factor > 0)) {
+			throw new Error('Invalid stretch factor');
+		}
+		this.#stretch = factor;
 	}
 
 	public height(): number {
