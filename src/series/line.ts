@@ -26,8 +26,7 @@ function draw(ctx: CanvasRenderingContext2D, data: SeriesDrawData, options: Line
 	ctx.scale(data.pixelRatio, data.pixelRatio);
 
 	ctx.lineCap = 'square';
-	ctx.lineWidth = options.lineWidth;
-	setLineStyle(ctx, options.lineStyle);
+	setLineStyle(ctx, options.lineStyle, options.lineWidth);
 	ctx.strokeStyle = options.color;
 	ctx.lineJoin = 'miter';
 

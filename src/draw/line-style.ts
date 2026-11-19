@@ -21,15 +21,25 @@ export function hairline(pixelRatio: number, width: number = 1): number {
 	return Math.max(1, Math.floor(width * pixelRatio));
 }
 
-export function setLineStyle(ctx: CanvasRenderingContext2D, style: LineStyle): void {
-	const dashPatterns = {
-		[LineStyle.Solid]: [],
-		[LineStyle.Dotted]: [ctx.lineWidth, ctx.lineWidth],
-		[LineStyle.Dashed]: [2 * ctx.lineWidth, 2 * ctx.lineWidth],
-		[LineStyle.LargeDashed]: [6 * ctx.lineWidth, 6 * ctx.lineWidth],
-		[LineStyle.SparseDotted]: [ctx.lineWidth, 4 * ctx.lineWidth],
-	};
+const noDash: number[] = [];
+// the canvas copies the pattern, so one array is sufficient for all calls
+const dash: number[] = [0, 0];
 
-	const dashPattern = dashPatterns[style];
-	ctx.setLineDash(dashPattern);
+/**
+ * Sets the width and the dash pattern of the lines that are stroked after this call.
+ *
+ * @param lineWidth - in the units of the context
+ * @returns the offset that puts a line of this width on full pixels: 0.5 for an odd width
+ */
+export function setLineStyle(ctx: CanvasRenderingContext2D, style: LineStyle, lineWidth: number): number {
+	ctx.lineWidth = lineWidth;
+	if (style === LineStyle.Solid) {
+		ctx.setLineDash(noDash);
+	} else {
+		const length = style === LineStyle.Dashed ? 2 : style === LineStyle.LargeDashed ? 6 : 1;
+		dash[0] = length * lineWidth;
+		dash[1] = (style === LineStyle.SparseDotted ? 4 : length) * lineWidth;
+		ctx.setLineDash(dash);
+	}
+	return (lineWidth % 2) ? 0.5 : 0;
 }

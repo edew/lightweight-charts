@@ -25,11 +25,6 @@ const drawData: SeriesDrawData = {
 	pixelRatio: 1,
 };
 
-function strokeOffset(ctx: CanvasRenderingContext2D): number {
-	// a line with an odd width is sharp only when it is on the center of a pixel
-	return (ctx.lineWidth % 2) ? 0.5 : 0;
-}
-
 function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, pixelRatio: number): void {
 	const options = model.options().grid;
 	if (!options.vertLines.visible && !options.horzLines.visible) {
@@ -41,7 +36,6 @@ function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, 
 	const width = Math.ceil(model.timeScale().width() * pixelRatio);
 
 	ctx.save();
-	ctx.lineWidth = lineWidth;
 	if (lineWidth % 2) {
 		ctx.translate(0.5, 0.5);
 	}
@@ -50,7 +44,7 @@ function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, 
 		const timeMarks = model.timeScale().marks();
 		if (timeMarks !== null) {
 			ctx.strokeStyle = options.vertLines.color;
-			setLineStyle(ctx, options.vertLines.style);
+			setLineStyle(ctx, options.vertLines.style, lineWidth);
 			ctx.beginPath();
 			for (let i = 0; i < timeMarks.length; i++) {
 				const x = Math.round(timeMarks[i].coord * pixelRatio);
@@ -64,7 +58,7 @@ function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, 
 	if (options.horzLines.visible) {
 		const priceMarks = pane.priceScale.marks();
 		ctx.strokeStyle = options.horzLines.color;
-		setLineStyle(ctx, options.horzLines.style);
+		setLineStyle(ctx, options.horzLines.style, lineWidth);
 		ctx.beginPath();
 		for (let i = 0; i < priceMarks.length; i++) {
 			const y = Math.round(priceMarks[i].coord * pixelRatio);
@@ -212,9 +206,7 @@ function drawBaseLine(ctx: CanvasRenderingContext2D, series: Series, width: numb
 	ctx.save();
 	ctx.lineCap = 'butt';
 	ctx.strokeStyle = options.baseLineColor;
-	ctx.lineWidth = hairline(pixelRatio, options.baseLineWidth);
-	setLineStyle(ctx, options.baseLineStyle);
-	const offset = strokeOffset(ctx);
+	const offset = setLineStyle(ctx, options.baseLineStyle, hairline(pixelRatio, options.baseLineWidth));
 	ctx.beginPath();
 	ctx.moveTo(0, y + offset);
 	ctx.lineTo(Math.ceil(width * pixelRatio), y + offset);
@@ -290,10 +282,8 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 	ctx.lineCap = 'butt';
 
 	if (options.vertLine.visible && x >= 0) {
-		ctx.lineWidth = hairline(pixelRatio, options.vertLine.width);
 		ctx.strokeStyle = options.vertLine.color;
-		setLineStyle(ctx, options.vertLine.style);
-		const offset = strokeOffset(ctx);
+		const offset = setLineStyle(ctx, options.vertLine.style, hairline(pixelRatio, options.vertLine.width));
 		ctx.beginPath();
 		ctx.moveTo(x + offset, 0);
 		ctx.lineTo(x + offset, h);
@@ -301,10 +291,8 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 	}
 
 	if (options.horzLine.visible && crosshair.pane === pane && y >= 0) {
-		ctx.lineWidth = hairline(pixelRatio, options.horzLine.width);
 		ctx.strokeStyle = options.horzLine.color;
-		setLineStyle(ctx, options.horzLine.style);
-		const offset = strokeOffset(ctx);
+		const offset = setLineStyle(ctx, options.horzLine.style, hairline(pixelRatio, options.horzLine.width));
 		ctx.beginPath();
 		ctx.moveTo(0, y + offset);
 		ctx.lineTo(w, y + offset);
