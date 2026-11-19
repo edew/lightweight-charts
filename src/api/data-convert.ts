@@ -71,7 +71,7 @@ export function itemTimeToSeconds(time: Time, businessDay: boolean): number {
 	}
 
 	if (!isUTCTimestamp(time)) {
-		throw new Error('time must be of type isUTCTimestamp');
+		throw new Error('time must be of type UTCTimestamp');
 	}
 	return time;
 }

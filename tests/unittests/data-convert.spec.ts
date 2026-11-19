@@ -31,7 +31,7 @@ describe('data-convert', () => {
 
 	it('throws when the time type of an item is not the type of the chart', () => {
 		expect(() => itemTimeToSeconds(ts(1000), true)).to.throw('time must be of type BusinessDay');
-		expect(() => itemTimeToSeconds('2019-05-01', false)).to.throw('time must be of type isUTCTimestamp');
+		expect(() => itemTimeToSeconds('2019-05-01', false)).to.throw('time must be of type UTCTimestamp');
 	});
 
 	it('copies line data into typed arrays and does not change the input', () => {
