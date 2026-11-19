@@ -9,8 +9,6 @@ import type { Series } from './series';
  * All panes share the time scale.
  */
 export class Pane {
-	/** True when the next frame must fit the price range to the visible bars one time. */
-	public autoScaleRequest: boolean = true;
 	/** Relative height of the pane. */
 	public stretch: number = 1;
 	/** The price scale that the price axis shows. */
@@ -73,7 +71,8 @@ export class Pane {
 	}
 
 	#recalculatePriceScale(priceScale: PriceScale, force: boolean): void {
-		if (!force && !priceScale.isAutoScale()) {
+		// a scale with no range gets one autoscale, also when the autoscale option is off
+		if (!force && !priceScale.isAutoScale() && priceScale.priceRange() !== null) {
 			return;
 		}
 

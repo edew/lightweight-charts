@@ -40,7 +40,6 @@ describe('ChartModel', () => {
 	it('has one pane after construction and asks for a full update', () => {
 		expect(model.panes().length).to.equal(1);
 		expect(invalidations[0]).to.equal(InvalidationLevel.Full);
-		expect(model.panes()[0].autoScaleRequest).to.equal(true);
 	});
 
 	it('fullUpdate and lightUpdate call the invalidate handler with the level', () => {
@@ -208,16 +207,17 @@ describe('ChartModel', () => {
 	});
 
 	describe('requests', () => {
-		it('applies the one-time autoscale of a pane, also when autoscale is off', () => {
-			const series = addLine(model);
-			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+		it('a price scale with no range gets one autoscale, also when autoscale is off', () => {
 			const pane = model.panes()[0];
 			pane.priceScale.setAutoScale(false);
-			pane.priceScale.setPriceRange({ min: 100, max: 200 });
-
-			model.applyRequests();
-			expect(pane.autoScaleRequest).to.equal(false);
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
 			expect(pane.priceScale.priceRange()).to.deep.equal({ min: 1, max: 3 });
+
+			// the scale keeps a range that it has
+			pane.priceScale.setPriceRange({ min: 100, max: 200 });
+			setLine(model, series, [10, 20, 30], [4, 5, 6]);
+			expect(pane.priceScale.priceRange()).to.deep.equal({ min: 100, max: 200 });
 		});
 
 		it('fitContent shows all time points in the next frame', () => {

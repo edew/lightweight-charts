@@ -283,17 +283,10 @@ export class ChartModel {
 	}
 
 	/**
-	 * Applies the requests for the next frame: the one-time autoscale of a pane,
-	 * "fit content" and a time range. A frame calls this before the layout.
+	 * Applies the requests for the next frame: "fit content" and a time range.
+	 * A frame calls this before the layout.
 	 */
 	public applyRequests(): void {
-		for (const pane of this.#panes) {
-			if (pane.autoScaleRequest) {
-				pane.autoScaleRequest = false;
-				pane.momentaryAutoScale();
-			}
-		}
-
 		if (this.#fitContentRequest) {
 			this.#fitContentRequest = false;
 			this.#timeScale.fitContent();
@@ -393,7 +386,6 @@ export class ChartModel {
 	// ---- private
 
 	#createPane(): Pane {
-		// a new pane always gets one autoscale, also if the autoscale option is off
 		const pane = new Pane(this);
 		this.#panes.push(pane);
 		this.fullUpdate();

@@ -52,7 +52,7 @@ Dependencies go down only. `src/model` does not import `src/draw`, `src/series` 
 
 One frame, for an invalidation level above Cursor:
 
-1. `model.applyRequests()`: the one-time autoscale of a pane, "fit content", a time range.
+1. `model.applyRequests()`: "fit content", a time range.
 2. `layoutChart()`: measure the price axis, calculate the rectangles (`computeLayout()`), give the pane sizes to the model. It does this two times, because the axis width depends on the price range.
 3. `model.resolveCrosshair()`: one calculation of the crosshair for each frame.
 4. `drawStatic()` on the static canvas: background, and for each pane the grid, series and price axis; then separators and the time axis.
@@ -71,7 +71,7 @@ To add a series type: add one file in `src/series/` with the kind record and a f
 ### Scales
 
 - `PriceScale` (`src/model/price-scale/price-scale.ts`): one file with the conversions for the four modes (normal, logarithmic, percentage, indexed to 100), autoscale, the tick marks and the drag state. A `PriceRange` is a plain `{ min, max }` that is not changed after it is made. The range is in the values that the scale shows (for example logarithms in the logarithmic mode).
-- `TimeScale` (`src/model/time-scale/time-scale.ts`): bar spacing, right offset, visible bars (`BarsRange`, a plain `{ first, last }`), tick mark labels and the drag state. A method that changes the visible range also requests the autoscale of the panes and a Light frame.
+- `TimeScale` (`src/model/time-scale/time-scale.ts`): bar spacing, right offset, visible bars (`BarsRange`, a plain `{ first, last }`), tick mark labels and the drag state. A method that changes the visible range also requests the autoscale of the panes and a Light frame. A price scale with no range gets one autoscale also when the `autoScale` option is off.
 - The widget calls the drag methods of the scales directly (`startScale` / `scaleTo`, `startScroll` / `scrollTo`, `endDrag`).
 - A price formatter is a function `(price) => string` (`src/formatters/price-formatter.ts`).
 
