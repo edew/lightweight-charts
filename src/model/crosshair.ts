@@ -44,7 +44,6 @@ export interface CrosshairOptions {
  * the origin from the origin, one time for each frame.
  */
 export interface Crosshair {
-	visible: boolean;
 	/** The pane under the pointer, or null when there is no crosshair. */
 	pane: Pane | null;
 	/** Pointer position in the pane, CSS pixels. */
@@ -62,7 +61,6 @@ export interface Crosshair {
 
 export function createCrosshair(): Crosshair {
 	return {
-		visible: false,
 		pane: null,
 		originX: NaN,
 		originY: NaN,

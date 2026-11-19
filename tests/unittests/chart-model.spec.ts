@@ -171,7 +171,6 @@ describe('ChartModel', () => {
 
 			expect(model.resolveCrosshair()).to.equal(true);
 			const crosshair = model.crosshair();
-			expect(crosshair.visible).to.equal(true);
 			expect(crosshair.index).to.equal(2);
 			expect(crosshair.x).to.equal(model.timeScale().indexToCoordinate(2 as TimePointIndex));
 			expect(Number.isNaN(crosshair.price)).to.equal(false);
@@ -200,7 +199,6 @@ describe('ChartModel', () => {
 			model.clearCrosshairPosition();
 			expect(model.resolveCrosshair()).to.equal(true);
 			const crosshair = model.crosshair();
-			expect(crosshair.visible).to.equal(false);
 			expect(crosshair.pane).to.equal(null);
 			expect(crosshair.index).to.equal(2);
 		});

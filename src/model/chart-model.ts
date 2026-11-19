@@ -315,14 +315,12 @@ export class ChartModel {
 		crosshair.originX = x;
 		crosshair.originY = y;
 		crosshair.pane = pane;
-		crosshair.visible = true;
 		this.#crosshairDirty = true;
 		this.#invalidateHandler(InvalidationLevel.Cursor);
 	}
 
 	public clearCrosshairPosition(): void {
 		const crosshair = this.#crosshair;
-		crosshair.visible = false;
 		crosshair.pane = null;
 		crosshair.originX = NaN;
 		crosshair.originY = NaN;

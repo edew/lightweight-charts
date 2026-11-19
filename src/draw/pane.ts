@@ -281,44 +281,38 @@ export function drawPane(ctx: CanvasRenderingContext2D, model: ChartModel, pane:
 /** The crosshair lines and markers of one pane. */
 export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, pixelRatio: number): void {
 	const crosshair = model.crosshair();
-	if (crosshair.pane === null) {
-		return;
-	}
-
 	const options = model.options().crosshair;
 	const x = Math.round(crosshair.x * pixelRatio);
 	const y = Math.round(crosshair.y * pixelRatio);
 	const w = Math.ceil(model.timeScale().width() * pixelRatio);
 	const h = Math.ceil(pane.height() * pixelRatio);
 
-	if (crosshair.visible) {
-		ctx.save();
-		ctx.lineCap = 'butt';
+	ctx.save();
+	ctx.lineCap = 'butt';
 
-		if (options.vertLine.visible && x >= 0) {
-			ctx.lineWidth = Math.max(1, Math.floor(options.vertLine.width * pixelRatio));
-			ctx.strokeStyle = options.vertLine.color;
-			setLineStyle(ctx, options.vertLine.style);
-			const offset = strokeOffset(ctx);
-			ctx.beginPath();
-			ctx.moveTo(x + offset, 0);
-			ctx.lineTo(x + offset, h);
-			ctx.stroke();
-		}
-
-		if (options.horzLine.visible && crosshair.pane === pane && y >= 0) {
-			ctx.lineWidth = Math.max(1, Math.floor(options.horzLine.width * pixelRatio));
-			ctx.strokeStyle = options.horzLine.color;
-			setLineStyle(ctx, options.horzLine.style);
-			const offset = strokeOffset(ctx);
-			ctx.beginPath();
-			ctx.moveTo(0, y + offset);
-			ctx.lineTo(w, y + offset);
-			ctx.stroke();
-		}
-
-		ctx.restore();
+	if (options.vertLine.visible && x >= 0) {
+		ctx.lineWidth = Math.max(1, Math.floor(options.vertLine.width * pixelRatio));
+		ctx.strokeStyle = options.vertLine.color;
+		setLineStyle(ctx, options.vertLine.style);
+		const offset = strokeOffset(ctx);
+		ctx.beginPath();
+		ctx.moveTo(x + offset, 0);
+		ctx.lineTo(x + offset, h);
+		ctx.stroke();
 	}
+
+	if (options.horzLine.visible && crosshair.pane === pane && y >= 0) {
+		ctx.lineWidth = Math.max(1, Math.floor(options.horzLine.width * pixelRatio));
+		ctx.strokeStyle = options.horzLine.color;
+		setLineStyle(ctx, options.horzLine.style);
+		const offset = strokeOffset(ctx);
+		ctx.beginPath();
+		ctx.moveTo(0, y + offset);
+		ctx.lineTo(w, y + offset);
+		ctx.stroke();
+	}
+
+	ctx.restore();
 
 	// a marker on each series that has one, at the bar under the crosshair
 	const backColor = model.options().layout.backgroundColor;

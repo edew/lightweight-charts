@@ -79,7 +79,7 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	const options = model.options();
 	const lineOptions = options.crosshair.vertLine;
 	const timeScale = model.timeScale();
-	if (!crosshair.visible || !lineOptions.labelVisible || timeScale.isEmpty()) {
+	if (!lineOptions.labelVisible || timeScale.isEmpty()) {
 		return;
 	}
 

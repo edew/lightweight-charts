@@ -215,7 +215,7 @@ export function drawPriceAxisCrosshair(ctx: CanvasRenderingContext2D, model: Cha
 	const crosshair = model.crosshair();
 	const options = model.options();
 	const lineOptions = options.crosshair.horzLine;
-	if (!crosshair.visible || crosshair.pane !== pane || !lineOptions.labelVisible) {
+	if (crosshair.pane !== pane || !lineOptions.labelVisible) {
 		return;
 	}
 
