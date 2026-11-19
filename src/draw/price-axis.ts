@@ -56,8 +56,8 @@ function collectLabels(pane: Pane): void {
 }
 
 /**
- * Moves labels that overlap away from each other. The label of the first series
- * that is on the scale of the axis stays at its place; the other labels move up or down.
+ * Moves labels that overlap away from each other. The label nearest to the center of
+ * the pane stays at its place; the other labels move up or down.
  */
 function alignLabels(pane: Pane, labelHeight: number): void {
 	if (labelCount < 2) {
