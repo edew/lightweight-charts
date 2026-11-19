@@ -4,10 +4,10 @@
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import type { BarData, LineData } from '../../src/api/data-consumer';
 import { seriesOptionsFromSpec, setSeriesData, updateSeriesData } from '../../src/api/series-api';
-import { drawOverlay, drawStatic, layoutChart } from '../../src/draw/chart';
+import { drawFrame, prepareFrame } from '../../src/draw/chart';
 import type { Layout } from '../../src/draw/layout';
 import { clone, type DeepPartial, merge } from '../../src/helpers/strict-type-checks';
-import { ChartModel, type ChartOptionsInternal } from '../../src/model/chart-model';
+import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../../src/model/chart-model';
 import type { Series } from '../../src/model/series';
 import type { SeriesSpec } from '../../src/model/series-kind';
 import type { SeriesPartialOptionsMap, SeriesType } from '../../src/model/series-options';
@@ -90,14 +90,13 @@ export function createHeadlessChart(params: HeadlessChartParams): HeadlessChart 
 		},
 
 		layout(ctx: CanvasRenderingContext2D): Layout {
-			return layoutChart(ctx, model, params.width, params.height, 0);
+			return prepareFrame(ctx, model, params.width, params.height, InvalidationLevel.Full, null);
 		},
 
 		draw(ctx: CanvasRenderingContext2D, pixelRatio: number): void {
-			const layout = layoutChart(ctx, model, params.width, params.height, 0);
-			model.resolveCrosshair();
-			drawStatic(ctx, model, layout, pixelRatio);
-			drawOverlay(ctx, model, layout, pixelRatio);
+			// the frame of the widget, with one canvas for the static content and the crosshair
+			const layout = prepareFrame(ctx, model, params.width, params.height, InvalidationLevel.Full, null);
+			drawFrame(ctx, ctx, model, layout, pixelRatio, InvalidationLevel.Full);
 		},
 	};
 }

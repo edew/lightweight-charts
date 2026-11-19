@@ -2,7 +2,7 @@
 // and an overlay (crosshair). This file and the files it imports have no DOM code,
 // so the chart can be drawn in tests with any canvas implementation.
 
-import type { ChartModel } from '../model/chart-model';
+import { type ChartModel, InvalidationLevel } from '../model/chart-model';
 
 import { computeLayout, type Layout, type Rect } from './layout';
 import { drawPane, drawPaneCrosshair } from './pane';
@@ -56,9 +56,39 @@ export function layoutChart(ctx: CanvasRenderingContext2D, model: ChartModel, wi
 	return layout as Layout;
 }
 
-/** Width of the price axis of a layout, or 0. */
-export function layoutPriceAxisWidth(layout: Layout): number {
-	return layout.priceAxes.length !== 0 ? layout.priceAxes[0].width : 0;
+/**
+ * The first step of a frame above the Cursor level: applies the requests of the model
+ * and calculates the layout. The caller sets the canvas sizes, then calls `drawFrame()`.
+ *
+ * @param previous - the layout of the last frame, or null for the first frame
+ */
+export function prepareFrame(ctx: CanvasRenderingContext2D, model: ChartModel, width: number, height: number, level: InvalidationLevel, previous: Layout | null): Layout {
+	model.applyRequests();
+	// between full updates the price axis only grows, so that it does not jump during a scroll
+	const minAxisWidth = level === InvalidationLevel.Full || previous === null || previous.priceAxes.length === 0 ? 0 : previous.priceAxes[0].width;
+	return layoutChart(ctx, model, width, height, minAxisWidth);
+}
+
+/**
+ * The second step of a frame: calculates the crosshair and draws. A Cursor frame draws
+ * only the overlay. With one context for the two parameters, the crosshair is drawn on
+ * the static content.
+ *
+ * @returns true if the crosshair changed
+ */
+export function drawFrame(staticCtx: CanvasRenderingContext2D, overlayCtx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number, level: InvalidationLevel): boolean {
+	// one calculation of the crosshair for each frame
+	const crosshairChanged = model.resolveCrosshair();
+
+	if (level > InvalidationLevel.Cursor) {
+		drawStatic(staticCtx, model, layout, pixelRatio);
+	}
+
+	if (overlayCtx !== staticCtx) {
+		overlayCtx.clearRect(0, 0, overlayCtx.canvas.width, overlayCtx.canvas.height);
+	}
+	drawOverlay(overlayCtx, model, layout, pixelRatio);
+	return crosshairChanged;
 }
 
 function beginRegion(ctx: CanvasRenderingContext2D, rect: Rect, pixelRatio: number): void {
@@ -70,7 +100,7 @@ function beginRegion(ctx: CanvasRenderingContext2D, rect: Rect, pixelRatio: numb
 }
 
 /** Draws all content that changes only with data, scales or options. */
-export function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
+function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
 	const options = model.options();
 	const panes = model.panes();
 
@@ -118,8 +148,8 @@ export function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, lay
 	}
 }
 
-/** Draws the crosshair: lines, markers and the labels on the axes. The canvas must be clear. */
-export function drawOverlay(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
+/** Draws the crosshair: lines, markers and the labels on the axes. */
+function drawOverlay(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
 	if (model.crosshair().pane === null) {
 		return;
 	}

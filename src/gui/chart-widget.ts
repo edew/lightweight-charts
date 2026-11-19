@@ -5,7 +5,7 @@ import { ensureNotNull } from '../helpers/assertions';
 import type { IDestroyable } from '../helpers/idestroyable';
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { drawOverlay, drawStatic, layoutChart, layoutPriceAxisWidth } from '../draw/chart';
+import { drawFrame, layoutChart, prepareFrame } from '../draw/chart';
 import { type HitResult, hitTest, type Layout, Region } from '../draw/layout';
 
 import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../model/chart-model';
@@ -196,8 +196,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		canvas.style.width = this.#width + 'px';
 		canvas.style.height = this.#height + 'px';
 		const ctx = ensureNotNull(canvas.getContext('2d'));
-		drawStatic(ctx, this.#model, this.#layout, this.#pixelRatio);
-		drawOverlay(ctx, this.#model, this.#layout, this.#pixelRatio);
+		drawFrame(ctx, ctx, this.#model, this.#layout, this.#pixelRatio, InvalidationLevel.Full);
 		return canvas;
 	}
 
@@ -598,11 +597,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 			// changes that this step makes in the model are drawn by this frame
 			this.#preparing = true;
 			try {
-				model.applyRequests();
-
-				// between full updates the price axis only grows, so that it does not jump during a scroll
-				const minAxisWidth = level === InvalidationLevel.Full ? 0 : layoutPriceAxisWidth(this.#layout);
-				this.#layout = layoutChart(this.#staticCtx, model, this.#width, this.#height, minAxisWidth);
+				this.#layout = prepareFrame(this.#staticCtx, model, this.#width, this.#height, level, this.#layout);
 			} finally {
 				this.#preparing = false;
 			}
@@ -615,15 +610,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 			}
 		}
 
-		// one calculation of the crosshair for each frame, and at most one event
-		const crosshairChanged = model.resolveCrosshair();
-
-		if (level > InvalidationLevel.Cursor) {
-			drawStatic(this.#staticCtx, model, this.#layout, this.#pixelRatio);
-		}
-
-		this.#overlayCtx.clearRect(0, 0, this.#bitmapWidth, this.#bitmapHeight);
-		drawOverlay(this.#overlayCtx, model, this.#layout, this.#pixelRatio);
+		const crosshairChanged = drawFrame(this.#staticCtx, this.#overlayCtx, model, this.#layout, this.#pixelRatio, level);
 
 		if (crosshairChanged && this.onCrosshairMove !== null) {
 			const crosshair = model.crosshair();
