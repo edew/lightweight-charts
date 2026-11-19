@@ -43,6 +43,14 @@ function createCanvas(zIndex: string): HTMLCanvasElement {
 	return canvas;
 }
 
+/** Sets the size of the bitmap of a canvas. A write clears the canvas, also with the same value. */
+function setBitmapSize(canvas: HTMLCanvasElement, width: number, height: number): void {
+	if (canvas.width !== width || canvas.height !== height) {
+		canvas.width = width;
+		canvas.height = height;
+	}
+}
+
 export class ChartWidget implements IDestroyable, PointerHandlers {
 	/** Set by the API layer. */
 	public onClick: ChartPointerCallback | null = null;
@@ -604,12 +612,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 				this.#preparing = false;
 			}
 
-			for (const canvas of [this.#staticCanvas, this.#overlayCanvas]) {
-				if (canvas.width !== this.#bitmapWidth || canvas.height !== this.#bitmapHeight) {
-					canvas.width = this.#bitmapWidth;
-					canvas.height = this.#bitmapHeight;
-				}
-			}
+			setBitmapSize(this.#staticCanvas, this.#bitmapWidth, this.#bitmapHeight);
+			setBitmapSize(this.#overlayCanvas, this.#bitmapWidth, this.#bitmapHeight);
 		}
 
 		const crosshairChanged = drawFrame(this.#staticCtx, this.#overlayCtx, model, this.#layout, this.#pixelRatio, level);
