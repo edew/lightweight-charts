@@ -272,7 +272,7 @@ export class DataStore {
 			}
 
 			if (time < lastTime) {
-				throw new Error(`Cannot update oldest data, last time=${lastTime}, new time=${time}`);
+				throw new Error(`Cannot update older data, last time=${lastTime}, new time=${time}`);
 			}
 		}
 

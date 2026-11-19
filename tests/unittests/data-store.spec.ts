@@ -174,7 +174,7 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const line = store.createSeries(1);
 		store.setSeriesData(line, sorted(10, 20), f64(1, 2));
-		expect(() => store.updateSeries(line, 15, 3, 0, 0, 0)).to.throw('Cannot update oldest data');
+		expect(() => store.updateSeries(line, 15, 3, 0, 0, 0)).to.throw('Cannot update older data');
 	});
 
 	it('finds a time index by time', () => {
