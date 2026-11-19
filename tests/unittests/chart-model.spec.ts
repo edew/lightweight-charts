@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { beforeEach, describe, it } from 'vitest';
+import { beforeEach, describe, it, vi } from 'vitest';
 
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import { seriesOptionsFromSpec } from '../../src/api/series-api';
@@ -168,6 +168,35 @@ describe('ChartModel', () => {
 
 		setLine(model, series, [], []);
 		expect(model.timeScale().baseIndex()).to.equal(0);
+	});
+
+	describe('scroll animation', () => {
+		it('a new animation and a reset stop the animation that is in progress', () => {
+			vi.useFakeTimers();
+			try {
+				const series = addLine(model);
+				const times = Array.from({ length: 100 }, (_: unknown, i: number) => 1000 + i * 60);
+				setLine(model, series, times, times);
+				const timeScale = model.timeScale();
+
+				timeScale.scrollToOffsetAnimated(-30, 1000);
+				vi.advanceTimersByTime(100);
+				timeScale.scrollToOffsetAnimated(-10, 400);
+				vi.advanceTimersByTime(2000);
+				expect(timeScale.rightOffset()).to.equal(-10);
+
+				timeScale.scrollToOffsetAnimated(-30, 1000);
+				vi.advanceTimersByTime(100);
+				timeScale.stopAnimation();
+				const offset = timeScale.rightOffset();
+				expect(vi.getTimerCount()).to.be.lessThan(2);
+				vi.advanceTimersByTime(2000);
+				expect(timeScale.rightOffset()).to.equal(offset);
+				expect(vi.getTimerCount()).to.equal(0);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
 	});
 
 	describe('crosshair', () => {

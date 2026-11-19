@@ -70,6 +70,8 @@ export class TimeScale {
 	#barSpacingAtStart: number = 0;
 	#rightOffsetAtStart: number = 0;
 
+	/** The number of the last scroll animation. A step of an older animation does nothing. */
+	#animation: number = 0;
 	readonly #tickMarks: TickMarks = new TickMarks();
 	readonly #marks: TimeMark[] = [];
 	#marksValid: boolean = false;
@@ -244,8 +246,14 @@ export class TimeScale {
 		return labels;
 	}
 
+	/** Stops the scroll animation that is in progress, if there is one. */
+	public stopAnimation(): void {
+		this.#animation++;
+	}
+
 	/** Call when all time points of the data store changed. */
 	public reset(): void {
+		this.stopAnimation();
 		this.endDrag();
 		this.#leftEdgeFixed = false;
 		this.#dataChanged();
@@ -302,6 +310,8 @@ export class TimeScale {
 
 	public startScroll(x: Coordinate): void {
 		if (this.#scrollStart === null && this.#scaleStart === null && !this.isEmpty()) {
+			// the scroll of the user replaces a scroll animation
+			this.stopAnimation();
 			this.#scrollStart = x;
 			this.#rightOffsetAtStart = this.#rightOffset;
 		}
@@ -331,9 +341,13 @@ export class TimeScale {
 
 	/** @param duration - milliseconds */
 	public scrollToOffsetAnimated(offset: number, duration: number): void {
+		const animation = ++this.#animation;
 		const source = this.#rightOffset;
 		const start = Date.now();
 		const step = (): void => {
+			if (animation !== this.#animation) {
+				return;
+			}
 			const progress = Math.min(1, (Date.now() - start) / duration);
 			this.setRightOffset(source + (offset - source) * progress);
 			if (progress < 1) {

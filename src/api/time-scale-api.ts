@@ -21,6 +21,7 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 	}
 
 	public destroy(): void {
+		this.#timeScale().stopAnimation();
 		(this.#model as unknown as null) = null;
 	}
 
