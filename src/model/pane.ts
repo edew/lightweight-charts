@@ -2,7 +2,9 @@ import { clone } from '../helpers/strict-type-checks';
 
 import type { ChartModel } from './chart-model';
 import { PriceScale, PriceScaleMode } from './price-scale/price-scale';
-import type { Series } from './series';
+import { Series } from './series';
+import type { SeriesKind } from './series-kind';
+import type { SeriesOptionsMap, SeriesType } from './series-options';
 
 /**
  * One horizontal part of the chart with its own price scale.
@@ -36,14 +38,17 @@ export class Pane {
 		}
 	}
 
-	/** An overlay series gets its own price scale, which has no axis. */
-	public addSeries(series: Series, overlay: boolean): void {
-		const priceScale = overlay ? this.#createPriceScale(true) : this.priceScale;
-		priceScale.addSource(series);
-		series.setPriceScale(priceScale);
-		series.setPane(this);
-		this.series.push(series);
+	/** Makes a series in this pane. An overlay series gets its own price scale, which has no axis. */
+	public createSeries<T extends SeriesType>(kind: SeriesKind<T>, options: SeriesOptionsMap[T]): Series<T> {
+		const priceScale = options.overlay ? this.#createPriceScale(true) : this.priceScale;
+		if (options.overlay) {
+			priceScale.applyOptions({ scaleMargins: options.scaleMargins });
+		}
+		const series = new Series<T>(this.#model, this, priceScale, kind, options);
+		priceScale.addSource(series as unknown as Series);
+		this.series.push(series as unknown as Series);
 		this.recalculate();
+		return series;
 	}
 
 	public removeSeries(series: Series): void {

@@ -1,6 +1,5 @@
 import { priceFormat, type PriceFormatter, volumeFormat } from '../formatters/price-formatter';
 
-import { ensureNotNull } from '../helpers/assertions';
 import { merge } from '../helpers/strict-type-checks';
 
 import type { BarPrice, BarPrices } from './bar';
@@ -9,7 +8,7 @@ import { SearchMode, type SeriesStore } from './data-store';
 import type { Pane } from './pane';
 import type { PriceRange, PriceScale } from './price-scale/price-scale';
 import type { SeriesKind } from './series-kind';
-import type { LineStyleOptions, SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from './series-options';
+import type { LineStyleOptions, PriceFormat, SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from './series-options';
 import type { TimePointIndex } from './time-scale/time-data';
 
 export interface FirstValue {
@@ -36,21 +35,32 @@ export interface SeriesDataAtTypeMap {
 
 const rangeOut = new Float64Array(2);
 
+function makeFormatter(format: PriceFormat): PriceFormatter {
+	return format.type === 'custom'
+		? format.formatter as PriceFormatter
+		: format.type === 'volume'
+			? volumeFormat(format.precision)
+			: priceFormat(format.precision, format.minMove, format.type === 'percent' ? '%' : '');
+}
+
 export class Series<T extends SeriesType = SeriesType> {
 	public readonly kind: SeriesKind<T>;
 	readonly #model: ChartModel;
 	readonly #options: SeriesOptionsMap[T];
 	readonly #store: SeriesStore;
-	#formatter!: PriceFormatter;
-	#priceScale: PriceScale | null = null;
-	#pane: Pane | null = null;
+	readonly #priceScale: PriceScale;
+	readonly #pane: Pane;
+	#formatter: PriceFormatter;
 
-	public constructor(model: ChartModel, kind: SeriesKind<T>, options: SeriesOptionsMap[T]) {
+	/** `Pane.createSeries()` is the only caller: it makes the price scale and adds the series to it. */
+	public constructor(model: ChartModel, pane: Pane, priceScale: PriceScale, kind: SeriesKind<T>, options: SeriesOptionsMap[T]) {
 		this.#model = model;
+		this.#pane = pane;
+		this.#priceScale = priceScale;
 		this.kind = kind;
 		this.#options = options;
 		this.#store = model.dataStore().createSeries(kind.stride);
-		this.#recreateFormatter();
+		this.#formatter = makeFormatter(options.priceFormat);
 	}
 
 	/** Removes the data of the series from the data store. */
@@ -75,33 +85,26 @@ export class Series<T extends SeriesType = SeriesType> {
 		merge(this.#options, options);
 		this.#options.overlay = overlay;
 
-		if (overlay && this.#priceScale !== null && options.scaleMargins !== undefined) {
+		if (overlay && options.scaleMargins !== undefined) {
 			this.#priceScale.applyOptions({
 				scaleMargins: this.#options.scaleMargins,
 			});
 		}
 
 		if (options.priceFormat !== undefined) {
-			this.#recreateFormatter();
+			this.#formatter = makeFormatter(this.#options.priceFormat);
+			this.#priceScale.updateFormatter();
 		}
 
 		this.#model.lightUpdate();
 	}
 
 	public priceScale(): PriceScale {
-		return ensureNotNull(this.#priceScale);
-	}
-
-	public setPriceScale(priceScale: PriceScale): void {
-		this.#priceScale = priceScale;
+		return this.#priceScale;
 	}
 
 	public pane(): Pane {
-		return ensureNotNull(this.#pane);
-	}
-
-	public setPane(pane: Pane): void {
-		this.#pane = pane;
+		return this.#pane;
 	}
 
 	public minMove(): number {
@@ -212,18 +215,5 @@ export class Series<T extends SeriesType = SeriesType> {
 	public crosshairMarkerRadius(): number {
 		const options = this.#options as Partial<LineStyleOptions>;
 		return options.crosshairMarkerVisible === true ? options.crosshairMarkerRadius ?? 0 : 0;
-	}
-
-	#recreateFormatter(): void {
-		const format = this.#options.priceFormat;
-		this.#formatter = format.type === 'custom'
-			? format.formatter as PriceFormatter
-			: format.type === 'volume'
-				? volumeFormat(format.precision)
-				: priceFormat(format.precision, format.minMove, format.type === 'percent' ? '%' : '');
-
-		if (this.#priceScale !== null) {
-			this.#priceScale.updateFormatter();
-		}
 	}
 }

@@ -180,12 +180,7 @@ export class ChartModel {
 		}
 
 		const pane = paneIndex === this.#panes.length ? this.#createPane() : this.#panes[paneIndex];
-		const series = new Series<T>(this, kind, options);
-		pane.addSeries(series as unknown as Series, Boolean(options.overlay));
-		if (options.overlay) {
-			// apply the options again to set the margins of the overlay scale
-			series.applyOptions(options);
-		}
+		const series = pane.createSeries(kind, options);
 
 		// the first series changes the geometry of the chart
 		this.fullUpdate();
