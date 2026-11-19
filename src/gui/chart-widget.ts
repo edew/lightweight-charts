@@ -27,6 +27,13 @@ export interface Point {
 }
 
 /** Called with the time index under the pointer and the pointer position in the pane. */
+const enum RafId {
+	/** No frame is requested. */
+	None = 0,
+	/** The widget is destroyed: an invalidation requests no frame. The browser does not use this id. */
+	Destroyed = -1,
+}
+
 export type ChartPointerCallback = (index: TimePointIndex | null, point: Point | null) => void;
 
 function createCanvas(zIndex: string): HTMLCanvasElement {
@@ -64,7 +71,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 	// frame loop
 	#invalidLevel: InvalidationLevel = InvalidationLevel.None;
-	#rafId: number = 0;
+	/** The id of the frame request, or a `RafId` value. */
+	#rafId: number = RafId.None;
 	/** True while a frame prepares the model: invalidations from that step need no new frame. */
 	#preparing: boolean = false;
 
@@ -130,10 +138,8 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 	}
 
 	public destroy(): void {
-		if (this.#rafId !== 0) {
-			cancelAnimationFrame(this.#rafId);
-			this.#rafId = 0;
-		}
+		cancelAnimationFrame(this.#rafId);
+		this.#rafId = RafId.Destroyed;
 
 		this.#resizeObserver.disconnect();
 		this.#listeners.abort();
@@ -571,9 +577,9 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		}
 
 		this.#invalidLevel = Math.max(this.#invalidLevel, level);
-		if (this.#rafId === 0) {
+		if (this.#rafId === RafId.None) {
 			this.#rafId = requestAnimationFrame(() => {
-				this.#rafId = 0;
+				this.#rafId = RafId.None;
 				this.#flush();
 			});
 		}
