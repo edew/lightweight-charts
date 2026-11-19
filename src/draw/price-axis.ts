@@ -145,7 +145,7 @@ export function drawPriceAxis(ctx: CanvasRenderingContext2D, model: ChartModel, 
 	const priceScale = pane.priceScale;
 	const isLeft = options.priceScale.position === 'left';
 	const borderVisible = priceScale.options().borderVisible;
-	const borderColor = options.priceScale.borderColor;
+	const borderColor = priceScale.options().borderColor;
 	const bitmapWidth = Math.ceil(width * pixelRatio);
 
 	if (borderVisible) {

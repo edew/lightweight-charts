@@ -9,7 +9,10 @@ export interface IPaneApi {
 	/** Relative height of the pane: a pane with factor 2 is two times as high as a pane with factor 1. */
 	stretchFactor(): number;
 	setStretchFactor(factor: number): void;
-	/** Applies options to the price scale of this pane only. */
-	applyPriceScaleOptions(options: DeepPartial<PriceScaleOptions>): void;
+	/**
+	 * Applies options to the price scale of this pane only. The position of the price
+	 * axis is the same for all panes: set it with the options of the chart.
+	 */
+	applyPriceScaleOptions(options: DeepPartial<Omit<PriceScaleOptions, 'position'>>): void;
 	priceScaleOptions(): Readonly<PriceScaleOptions>;
 }

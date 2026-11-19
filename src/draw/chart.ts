@@ -135,8 +135,8 @@ function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: La
 		drawTimeAxis(ctx, model, layout.timeAxis.width, pixelRatio);
 		ctx.restore();
 
-		// the corner continues the border of the two axes
-		if (layout.corner !== null && options.priceScale.borderVisible && options.timeScale.borderVisible) {
+		// the corner continues the border of the time axis and of the price axis of the last pane
+		if (layout.corner !== null && panes[panes.length - 1].priceScale.options().borderVisible && options.timeScale.borderVisible) {
 			const corner = layout.corner;
 			const borderSize = Math.max(1, Math.floor(pixelRatio));
 			const left = layout.priceAxisPosition === 'left'

@@ -29,6 +29,23 @@ function risingCandles(count: number): BarData[] {
 }
 
 describe('draw calls', () => {
+	it('an option of the price scale of the only pane draws as the same option of the chart', () => {
+		const axes = { priceScale: { position: 'right' as const }, timeScale: { visible: true } };
+		for (const scaleOptions of [{ borderVisible: false }, { borderColor: '#ff0000' }]) {
+			const byChart = createHeadlessChart({ width: 400, height: 240, options: { ...axes, priceScale: { ...axes.priceScale, ...scaleOptions } } });
+			byChart.addSeries('Line').setData(line(50));
+
+			const byPane = createHeadlessChart({ width: 400, height: 240, options: axes });
+			byPane.addSeries('Line').setData(line(50));
+			byPane.model.panes()[0].priceScale.applyOptions(scaleOptions);
+
+			// the first draw fills the text width cache, which writes the font
+			draw(byPane);
+			draw(byChart);
+			expect(draw(byPane).log, JSON.stringify(scaleOptions)).to.deep.equal(draw(byChart).log);
+		}
+	});
+
 	it('draws the wick of a candle at a pixel ratio below 1', () => {
 		const chart = createHeadlessChart({ width: 400, height: 240, options: seriesOnly });
 		chart.addSeries('Candlestick', { lastValueVisible: false, borderVisible: false }).setData(risingCandles(50));

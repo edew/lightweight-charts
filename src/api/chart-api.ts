@@ -58,7 +58,7 @@ function paneApi(model: ChartModel, pane: Pane): IPaneApi {
 			pane.stretch = factor;
 			model.fullUpdate();
 		},
-		applyPriceScaleOptions: (options: DeepPartial<PriceScaleOptions>) => {
+		applyPriceScaleOptions: (options: DeepPartial<Omit<PriceScaleOptions, 'position'>>) => {
 			pane.priceScale.applyOptions(options);
 			model.fullUpdate();
 		},
