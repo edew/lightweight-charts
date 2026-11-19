@@ -5,6 +5,7 @@ import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaul
 import { seriesOptionsFromSpec } from '../../src/api/series-api';
 import { clone } from '../../src/helpers/strict-type-checks';
 import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../../src/model/chart-model';
+import type { SortedTimes } from '../../src/model/data-store';
 import type { Series } from '../../src/model/series';
 import type { TimePointIndex } from '../../src/model/time-scale/time-data';
 import { Candlestick } from '../../src/series/candlestick';
@@ -23,7 +24,7 @@ function addLine(model: ChartModel, pane: number = 0, overlay: boolean = false):
 }
 
 function setLine(model: ChartModel, series: Series, times: number[], values: number[]): void {
-	model.setSeriesData(series, new Float64Array(times), new Float64Array(values), false);
+	model.setSeriesData(series, new Float64Array(times) as SortedTimes, new Float64Array(values), false);
 }
 
 describe('ChartModel', () => {
@@ -151,7 +152,7 @@ describe('ChartModel', () => {
 		it('gives the range of the visible bars for autoscale', () => {
 			const spec = Candlestick();
 			const series = model.createSeries(spec.kind, seriesOptionsFromSpec(spec)) as unknown as Series;
-			model.setSeriesData(series, new Float64Array([10, 20]), new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), false);
+			model.setSeriesData(series, new Float64Array([10, 20]) as SortedTimes, new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), false);
 			const range = series.autoscaleRange(0 as TimePointIndex, 1 as TimePointIndex);
 			expect(range?.min).to.equal(2);
 			expect(range?.max).to.equal(9);

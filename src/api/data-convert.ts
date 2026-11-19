@@ -5,6 +5,7 @@
 
 import { isString } from '../helpers/strict-type-checks';
 
+import type { SortedTimes } from '../model/data-store';
 import type { BusinessDay, UTCTimestamp } from '../model/time-scale/time-data';
 
 import { type BarData, isBusinessDay, isUTCTimestamp, type LineData, type Time } from './data-consumer';
@@ -80,8 +81,7 @@ export function isBusinessDayTime(time: Time): boolean {
 }
 
 export interface ConvertedSeriesData {
-	/** Sorted UTC seconds with no duplicates. */
-	times: Float64Array;
+	times: SortedTimes;
 	/** `stride` values for each time. */
 	values: Float64Array;
 	businessDay: boolean;
@@ -119,7 +119,7 @@ export function convertSeriesData(stride: number, data: readonly (LineData | Bar
 	}
 
 	if (sorted) {
-		return { times, values, businessDay };
+		return { times: times as SortedTimes, values, businessDay };
 	}
 
 	// slow path: the input is not in order or has duplicate times
@@ -145,5 +145,5 @@ export function convertSeriesData(stride: number, data: readonly (LineData | Bar
 		out++;
 	}
 
-	return { times: sortedTimes.slice(0, out), values: sortedValues.slice(0, out * stride), businessDay };
+	return { times: sortedTimes.slice(0, out) as SortedTimes, values: sortedValues.slice(0, out * stride), businessDay };
 }

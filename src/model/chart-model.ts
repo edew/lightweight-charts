@@ -2,7 +2,7 @@ import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { Coordinate } from './coordinate';
 import { createCrosshair, type Crosshair, type CrosshairOptions } from './crosshair';
-import { DataStore, UpdateKind } from './data-store';
+import { DataStore, type SortedTimes, UpdateKind } from './data-store';
 import type { GridOptions } from './grid';
 import type { LayoutOptions } from './layout-options';
 import type { LocalizationOptions } from './localization-options';
@@ -212,10 +212,9 @@ export class ChartModel {
 	// ---- data
 
 	/**
-	 * Replaces all data of a series. `times` are sorted UTC seconds with no duplicates.
-	 * The model takes ownership of the arrays.
+	 * Replaces all data of a series. The model takes ownership of the arrays.
 	 */
-	public setSeriesData(series: Series, times: Float64Array, values: Float64Array, businessDay: boolean): void {
+	public setSeriesData(series: Series, times: SortedTimes, values: Float64Array, businessDay: boolean): void {
 		if (times.length !== 0) {
 			this.#dataStore.businessDay = businessDay;
 		}

@@ -4,6 +4,8 @@
 // that array is its time point index. Each series has one flat array of values with
 // `stride` numbers for each row (1: value; 4: open, high, low, close).
 
+import type { Nominal } from '../helpers/nominal';
+
 const MIN_CAPACITY = 16;
 
 /** Result of a streaming update. Higher values need more work in the model. */
@@ -23,6 +25,12 @@ export const enum SearchMode {
 	Exact = 0,
 	NearestRight = 1,
 }
+
+/**
+ * UTC seconds in ascending order with no duplicates. Only the code that makes the array
+ * and checks the order gives it this type.
+ */
+export type SortedTimes = Nominal<Float64Array, 'SortedTimes'>;
 
 export class SeriesStore {
 	public readonly stride: number;
@@ -224,10 +232,10 @@ export class DataStore {
 	}
 
 	/**
-	 * Replaces all data of a series. `times` must be sorted with no duplicates, and
-	 * `values` has `stride` values for each time. The store takes ownership of both arrays.
+	 * Replaces all data of a series. `values` has `stride` values for each time.
+	 * The store takes ownership of both arrays.
 	 */
-	public setSeriesData(series: SeriesStore, times: Float64Array, values: Float64Array): void {
+	public setSeriesData(series: SeriesStore, times: SortedTimes, values: Float64Array): void {
 		series.values = values;
 		series.length = times.length;
 		this.#rebuild(series, times);
