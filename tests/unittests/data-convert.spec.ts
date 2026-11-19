@@ -21,6 +21,8 @@ describe('data-convert', () => {
 	it('parses a date string to a business day', () => {
 		expect(stringToBusinessDay('2019-05-01')).to.deep.equal({ day: 1, month: 5, year: 2019 });
 		expect(() => stringToBusinessDay('abc')).to.throw();
+		// a browser can accept this text and read it in its own way
+		expect(() => stringToBusinessDay('2019-1-1')).to.throw();
 	});
 
 	it('knows which times are business days', () => {

@@ -1,5 +1,3 @@
-/// <reference types="_build-time-constants" />
-
 // Conversion between the time types of the public API and UTC seconds.
 // Inside the library a time is always a number of UTC seconds.
 
@@ -13,17 +11,10 @@ import { type BarData, isBusinessDay, isUTCTimestamp, type LineData, type Time }
 const validDateRegex = /^\d\d\d\d-\d\d-\d\d$/;
 
 export function stringToBusinessDay(value: string): BusinessDay {
-	if (process.env.NODE_ENV === 'development') {
-		// in some browsers the Date constructor accepts invalid date strings
-		// and parses them in an "implementation specific" way
-		// (for example 2019-1-1 is not the same as 2019-01-01)
-		if (!validDateRegex.test(value)) {
-			throw new Error(`Invalid date string=${value}, expected format=yyyy-mm-dd`);
-		}
-	}
-
+	// some browsers accept a different format and read it in their own way
+	// (for example 2019-1-1 is not the same as 2019-01-01)
 	const d = new Date(value);
-	if (isNaN(d.getTime())) {
+	if (!validDateRegex.test(value) || isNaN(d.getTime())) {
 		throw new Error(`Invalid date string=${value}, expected format=yyyy-mm-dd`);
 	}
 
