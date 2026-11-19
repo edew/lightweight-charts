@@ -93,7 +93,7 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	const metrics = labelMetrics(options.layout);
 	const text = timeScale.formatDateTime(time);
 	ctx.font = metrics.font;
-	const labelTextWidth = Math.round(textWidth(ctx, text));
+	const labelTextWidth = Math.round(textWidth(ctx, metrics, text));
 	if (labelTextWidth <= 0) {
 		return;
 	}

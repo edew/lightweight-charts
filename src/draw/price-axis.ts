@@ -106,7 +106,6 @@ function alignLabels(pane: Pane, labelHeight: number): void {
 /** The width that the price axis needs for its tick labels and its last-value labels, CSS pixels. */
 export function priceAxisOptimalWidth(ctx: CanvasRenderingContext2D, model: ChartModel): number {
 	const metrics = labelMetrics(model.options().layout);
-	ctx.font = metrics.font;
 
 	// a reasonable value while there is no data
 	let maxTextWidth = 34;
@@ -117,8 +116,8 @@ export function priceAxisOptimalWidth(ctx: CanvasRenderingContext2D, model: Char
 		const marks = panes[p].priceScale.marks();
 		if (marks.length > 0) {
 			const width = Math.max(
-				textWidth(ctx, marks[0].label),
-				textWidth(ctx, marks[marks.length - 1].label)
+				textWidth(ctx, metrics, marks[0].label),
+				textWidth(ctx, metrics, marks[marks.length - 1].label)
 			);
 			maxTextWidth = measured ? Math.max(maxTextWidth, width) : width;
 			measured = true;
@@ -126,7 +125,7 @@ export function priceAxisOptimalWidth(ctx: CanvasRenderingContext2D, model: Char
 
 		collectLabels(panes[p]);
 		for (let i = 0; i < labelCount; i++) {
-			maxTextWidth = Math.max(maxTextWidth, textWidth(ctx, labels[i].text));
+			maxTextWidth = Math.max(maxTextWidth, textWidth(ctx, metrics, labels[i].text));
 		}
 	}
 

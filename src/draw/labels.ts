@@ -33,26 +33,30 @@ export interface LabelMetrics {
 	timePaddingHorizontal: number;
 	timeBaselineOffset: number;
 	timeAxisHeight: number;
+	/** Widths of texts in `font`. Use `textWidth()`. */
+	widths: Map<string, number>;
 }
 
+// the metrics of the last call, and the metrics of each font that a chart uses
 let cachedMetrics: LabelMetrics | null = null;
 let cachedFontSize = NaN;
 let cachedFontFamily = '';
-
-// text widths for the font of the last `labelMetrics()` result
-const textWidths = new Map<string, number>();
+const metricsByFont = new Map<string, LabelMetrics>();
 
 /**
- * Width of a text in the font of the context. Digits are replaced with "0" before a
- * measurement, so that all prices with the same number of digits have the same width
- * and need one measurement.
+ * Width of a text in the normal font of `metrics`. Sets the font of the context when it
+ * measures. Digits other than "1" are replaced with "0" before a measurement, so that
+ * most prices with the same number of digits need one measurement. "1" is narrower
+ * than the other digits in many fonts.
  */
-export function textWidth(ctx: CanvasRenderingContext2D, text: string): number {
+export function textWidth(ctx: CanvasRenderingContext2D, metrics: LabelMetrics, text: string): number {
+	const textWidths = metrics.widths;
 	let width = textWidths.get(text);
 	if (width === undefined) {
 		const key = text.replace(/[2-9]/g, '0');
 		width = textWidths.get(key);
 		if (width === undefined) {
+			ctx.font = metrics.font;
 			width = ctx.measureText(key).width;
 			if (width === 0) {
 				// Firefox can give 0 for a canvas with no size: do not keep it
@@ -74,15 +78,19 @@ export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 	}
 
 	const fontSize = layout.fontSize;
+	const font = makeFont(fontSize, layout.fontFamily);
 	cachedFontSize = fontSize;
 	cachedFontFamily = layout.fontFamily;
-	textWidths.clear();
+	cachedMetrics = metricsByFont.get(font) ?? null;
+	if (cachedMetrics !== null) {
+		return cachedMetrics;
+	}
 
 	const pricePadding = Math.floor(fontSize / 3.5);
 	const timePadding = Math.ceil(fontSize / 2.5);
 
 	cachedMetrics = {
-		font: makeFont(fontSize, layout.fontFamily),
+		font,
 		boldFont: makeFont(fontSize, layout.fontFamily, 'bold'),
 		fontSize,
 		pricePadding,
@@ -94,7 +102,12 @@ export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 		timePaddingHorizontal: Math.ceil(fontSize / 2),
 		timeBaselineOffset: Math.round(fontSize / 5),
 		timeAxisHeight: Math.ceil(LabelSize.Border + LabelSize.TimeTick + fontSize + timePadding * 2),
+		widths: new Map(),
 	};
+	if (metricsByFont.size > 8) {
+		metricsByFont.clear();
+	}
+	metricsByFont.set(font, cachedMetrics);
 	return cachedMetrics;
 }
 
@@ -179,7 +192,7 @@ export function drawPriceLabel(
 
 	const tickSize = tickVisible ? LabelSize.PriceTick : 0;
 	const horzBorder = LabelSize.Border;
-	const labelTextWidth = Math.ceil(textWidth(ctx, text));
+	const labelTextWidth = Math.ceil(textWidth(ctx, metrics, text));
 	const totalHeight = metrics.priceLabelHeight;
 	const halfHeight = Math.ceil(totalHeight * 0.5);
 	const totalWidth = horzBorder + labelTextWidth + metrics.pricePaddingInner + metrics.pricePaddingOuter + tickSize;
