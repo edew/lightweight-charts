@@ -143,3 +143,12 @@ describe('types', () => {
 		expect(merge(options, { size: 2 }).size).to.equal(2);
 	});
 });
+
+describe('merge and the prototype', () => {
+	it('does not write to the prototype of all objects', () => {
+		merge<object>({}, JSON.parse('{ "__proto__": { "polluted": 1 } }') as object);
+		const polluted = ({} as { polluted?: number }).polluted;
+		delete (Object.prototype as { polluted?: number }).polluted;
+		expect(polluted).to.equal(undefined);
+	});
+});

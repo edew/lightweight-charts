@@ -20,7 +20,8 @@ export function merge<T extends object>(dst: T, ...sources: DeepPartial<T>[]): T
 function mergeInto(dst: Record<string, any>, sources: Record<string, any>[]): void {
 	for (const src of sources) {
 		for (const i in src) {
-			if (src[i] === undefined) {
+			// a "__proto__" key from JSON.parse() would write to the prototype of all objects
+			if (src[i] === undefined || i === '__proto__') {
 				continue;
 			}
 
