@@ -65,8 +65,6 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 	#bitmapWidth: number = 0;
 	#bitmapHeight: number = 0;
 	#pixelRatio: number = 1;
-	/** True when the browser gives the exact bitmap size in device pixels. */
-	#exactBitmapSize: boolean = false;
 	#layout: Layout;
 
 	// frame loop
@@ -168,11 +166,10 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		this.#element.style.width = width + 'px';
 		this.#element.style.height = height + 'px';
 
-		if (!this.#exactBitmapSize) {
-			this.#pixelRatio = window.devicePixelRatio || 1;
-			this.#bitmapWidth = Math.round(width * this.#pixelRatio);
-			this.#bitmapHeight = Math.round(height * this.#pixelRatio);
-		}
+		// the best value until the ResizeObserver gives the exact size in device pixels
+		this.#pixelRatio = window.devicePixelRatio || 1;
+		this.#bitmapWidth = Math.round(width * this.#pixelRatio);
+		this.#bitmapHeight = Math.round(height * this.#pixelRatio);
 
 		// the model needs its size now, not in the next frame: the time scale uses the
 		// width when it gets data
@@ -553,7 +550,6 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		// the type says that this field always exists, but Safari does not have it
 		const exact = entry.devicePixelContentBoxSize as ReadonlyArray<ResizeObserverSize> | undefined;
 		if (exact !== undefined && exact.length !== 0) {
-			this.#exactBitmapSize = true;
 			bitmapWidth = exact[0].inlineSize;
 			bitmapHeight = exact[0].blockSize;
 		} else {
