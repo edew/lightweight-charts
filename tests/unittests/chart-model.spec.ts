@@ -86,7 +86,7 @@ describe('ChartModel', () => {
 			expect(model.panes().length).to.equal(1);
 			model.removeSeries(first);
 			expect(model.panes().length).to.equal(1);
-			expect(model.serieses().length).to.equal(0);
+			expect(model.panes()[0].series.length).to.equal(0);
 		});
 
 		it('gives an overlay series its own price scale with its margins', () => {

@@ -1,4 +1,3 @@
-import { assert } from '../helpers/assertions';
 import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { Coordinate } from './coordinate';
@@ -86,7 +85,6 @@ export class ChartModel {
 	readonly #dataStore: DataStore = new DataStore();
 	readonly #timeScale: TimeScale;
 	readonly #panes: Pane[] = [];
-	readonly #serieses: Series[] = [];
 	readonly #crosshair: Crosshair = createCrosshair();
 	#crosshairDirty: boolean = false;
 
@@ -155,10 +153,6 @@ export class ChartModel {
 		return this.#panes;
 	}
 
-	public serieses(): ReadonlyArray<Series> {
-		return this.#serieses;
-	}
-
 	public crosshair(): Readonly<Crosshair> {
 		return this.#crosshair;
 	}
@@ -192,7 +186,6 @@ export class ChartModel {
 			// apply the options again to set the margins of the overlay scale
 			series.applyOptions(options);
 		}
-		this.#serieses.push(series as unknown as Series);
 
 		// the first series changes the geometry of the chart
 		this.fullUpdate();
@@ -201,10 +194,6 @@ export class ChartModel {
 
 	/** Removes a series and its data. A pane that has no series after this is removed, but not the first pane. */
 	public removeSeries(series: Series): void {
-		const seriesIndex = this.#serieses.indexOf(series);
-		assert(seriesIndex !== -1, 'Series not found');
-		this.#serieses.splice(seriesIndex, 1);
-
 		const pane = series.pane();
 		pane.removeSeries(series);
 		const paneIndex = this.#panes.indexOf(pane);
