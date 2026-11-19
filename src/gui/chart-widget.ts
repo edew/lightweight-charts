@@ -324,8 +324,9 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		}
 
 		if (this.onClick !== null) {
-			this.#flush();
-			this.onClick(this.#model.crosshair().index, { x: hit.x, y: hit.y });
+			// the time point at the click, and not the one of the crosshair: a tap sets no crosshair
+			const timeScale = this.#model.timeScale();
+			this.onClick(timeScale.isEmpty() ? null : timeScale.coordinateToIndex(hit.x as Coordinate), { x: hit.x, y: hit.y });
 		}
 
 		if (this.#exitTrackingModeOnNextTry) {
