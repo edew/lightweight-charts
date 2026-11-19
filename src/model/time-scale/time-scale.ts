@@ -49,6 +49,14 @@ export interface TimeScaleOptions {
 	secondsVisible: boolean;
 }
 
+/**
+ * x of the center of the bar at a time index.
+ * @param rightIndex - the base index plus the right offset
+ */
+export function barX(width: number, rightIndex: number, barSpacing: number, index: number): number {
+	return width - (rightIndex - index + 0.5) * barSpacing;
+}
+
 export class TimeScale {
 	readonly #options: TimeScaleOptions;
 	readonly #model: ChartModel;
@@ -176,8 +184,7 @@ export class TimeScale {
 			return 0 as Coordinate;
 		}
 
-		const deltaFromRight = this.baseIndex() + this.#rightOffset - index;
-		return this.#width - (deltaFromRight + 0.5) * this.#barSpacing as Coordinate;
+		return barX(this.#width, this.baseIndex() + this.#rightOffset, this.#barSpacing, index) as Coordinate;
 	}
 
 	/** Time of a time point in UTC seconds, or null when there is no such time point. */

@@ -9,7 +9,7 @@ import { PriceScaleMode } from '../model/price-scale/price-scale';
 import type { Series } from '../model/series';
 import type { SeriesDrawData } from '../model/series-kind';
 import { PriceAxisLastValueMode } from '../model/series-options';
-import type { TimeScale } from '../model/time-scale/time-scale';
+import { barX, type TimeScale } from '../model/time-scale/time-scale';
 
 import { contrastTextColor, drawPriceLabel, labelMetrics } from './labels';
 import { setLineStyle } from './line-style';
@@ -161,7 +161,6 @@ function drawSeries(ctx: CanvasRenderingContext2D, series: Series, timeScale: Ti
 		drawData.ys = new Float64Array(Math.max(count * stride, drawData.ys.length * 2));
 	}
 
-	// the same expression as TimeScale.indexToCoordinate, for the same rounding
 	const xs = drawData.xs;
 	const width = timeScale.width();
 	const barSpacing = timeScale.barSpacing();
@@ -170,11 +169,11 @@ function drawSeries(ctx: CanvasRenderingContext2D, series: Series, timeScale: Ti
 	if (index === null) {
 		const first = store.first + from;
 		for (let i = 0; i < count; i++) {
-			xs[i] = width - (rightIndex - (first + i) + 0.5) * barSpacing;
+			xs[i] = barX(width, rightIndex, barSpacing, first + i);
 		}
 	} else {
 		for (let i = 0; i < count; i++) {
-			xs[i] = width - (rightIndex - index[from + i] + 0.5) * barSpacing;
+			xs[i] = barX(width, rightIndex, barSpacing, index[from + i]);
 		}
 	}
 
