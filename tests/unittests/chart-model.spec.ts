@@ -219,6 +219,14 @@ describe('ChartModel', () => {
 		expect(pane.stretch).to.equal(2);
 	});
 
+	it('a time range with the limits in the wrong order shows the same bars as the correct order', () => {
+		const series = addLine(model);
+		setLine(model, series, [10, 20, 30, 40, 50], [1, 2, 3, 4, 5]);
+		model.setTargetTimeRange({ from: 40, to: 20 });
+		model.applyRequests();
+		expect(model.timeScale().visibleBars()).to.deep.equal({ first: 1, last: 3 });
+	});
+
 	describe('crosshair', () => {
 		it('is calculated one time for each frame, from the last pointer position', () => {
 			const series = addLine(model);

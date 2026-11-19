@@ -389,8 +389,8 @@ export class TimeScale {
 		const count = store.length;
 		if (count !== 0) {
 			this.setVisibleRange(
-				store.indexOfTime(Math.max(store.times[0], range.from), true) as number,
-				store.indexOfTime(Math.min(store.times[count - 1], range.to), true) as number
+				store.indexOfTime(Math.max(store.times[0], Math.min(range.from, range.to)), true) as number,
+				store.indexOfTime(Math.min(store.times[count - 1], Math.max(range.from, range.to)), true) as number
 			);
 		}
 	}
