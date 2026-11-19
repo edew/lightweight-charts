@@ -29,6 +29,21 @@ function risingCandles(count: number): BarData[] {
 }
 
 describe('draw calls', () => {
+	it('the crosshair labels of the two axes have a background with no transparency', () => {
+		const line50 = { labelBackgroundColor: 'rgba(12, 34, 56, 0.5)' };
+		const chart = createHeadlessChart({
+			width: 400,
+			height: 240,
+			options: { priceScale: { position: 'right' }, timeScale: { visible: true }, crosshair: { vertLine: line50, horzLine: line50 } },
+		});
+		chart.addSeries('Line').setData(line(50));
+		chart.setCrosshair(200, 100);
+		const recording = draw(chart);
+
+		// one write for the label on the price axis and one for the label on the time axis
+		expect(recording.log.filter((entry: string) => entry === 'fillStyle=rgb(12, 34, 56)').length).to.equal(2);
+	});
+
 	it('the clip of the pane does not go into the price axis at a fractional pixel ratio', () => {
 		for (let width = 400; width < 408; width++) {
 			const chart = createHeadlessChart({ width, height: 240, options: { priceScale: { position: 'right' } } });

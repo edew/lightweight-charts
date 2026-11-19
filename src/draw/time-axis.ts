@@ -4,7 +4,7 @@
 import type { ChartModel } from '../model/chart-model';
 import { TickMarkWeight } from '../model/data-store';
 
-import { contrastTextColor, LabelSize, labelMetrics, textWidth } from './labels';
+import { contrastTextColor, LabelSize, labelMetrics, opaqueColor, textWidth } from './labels';
 import { hairline } from './line-style';
 
 /** Height of the time axis in CSS pixels, or 0 if it is not visible. */
@@ -120,7 +120,7 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	const x2scaled = Math.round(x2 * pixelRatio);
 	const y2scaled = Math.round(y2 * pixelRatio);
 
-	ctx.fillStyle = lineOptions.labelBackgroundColor;
+	ctx.fillStyle = opaqueColor(ctx, lineOptions.labelBackgroundColor);
 	ctx.fillRect(x1scaled, 0, x2scaled - x1scaled, y2scaled);
 
 	const textColor = contrastTextColor(ctx, lineOptions.labelBackgroundColor);

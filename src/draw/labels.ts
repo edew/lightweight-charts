@@ -159,7 +159,7 @@ export function contrastTextColor(ctx: CanvasRenderingContext2D, background: str
 }
 
 /** The color with no transparency. */
-function opaqueColor(ctx: CanvasRenderingContext2D, color: string): string {
+export function opaqueColor(ctx: CanvasRenderingContext2D, color: string): string {
 	return parsedColor(ctx, color).opaque;
 }
 
