@@ -337,21 +337,18 @@ export class ChartModel {
 		const pane = crosshair.pane;
 		const timeScale = this.#timeScale;
 
-		if (pane === null) {
+		const visibleBars = timeScale.visibleBars();
+		if (pane === null || visibleBars === null) {
+			// no pointer: the last time point. No visible bars: no position on the time scale.
 			const count = this.#dataStore.length;
-			crosshair.index = count !== 0 ? count - 1 as TimePointIndex : null;
+			crosshair.index = pane === null && count !== 0 ? count - 1 as TimePointIndex : null;
 			crosshair.price = NaN;
 			crosshair.x = NaN;
 			crosshair.y = NaN;
 			return true;
 		}
 
-		let index = timeScale.coordinateToIndex(crosshair.originX as Coordinate);
-		const visibleBars = timeScale.visibleBars();
-		if (visibleBars !== null) {
-			index = Math.min(Math.max(visibleBars.first, index), visibleBars.last) as TimePointIndex;
-		}
-
+		const index = Math.min(Math.max(visibleBars.first, timeScale.coordinateToIndex(crosshair.originX as Coordinate)), visibleBars.last) as TimePointIndex;
 		crosshair.index = index;
 		crosshair.x = timeScale.indexToCoordinate(index);
 

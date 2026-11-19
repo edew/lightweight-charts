@@ -280,6 +280,13 @@ describe('ChartModel', () => {
 			expect(model.crosshair().index).to.equal(null);
 		});
 
+		it('has no position on the time scale when the chart has no data', () => {
+			model.setCrosshairPosition(50, 50, model.panes()[0]);
+			model.resolveCrosshair();
+			expect(model.crosshair().index).to.equal(null);
+			expect(Number.isNaN(model.crosshair().x)).to.equal(true);
+		});
+
 		it('clears to the last time point with no pane', () => {
 			const series = addLine(model);
 			setLine(model, series, [10, 20, 30], [1, 2, 3]);
