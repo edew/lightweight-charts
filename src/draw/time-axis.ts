@@ -4,6 +4,7 @@
 import type { ChartModel } from '../model/chart-model';
 
 import { contrastTextColor, LabelSize, labelMetrics, textWidth } from './labels';
+import { hairline } from './line-style';
 
 /** Height of the time axis in CSS pixels, or 0 if it is not visible. */
 export function timeAxisHeight(model: ChartModel): number {
@@ -19,7 +20,7 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 
 	if (borderVisible) {
 		ctx.fillStyle = borderColor;
-		ctx.fillRect(0, 0, Math.ceil(width * pixelRatio), Math.max(1, Math.floor(LabelSize.Border * pixelRatio)));
+		ctx.fillRect(0, 0, Math.ceil(width * pixelRatio), hairline(pixelRatio, LabelSize.Border));
 	}
 
 	const marks = model.timeScale().marks();
@@ -40,8 +41,8 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 	}
 
 	if (borderVisible) {
-		const borderSize = Math.floor(LabelSize.Border * pixelRatio);
-		const tickWidth = Math.max(1, Math.floor(pixelRatio));
+		const borderSize = hairline(pixelRatio, LabelSize.Border);
+		const tickWidth = hairline(pixelRatio);
 		const tickOffset = Math.floor(pixelRatio * 0.5);
 		const tickLength = Math.round(LabelSize.TimeTick * pixelRatio);
 		ctx.fillStyle = borderColor;
@@ -122,7 +123,7 @@ export function drawTimeAxisCrosshair(ctx: CanvasRenderingContext2D, model: Char
 	ctx.fillRect(x1scaled, 0, x2scaled - x1scaled, y2scaled);
 
 	const textColor = contrastTextColor(ctx, lineOptions.labelBackgroundColor);
-	const tickWidth = Math.max(1, Math.floor(pixelRatio));
+	const tickWidth = hairline(pixelRatio);
 	const tickOffset = Math.floor(pixelRatio * 0.5);
 	ctx.fillStyle = textColor;
 	ctx.fillRect(

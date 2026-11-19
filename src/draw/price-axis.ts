@@ -7,6 +7,7 @@ import type { Series } from '../model/series';
 import { PriceAxisLastValueMode } from '../model/series-options';
 
 import { contrastTextColor, drawPriceLabel, type LabelMetrics, LabelSize, labelMetrics, textWidth } from './labels';
+import { hairline } from './line-style';
 
 interface AxisLabel {
 	text: string;
@@ -150,7 +151,7 @@ export function drawPriceAxis(ctx: CanvasRenderingContext2D, model: ChartModel, 
 
 	if (borderVisible) {
 		ctx.fillStyle = borderColor;
-		const borderSize = Math.max(1, Math.floor(LabelSize.Border * pixelRatio));
+		const borderSize = hairline(pixelRatio, LabelSize.Border);
 		ctx.fillRect(isLeft ? bitmapWidth - borderSize : 0, 0, borderSize, Math.ceil(pane.height() * pixelRatio));
 	}
 
@@ -161,7 +162,7 @@ export function drawPriceAxis(ctx: CanvasRenderingContext2D, model: ChartModel, 
 			: Math.floor(LabelSize.Border * pixelRatio);
 
 		if (borderVisible) {
-			const tickHeight = Math.max(1, Math.floor(pixelRatio));
+			const tickHeight = hairline(pixelRatio);
 			const tickOffset = Math.floor(pixelRatio * 0.5);
 			const tickLength = Math.round(LabelSize.PriceTick * pixelRatio);
 			ctx.fillStyle = borderColor;

@@ -12,7 +12,7 @@ import { PriceAxisLastValueMode } from '../model/series-options';
 import { barX, type TimeScale } from '../model/time-scale/time-scale';
 
 import { contrastTextColor, drawPriceLabel, labelMetrics } from './labels';
-import { setLineStyle } from './line-style';
+import { hairline, setLineStyle } from './line-style';
 
 // Scratch buffers for the visible bars. All series share them; they only grow.
 const drawData: SeriesDrawData = {
@@ -36,7 +36,7 @@ function drawGrid(ctx: CanvasRenderingContext2D, model: ChartModel, pane: Pane, 
 		return;
 	}
 
-	const lineWidth = Math.max(1, Math.floor(pixelRatio));
+	const lineWidth = hairline(pixelRatio);
 	const height = Math.ceil(pane.height() * pixelRatio);
 	const width = Math.ceil(model.timeScale().width() * pixelRatio);
 
@@ -212,7 +212,7 @@ function drawBaseLine(ctx: CanvasRenderingContext2D, series: Series, width: numb
 	ctx.save();
 	ctx.lineCap = 'butt';
 	ctx.strokeStyle = options.baseLineColor;
-	ctx.lineWidth = Math.max(1, Math.floor(options.baseLineWidth * pixelRatio));
+	ctx.lineWidth = hairline(pixelRatio, options.baseLineWidth);
 	setLineStyle(ctx, options.baseLineStyle);
 	const offset = strokeOffset(ctx);
 	ctx.beginPath();
@@ -290,7 +290,7 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 	ctx.lineCap = 'butt';
 
 	if (options.vertLine.visible && x >= 0) {
-		ctx.lineWidth = Math.max(1, Math.floor(options.vertLine.width * pixelRatio));
+		ctx.lineWidth = hairline(pixelRatio, options.vertLine.width);
 		ctx.strokeStyle = options.vertLine.color;
 		setLineStyle(ctx, options.vertLine.style);
 		const offset = strokeOffset(ctx);
@@ -301,7 +301,7 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 	}
 
 	if (options.horzLine.visible && crosshair.pane === pane && y >= 0) {
-		ctx.lineWidth = Math.max(1, Math.floor(options.horzLine.width * pixelRatio));
+		ctx.lineWidth = hairline(pixelRatio, options.horzLine.width);
 		ctx.strokeStyle = options.horzLine.color;
 		setLineStyle(ctx, options.horzLine.style);
 		const offset = strokeOffset(ctx);

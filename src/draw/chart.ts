@@ -5,6 +5,7 @@
 import { type ChartModel, InvalidationLevel } from '../model/chart-model';
 
 import { computeLayout, type Layout, type Rect } from './layout';
+import { hairline } from './line-style';
 import { drawPane, drawPaneCrosshair } from './pane';
 import { drawPriceAxis, drawPriceAxisCrosshair, priceAxisOptimalWidth } from './price-axis';
 import { drawTimeAxis, drawTimeAxisCrosshair, timeAxisHeight } from './time-axis';
@@ -138,7 +139,7 @@ function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: La
 		// the corner continues the border of the time axis and of the price axis of the last pane
 		if (layout.corner !== null && panes[panes.length - 1].priceScale.options().borderVisible && options.timeScale.borderVisible) {
 			const corner = layout.corner;
-			const borderSize = Math.max(1, Math.floor(pixelRatio));
+			const borderSize = hairline(pixelRatio);
 			const left = layout.priceAxisPosition === 'left'
 				? Math.round((corner.left + corner.width) * pixelRatio) - borderSize
 				: Math.round(corner.left * pixelRatio);

@@ -1,3 +1,5 @@
+import { hairline } from '../draw/line-style';
+
 import type { SeriesDrawData, SeriesKind, SeriesSpec } from '../model/series-kind';
 import type { CandlestickSeriesOptions, CandlestickSeriesPartialOptions, CandlestickStyleOptions } from '../model/series-options';
 
@@ -25,7 +27,7 @@ function candlestickWidth(barSpacing: number, pixelRatio: number): number {
 
 	// the candle width must be odd or even as the wick width is, so that the wick is in the center
 	if (barWidth >= 2) {
-		const wickWidth = Math.max(1, Math.floor(pixelRatio));
+		const wickWidth = hairline(pixelRatio);
 		if ((wickWidth % 2) !== (barWidth % 2)) {
 			barWidth--;
 		}

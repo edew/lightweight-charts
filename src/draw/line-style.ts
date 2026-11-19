@@ -13,6 +13,14 @@ export enum LineStyle {
 	SparseDotted = 4,
 }
 
+/**
+ * Width of a line in device pixels: a full number of pixels, and at least one.
+ * @param width - width in CSS pixels
+ */
+export function hairline(pixelRatio: number, width: number = 1): number {
+	return Math.max(1, Math.floor(width * pixelRatio));
+}
+
 export function setLineStyle(ctx: CanvasRenderingContext2D, style: LineStyle): void {
 	const dashPatterns = {
 		[LineStyle.Solid]: [],

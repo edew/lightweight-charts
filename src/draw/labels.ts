@@ -4,6 +4,8 @@ import { makeFont } from '../helpers/make-font';
 
 import type { LayoutOptions } from '../model/layout-options';
 
+import { hairline } from './line-style';
+
 /** Sizes that do not depend on the font, CSS pixels. */
 export const enum LabelSize {
 	/** Width of the border line of an axis. */
@@ -202,8 +204,8 @@ export function drawPriceLabel(
 		xText = xInside + horzBorder + tickSize + metrics.pricePaddingInner;
 	}
 
-	const tickHeight = Math.max(1, Math.floor(pixelRatio));
-	const horzBorderScaled = Math.max(1, Math.floor(horzBorder * pixelRatio));
+	const tickHeight = hairline(pixelRatio);
+	const horzBorderScaled = hairline(pixelRatio, horzBorder);
 	const xInsideScaled = alignRight ? rightScaled : 0;
 	const yTopScaled = Math.round(yTop * pixelRatio);
 	const xOutsideScaled = Math.round(xOutside * pixelRatio);

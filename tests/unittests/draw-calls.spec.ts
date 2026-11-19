@@ -29,6 +29,20 @@ function risingCandles(count: number): BarData[] {
 }
 
 describe('draw calls', () => {
+	it('the tick marks of the time axis start below its border at a pixel ratio below 1', () => {
+		const chart = createHeadlessChart({ width: 400, height: 240, options: { timeScale: { visible: true, barSpacing: 8 } } });
+		chart.addSeries('Line', { lastValueVisible: false }).setData(line(200));
+		const recording = createRecordingContext();
+		chart.draw(recording.ctx, 0.75);
+
+		// a tick mark is 1 pixel wide and 2 pixels high (3 CSS pixels at ratio 0.75); the border is 1 pixel high
+		const ticks = recording.log.filter((entry: string) => /^fillRect\(-?\d+,\d+,1,2\)$/.test(entry));
+		expect(ticks.length).to.be.greaterThan(2);
+		for (const tick of ticks) {
+			expect(tick.split(',')[1], tick).to.equal('1');
+		}
+	});
+
 	it('an option of the price scale of the only pane draws as the same option of the chart', () => {
 		const axes = { priceScale: { position: 'right' as const }, timeScale: { visible: true } };
 		for (const scaleOptions of [{ borderVisible: false }, { borderColor: '#ff0000' }]) {
