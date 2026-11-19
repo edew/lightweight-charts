@@ -41,6 +41,7 @@ export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers
 	let downX = 0;
 	let downY = 0;
 	let moved = false;
+	/** Distance between the two fingers at the start of a pinch. 0 if the press had no pinch. */
 	let pinchStartDistance = 0;
 	let longTapTimer: ReturnType<typeof setTimeout> | null = null;
 	let lastClickTime = 0;
@@ -91,6 +92,7 @@ export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers
 			downX = x;
 			downY = y;
 			moved = false;
+			pinchStartDistance = 0;
 			if (isTouch) {
 				const tapX = x;
 				const tapY = y;
@@ -103,7 +105,8 @@ export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers
 		} else if (pointers.length === 2) {
 			clearLongTap();
 			moved = true;
-			pinchStartDistance = pinchDistance();
+			// not 0: the value also says that this press had a pinch
+			pinchStartDistance = pinchDistance() || 1;
 			handlers.pinchStart();
 		}
 	}
@@ -122,13 +125,12 @@ export function bindPointerEvents(target: HTMLElement, handlers: PointerHandlers
 		pointers[position].y = y;
 
 		if (pointers.length === 2) {
-			if (pinchStartDistance > 0) {
-				handlers.pinch((pointers[0].x + pointers[1].x) / 2, pinchDistance() / pinchStartDistance);
-			}
+			handlers.pinch((pointers[0].x + pointers[1].x) / 2, pinchDistance() / pinchStartDistance);
 			return;
 		}
 
-		if (pointers.length === 1) {
+		// after a pinch, the finger that stays down is far from the start of the press: it does not drag
+		if (pointers.length === 1 && pinchStartDistance === 0) {
 			if (!moved && Math.hypot(x - downX, y - downY) >= CLICK_DISTANCE) {
 				moved = true;
 				clearLongTap();

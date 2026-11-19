@@ -124,4 +124,5 @@ All tests run in Node. No browser, Playwright, Puppeteer or DOM emulator.
 - **Pixel tests:** `tests/visual/`. `tests/helpers/headless-chart.ts` makes a chart with no DOM (the real model and the real draw functions), `@napi-rs/canvas` draws it, and `pixelmatch` compares it with a PNG in `tests/visual/golden/`. Cases with no text must match exactly, at pixel ratios 0.75, 1, 1.5 and 2. Cases with text permit a small difference. On failure, see `tests/visual/out/<name>.diff.png`.
 - **Golden images change only in a commit that says why.** Record with `UPDATE_GOLDEN=1 npm run test:visual`. Do not record to make a test pass.
 - **Draw-call tests:** `tests/helpers/recording-context.ts` records each canvas call as text. `tests/unittests/draw-calls.spec.ts` uses it for the performance rules and for one snapshot.
-- **Not covered by tests:** `src/gui/` (the `ResizeObserver`, the frame loop, Pointer Events). Check it with `npm start` in a browser, and touch input on a device.
+- **Pointer gestures:** `tests/unittests/pointer-events.spec.ts` sends events to `bindPointerEvents()` through the `EventTarget` of Node.
+- **Not covered by tests:** `ChartWidget` in `src/gui/` (the `ResizeObserver`, the frame loop, the reaction to the gestures). Check it with `npm start` in a browser, and touch input on a device.
