@@ -22,7 +22,7 @@ export interface CandlestickStyleOptions {
 	borderColor: string;
 	/** Color of the border of rising candlesticks. Ignored if borderVisible == false or borderColor is specified */
 	borderUpColor: string;
-	/** Color of the border of rising candlesticks. Ignored if borderVisible == false or borderColor is specified */
+	/** Color of the border of falling candlesticks. Ignored if borderVisible == false or borderColor is specified */
 	borderDownColor: string;
 
 	/**
