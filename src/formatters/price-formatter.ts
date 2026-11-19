@@ -7,7 +7,11 @@ export type PriceFormatter = (price: number) => string;
  */
 export function priceFormat(precision: number, minMove: number, suffix: string = ''): PriceFormatter {
 	const base = 1 / minMove;
-	return (price: number) => (price < 0 ? '\u2212' : '') + (Math.round(Math.abs(price) * base) / base).toFixed(precision) + suffix;
+	return (price: number) => {
+		const text = (Math.round(Math.abs(price) * base) / base).toFixed(precision);
+		// no sign for a negative price that is shown as zero
+		return (price < 0 && +text !== 0 ? '\u2212' : '') + text + suffix;
+	};
 }
 
 function volumeNumber(value: number, precision: number): string {

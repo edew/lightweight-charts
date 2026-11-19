@@ -13,6 +13,11 @@ describe('priceFormat', () => {
 		expect(priceFormat(3, 0.001)(123.456)).to.equal('123.456');
 	});
 
+	it('writes no minus sign for a negative price that is shown as zero', () => {
+		expect(priceFormat(2, 0.01)(-0.001)).to.equal('0.00');
+		expect(priceFormat(2, 0.01)(-0.006)).to.equal('\u22120.01');
+	});
+
 	it('uses the Unicode minus sign', () => {
 		expect(priceFormat(2, 0.01)(-10.5)).to.equal('−10.50');
 	});
