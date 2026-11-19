@@ -53,7 +53,7 @@ export interface ISeriesApi<TSeriesType extends SeriesType> {
 
 	/**
 	 * Sets or replaces series data
-	 * @param data - ordered (earlier time point goes first) array of data items. Old data is fully replaced with the new one.
+	 * @param data - array of data items. The library sorts the items by time. If two items have the same time, the last one is used. Old data is fully replaced with the new one.
 	 */
 	setData(data: SeriesDataItemTypeMap[TSeriesType][]): void;
 
