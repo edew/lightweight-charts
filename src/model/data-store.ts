@@ -61,17 +61,7 @@ export class SeriesStore {
 			return Math.min(Math.max(Math.ceil(timeIndex) - this.first, 0), this.length);
 		}
 
-		let lo = 0;
-		let hi = this.length;
-		while (lo < hi) {
-			const mid = (lo + hi) >> 1;
-			if (index[mid] < timeIndex) {
-				lo = mid + 1;
-			} else {
-				hi = mid;
-			}
-		}
-		return lo;
+		return lowerBound(index, this.length, timeIndex);
 	}
 
 	/** Row at `timeIndex`, or the nearest row on the given side. Returns -1 when there is none. */
@@ -98,7 +88,8 @@ export class SeriesStore {
 	}
 }
 
-function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T, used: number, needed: number): T {
+/** Returns `array`, or a larger copy of its first `used` items when it has less than `needed` items. */
+export function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T, used: number, needed: number): T {
 	if (needed <= array.length) {
 		return array;
 	}
@@ -109,12 +100,13 @@ function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T, used: 
 	return result;
 }
 
-function lowerBoundTime(times: Float64Array, length: number, time: number): number {
+/** Position of the first of the `length` sorted items that is not less than `value`. Can be `length`. */
+export function lowerBound(array: ArrayLike<number>, length: number, value: number): number {
 	let lo = 0;
 	let hi = length;
 	while (lo < hi) {
 		const mid = (lo + hi) >> 1;
-		if (times[mid] < time) {
+		if (array[mid] < value) {
 			lo = mid + 1;
 		} else {
 			hi = mid;
@@ -289,7 +281,7 @@ export class DataStore {
 
 		const timeCount = this.length;
 		if (timeCount !== 0 && time <= this.times[timeCount - 1]) {
-			const timeIndex = lowerBoundTime(this.times, timeCount, time);
+			const timeIndex = lowerBound(this.times, timeCount, time);
 			if (this.times[timeIndex] !== time) {
 				// a new time point before the end: all time indexes after it move
 				const seriesTimes = new Float64Array(rows + 1);
@@ -325,7 +317,7 @@ export class DataStore {
 			return null;
 		}
 
-		const index = lowerBoundTime(this.times, this.length, time);
+		const index = lowerBound(this.times, this.length, time);
 		if (index === this.length) {
 			return nearest ? this.length - 1 : null;
 		}
@@ -415,7 +407,7 @@ export class DataStore {
 		}
 
 		const times = this.times;
-		const first = lowerBoundTime(times, this.length, seriesTimes[0]);
+		const first = lowerBound(times, this.length, seriesTimes[0]);
 		series.first = first;
 
 		let consecutive = first + rows <= this.length;

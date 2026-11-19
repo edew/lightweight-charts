@@ -5,6 +5,8 @@
 // only when it is far enough from all accepted marks. In each weight, the marks are
 // tried from left to right.
 
+import { grow, lowerBound } from '../data-store';
+
 export interface TickMarksResult {
 	/** Accepted time indexes, in ascending order. Only the first `count` items are valid. */
 	indexes: Int32Array;
@@ -54,18 +56,7 @@ export class TickMarks {
 
 		// keep the accepted marks before `start`
 		const prefix = result.indexes;
-		let prefixCount = 0;
-		if (start > 0) {
-			let end = result.count;
-			while (prefixCount < end) {
-				const mid = (prefixCount + end) >> 1;
-				if (prefix[mid] < start) {
-					prefixCount = mid + 1;
-				} else {
-					end = mid;
-				}
-			}
-		}
+		const prefixCount = start > 0 ? lowerBound(prefix, result.count, start) : 0;
 
 		// which weights are present in the part to build
 		const present = new Uint8Array(256);
@@ -147,11 +138,7 @@ export class TickMarks {
 }
 
 function push(array: Int32Array, position: number, value: number): Int32Array {
-	if (position >= array.length) {
-		const larger = new Int32Array(array.length * 2);
-		larger.set(array);
-		array = larger;
-	}
+	array = grow(array, position, position + 1);
 	array[position] = value;
 	return array;
 }

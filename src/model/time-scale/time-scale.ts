@@ -7,7 +7,7 @@ import { type DeepPartial, merge } from '../../helpers/strict-type-checks';
 import type { BarsRange } from '../bars-range';
 import type { ChartModel } from '../chart-model';
 import type { Coordinate } from '../coordinate';
-import { type DataStore, TickMarkWeight } from '../data-store';
+import { type DataStore, lowerBound, TickMarkWeight } from '../data-store';
 import type { LocalizationOptions } from '../localization-options';
 import { TickMarks } from './tick-marks';
 import { secondsToBusinessDay, type TimePointIndex, type TimeSecondsRange, type UTCTimestamp } from './time-data';
@@ -226,16 +226,7 @@ export class TimeScale {
 		const indexes = marks.indexes;
 
 		// first accepted mark that is not left of the visible range
-		let position = 0;
-		let end = marks.count;
-		while (position < end) {
-			const mid = (position + end) >> 1;
-			if (indexes[mid] < visibleBars.first) {
-				position = mid + 1;
-			} else {
-				end = mid;
-			}
-		}
+		let position = lowerBound(indexes, marks.count, visibleBars.first);
 
 		let count = 0;
 		for (; position < marks.count && indexes[position] <= visibleBars.last; position++) {
