@@ -171,7 +171,7 @@ function drawSeries(ctx: CanvasRenderingContext2D, series: Series, timeScale: Ti
 		}
 	}
 
-	priceScale.pricesToCoordinates(store.values, from * stride, to * stride, drawData.ys, firstValue.value);
+	priceScale.pricesToCoordinates(store.values, from * stride, to * stride, drawData.ys, firstValue);
 
 	drawData.count = count;
 	drawData.values = store.values;
@@ -198,7 +198,7 @@ function drawBaseLine(ctx: CanvasRenderingContext2D, series: Series, width: numb
 		return;
 	}
 
-	const y = Math.round(priceScale.priceToCoordinate(firstValue.value, firstValue.value) * pixelRatio);
+	const y = Math.round(priceScale.priceToCoordinate(firstValue, firstValue) * pixelRatio);
 	if (y < 0 || y > Math.ceil(height * pixelRatio)) {
 		return;
 	}
@@ -224,14 +224,19 @@ function drawSeriesTitleLabel(ctx: CanvasRenderingContext2D, model: ChartModel, 
 		return;
 	}
 
-	const lastValue = series.lastValue();
-	if (lastValue === null) {
+	const row = series.lastRow();
+	const firstValue = row < 0 ? null : series.firstValue();
+	if (firstValue === null) {
 		return;
 	}
 
+	const price = series.store().closeAt(row);
+	const priceScale = series.priceScale();
+	const color = series.barColor(row);
 	let text = title;
 	if (options.lastValueVisible && showPriceAndPercentage) {
-		text += ' ' + (series.priceScale().isPercentage() ? lastValue.formattedPriceAbsolute : lastValue.formattedPricePercentage);
+		// the price axis shows the value in the mode of the scale: this label shows the other one
+		text += ' ' + (priceScale.isPercentage() ? priceScale.formatPriceAbsolute(price) : priceScale.formatPricePercentage(price, firstValue));
 	}
 
 	const layout = model.options().layout;
@@ -240,9 +245,9 @@ function drawSeriesTitleLabel(ctx: CanvasRenderingContext2D, model: ChartModel, 
 		labelMetrics(layout),
 		pixelRatio,
 		text.trim(),
-		lastValue.coordinate,
-		lastValue.color,
-		contrastTextColor(ctx, lastValue.color),
+		priceScale.priceToCoordinate(price, firstValue),
+		color,
+		contrastTextColor(ctx, color),
 		layout.backgroundColor,
 		false,
 		model.timeScale().width(),
@@ -317,7 +322,7 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 			continue;
 		}
 
-		const markerY = series[i].priceScale().priceToCoordinate(store.closeAt(row), firstValue.value);
+		const markerY = series[i].priceScale().priceToCoordinate(store.closeAt(row), firstValue);
 		ctx.save();
 		ctx.scale(pixelRatio, pixelRatio);
 		ctx.fillStyle = backColor;

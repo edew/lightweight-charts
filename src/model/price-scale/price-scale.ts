@@ -7,7 +7,7 @@ import type { BarsRange } from '../bars-range';
 import type { Coordinate } from '../coordinate';
 import type { LayoutOptions } from '../layout-options';
 import type { LocalizationOptions } from '../localization-options';
-import type { FirstValue, Series } from '../series';
+import type { Series } from '../series';
 
 /**
  * Enum of possible price scale modes
@@ -365,16 +365,19 @@ export class PriceScale {
 
 	/** The base value for the percentage modes: the first visible value of the series that starts first. */
 	public firstValue(): number | null {
-		let result: FirstValue | null = null;
+		let result: number | null = null;
+		let first = Infinity;
 
 		for (const source of this.#sources) {
-			const firstValue = source.firstValue();
-			if (firstValue !== null && (result === null || firstValue.timeIndex < result.timeIndex)) {
-				result = firstValue;
+			const row = source.firstRow();
+			const store = source.store();
+			if (row >= 0 && store.timeIndexAt(row) < first) {
+				first = store.timeIndexAt(row);
+				result = store.closeAt(row);
 			}
 		}
 
-		return result === null ? null : result.value;
+		return result;
 	}
 
 	/** The tick marks of the axis. The array and its items are used again for each build. */
@@ -554,8 +557,8 @@ export class PriceScale {
 			const firstValue = source.firstValue();
 			const range = firstValue === null ? null : source.autoscaleRange(visibleBars.first, visibleBars.last);
 			if (firstValue !== null && range !== null) {
-				min = Math.min(min, this.#toScale(range.min, firstValue.value));
-				max = Math.max(max, this.#toScale(range.max, firstValue.value));
+				min = Math.min(min, this.#toScale(range.min, firstValue));
+				max = Math.max(max, this.#toScale(range.max, firstValue));
 			}
 		}
 

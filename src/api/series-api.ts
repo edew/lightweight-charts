@@ -102,7 +102,7 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 			return null;
 		}
 
-		return this.series().priceScale().priceToCoordinate(price, firstValue.value);
+		return this.series().priceScale().priceToCoordinate(price, firstValue);
 	}
 
 	public coordinateToPrice(coordinate: Coordinate): BarPrice | null {
@@ -110,7 +110,7 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 		if (firstValue === null) {
 			return null;
 		}
-		return this.series().priceScale().coordinateToPrice(coordinate, firstValue.value);
+		return this.series().priceScale().coordinateToPrice(coordinate, firstValue);
 	}
 
 	public setData(data: SeriesDataItemTypeMap[TSeriesType][]): void {

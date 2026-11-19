@@ -30,7 +30,7 @@ describe('frame', () => {
 		expect(priceScale.isEmpty()).to.be.equal(false);
 	});
 
-	it('does not build the price tick marks again in a frame after a tick that keeps the price range', () => {
+	it('formats no price text in a frame after a tick that keeps the price range, with no last-value label', () => {
 		let calls = 0;
 		const chart = createHeadlessChart({
 			width: 400,
@@ -54,7 +54,7 @@ describe('frame', () => {
 
 		const marks = chart.model.panes()[0].priceScale.marks().length;
 		expect(marks).to.be.greaterThan(2);
-		// the frame does not format the text of the tick marks again
-		expect(calls).to.be.lessThan(marks);
+		// the frame formats no text again: not for the tick marks, and not for a label that is not visible
+		expect(calls).to.equal(0);
 	});
 });

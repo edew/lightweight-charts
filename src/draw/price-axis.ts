@@ -3,7 +3,6 @@
 
 import type { ChartModel } from '../model/chart-model';
 import type { Pane } from '../model/pane';
-import type { Series } from '../model/series';
 import { PriceAxisLastValueMode } from '../model/series-options';
 
 import { contrastTextColor, drawPriceLabel, type LabelMetrics, LabelSize, labelMetrics, textWidth } from './labels';
@@ -22,28 +21,25 @@ interface AxisLabel {
 const labels: AxisLabel[] = [];
 let labelCount = 0;
 
-function axisText(series: Series, text: string, absolute: string, percentage: string): string {
-	const options = series.options();
-	if (!options.lastValueVisible) {
-		return '';
-	}
-	if (options.seriesLastValueMode !== PriceAxisLastValueMode.LastPriceAndPercentageValue) {
-		return text;
-	}
-	return series.priceScale().isPercentage() ? percentage : absolute;
-}
-
 /** Collects the last-value labels of the series of a pane into `labels`. */
 function collectLabels(pane: Pane): void {
 	labelCount = 0;
 	const series = pane.series;
 	for (let i = 0; i < series.length; i++) {
-		const lastValue = series[i].lastValue();
-		if (lastValue === null) {
+		const options = series[i].options();
+		const row = options.lastValueVisible ? series[i].lastRow() : -1;
+		const firstValue = row < 0 ? null : series[i].firstValue();
+		if (firstValue === null) {
 			continue;
 		}
 
-		const text = axisText(series[i], lastValue.text, lastValue.formattedPriceAbsolute, lastValue.formattedPricePercentage);
+		const price = series[i].store().closeAt(row);
+		const priceScale = series[i].priceScale();
+		const text = options.seriesLastValueMode !== PriceAxisLastValueMode.LastPriceAndPercentageValue
+			? priceScale.formatPrice(price, firstValue)
+			: priceScale.isPercentage()
+				? priceScale.formatPricePercentage(price, firstValue)
+				: priceScale.formatPriceAbsolute(price);
 		if (text.length === 0) {
 			continue;
 		}
@@ -53,9 +49,9 @@ function collectLabels(pane: Pane): void {
 		}
 		const label = labels[labelCount++];
 		label.text = text;
-		label.coordinate = lastValue.coordinate;
-		label.fixedCoordinate = lastValue.coordinate;
-		label.color = lastValue.color;
+		label.coordinate = priceScale.priceToCoordinate(price, firstValue);
+		label.fixedCoordinate = label.coordinate;
+		label.color = series[i].barColor(row);
 	}
 }
 

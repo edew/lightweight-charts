@@ -17,7 +17,9 @@ function createScale(min: number, max: number, options: Partial<PriceScaleOption
 	const scaleOptions = { ...defaults.priceScale, scaleMargins: { top: 0, bottom: 0 }, ...options };
 	const scale = new PriceScale(scaleOptions, defaults.layout, defaults.localization);
 	const source = {
-		firstValue: () => ({ value: min, timeIndex: 0 }),
+		firstValue: () => min,
+		firstRow: () => 0,
+		store: () => ({ timeIndexAt: () => 0, closeAt: () => min }),
 		autoscaleRange: () => ({ min, max }),
 		minMove: () => minMove,
 		formatter: () => priceFormat(2, minMove),

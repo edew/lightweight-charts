@@ -11,23 +11,6 @@ import type { SeriesKind } from './series-kind';
 import type { LineStyleOptions, PriceFormat, SeriesOptionsMap, SeriesPartialOptionsMap, SeriesType } from './series-options';
 import type { TimePointIndex } from './time-scale/time-data';
 
-export interface FirstValue {
-	value: number;
-	timeIndex: number;
-}
-
-/** The last visible bar of a series, for the label on the price axis. */
-export interface LastValue {
-	price: number;
-	/** y of the price, CSS pixels. */
-	coordinate: number;
-	color: string;
-	/** The price in the format of the price scale mode. */
-	text: string;
-	formattedPriceAbsolute: string;
-	formattedPricePercentage: string;
-}
-
 export interface SeriesDataAtTypeMap {
 	Candlestick: BarPrices;
 	Line: BarPrice;
@@ -124,54 +107,25 @@ export class Series<T extends SeriesType = SeriesType> {
 		return this.kind.barColor(this.#store.values, row, this.#options);
 	}
 
-	/** The price and time index of the first visible bar. Percentage scales use it as the base. */
-	public firstValue(): FirstValue | null {
+	/** The row of the first visible bar, or the first bar after it. -1 if there is none. */
+	public firstRow(): number {
 		const visibleBars = this.#model.timeScale().visibleBars();
-		if (visibleBars === null) {
-			return null;
-		}
-
-		const row = this.#store.rowAt(visibleBars.first, SearchMode.NearestRight);
-		if (row < 0) {
-			return null;
-		}
-
-		return {
-			value: this.#store.closeAt(row),
-			timeIndex: this.#store.timeIndexAt(row),
-		};
+		return visibleBars === null ? -1 : this.#store.rowAt(visibleBars.first, SearchMode.NearestRight);
 	}
 
-	/** The last visible bar, or null if no bar is visible. */
-	public lastValue(): LastValue | null {
-		const priceScale = this.priceScale();
-		const store = this.#store;
+	/** The close price of `firstRow()`, or null. Percentage scales use it as the base. */
+	public firstValue(): number | null {
+		const row = this.firstRow();
+		return row < 0 ? null : this.#store.closeAt(row);
+	}
+
+	/** The row of the last visible bar, or the last bar before it. -1 if there is none or if the scales are empty. */
+	public lastRow(): number {
 		const timeScale = this.#model.timeScale();
-
-		if (timeScale.isEmpty() || priceScale.isEmpty() || store.length === 0) {
-			return null;
-		}
-
 		const visibleBars = timeScale.visibleBars();
-		const firstValue = this.firstValue();
-		if (visibleBars === null || firstValue === null) {
-			return null;
-		}
-
-		const row = store.rowAt(visibleBars.last, SearchMode.NearestLeft);
-		if (row < 0) {
-			return null;
-		}
-
-		const price = store.closeAt(row);
-		return {
-			price,
-			coordinate: priceScale.priceToCoordinate(price, firstValue.value),
-			color: this.barColor(row),
-			text: priceScale.formatPrice(price, firstValue.value),
-			formattedPriceAbsolute: priceScale.formatPriceAbsolute(price),
-			formattedPricePercentage: priceScale.formatPricePercentage(price, firstValue.value),
-		};
+		return visibleBars === null || timeScale.isEmpty() || this.#priceScale.isEmpty()
+			? -1
+			: this.#store.rowAt(visibleBars.last, SearchMode.NearestLeft);
 	}
 
 	/** The price range of the bars with a time index in `[start, end]`, or null if there is none. */
