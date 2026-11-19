@@ -1,5 +1,5 @@
-// A chart with no DOM. The pixel tests and the benchmark use only this interface,
-// so they stay valid while the code below it is rewritten.
+// A chart with no DOM: the model and the frame functions of the library, with any
+// canvas context. The pixel tests and the benchmark use it.
 
 import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaults';
 import type { BarData, LineData } from '../../src/api/data-consumer';

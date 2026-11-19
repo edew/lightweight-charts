@@ -21,8 +21,8 @@ export interface SeriesDrawData {
 }
 
 /**
- * A series type. It is a record of plain functions, not a class: the chart core
- * owns ingest, scales, the crosshair and labels, and calls these functions.
+ * A series type: the constants and the functions that the chart core calls for one
+ * kind of series. The chart core owns ingest, scales, the crosshair and labels.
  */
 export interface SeriesKind<T extends SeriesType = SeriesType> {
 	readonly type: T;
