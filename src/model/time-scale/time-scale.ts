@@ -13,7 +13,6 @@ import { TickMarks } from './tick-marks';
 import { secondsToBusinessDay, type TimePointIndex, type TimeSecondsRange, type UTCTimestamp } from './time-data';
 
 const enum Constants {
-	DefaultAnimationDuration = 400,
 	MinBarSpacing = 0.5,
 	// the maximum bar spacing is the width divided by this number
 	MinVisibleBarsCount = 2,
@@ -330,11 +329,8 @@ export class TimeScale {
 		this.#scaleStart = null;
 	}
 
-	public scrollToRealTime(): void {
-		this.scrollToOffsetAnimated(this.#options.rightOffset);
-	}
-
-	public scrollToOffsetAnimated(offset: number, duration: number = Constants.DefaultAnimationDuration): void {
+	/** @param duration - milliseconds */
+	public scrollToOffsetAnimated(offset: number, duration: number): void {
 		const source = this.#rightOffset;
 		const start = Date.now();
 		const step = (): void => {

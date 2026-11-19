@@ -7,8 +7,10 @@ import { TimeScale, type TimeScaleOptions } from '../model/time-scale/time-scale
 import { secondsToTime, timeToSeconds } from './data-convert';
 import type { ITimeScaleApi, TimeRange } from './itime-scale-api';
 
-const enum Constants {
-	AnimationDurationMs = 1000,
+/** Milliseconds of the scroll animations. The interface documents these values. */
+const enum AnimationDuration {
+	ToPosition = 1000,
+	ToRealTime = 400,
 }
 
 export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
@@ -32,11 +34,12 @@ export class TimeScaleApi implements ITimeScaleApi, IDestroyable {
 			return;
 		}
 
-		this.#timeScale().scrollToOffsetAnimated(position, Constants.AnimationDurationMs);
+		this.#timeScale().scrollToOffsetAnimated(position, AnimationDuration.ToPosition);
 	}
 
 	public scrollToRealTime(): void {
-		this.#timeScale().scrollToRealTime();
+		const timeScale = this.#timeScale();
+		timeScale.scrollToOffsetAnimated(timeScale.options().rightOffset, AnimationDuration.ToRealTime);
 	}
 
 	public getVisibleRange(): TimeRange | null {
