@@ -8,13 +8,13 @@ Measured on 2026-11-19.
 
 | Metric | Value | Limit |
 |---|---|---|
-| Bundle, UMD minified (`npm run build`) | 58.42 kB | 60 kB |
-| Bundle, UMD gzip | 19.77 kB | 20 kB |
-| Bundle, ES module gzip | 22.20 kB | |
+| Bundle, UMD minified (`npm run build`) | 58.72 kB | 60 kB |
+| Bundle, UMD gzip | 19.90 kB | 20 kB |
+| Bundle, ES module gzip | 22.33 kB | |
 | Runtime dependencies | 0 | 0 |
-| `src` lines | 6,830 | |
+| `src` lines | 6,844 | |
 | Canvas elements for one chart | 2 | 2 |
-| Unit and pixel tests | 268 | |
+| Unit and pixel tests | 280 | |
 
 The margin below the gzip limit is small. Run `npm run build` after each change in `src` and read the gzip size of the UMD file.
 
