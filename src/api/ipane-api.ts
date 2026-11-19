@@ -4,7 +4,7 @@ import type { PriceScaleOptions } from '../model/price-scale/price-scale';
 
 /** Interface to control one pane of the chart */
 export interface IPaneApi {
-	/** Height of the pane in pixels. It is 0 before the first draw of the chart. */
+	/** Height of the pane in pixels. For a pane that a new series made, it is 0 until the next frame of the chart. */
 	height(): number;
 	/** Relative height of the pane: a pane with factor 2 is two times as high as a pane with factor 1. */
 	stretchFactor(): number;
