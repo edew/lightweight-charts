@@ -4,17 +4,17 @@
 
 ## Numbers
 
-Measured on 2026-11-18.
+Measured on 2026-11-19.
 
 | Metric | Value | Limit |
 |---|---|---|
-| Bundle, UMD minified (`npm run build`) | 59.14 kB | 60 kB |
-| Bundle, UMD gzip | 19.91 kB | 20 kB |
-| Bundle, ES module gzip | 22.29 kB | |
+| Bundle, UMD minified (`npm run build`) | 58.42 kB | 60 kB |
+| Bundle, UMD gzip | 19.77 kB | 20 kB |
+| Bundle, ES module gzip | 22.20 kB | |
 | Runtime dependencies | 0 | 0 |
-| `src` lines | 6,790 | |
+| `src` lines | 6,830 | |
 | Canvas elements for one chart | 2 | 2 |
-| Unit and pixel tests | 245 | |
+| Unit and pixel tests | 268 | |
 
 The margin below the gzip limit is small. Run `npm run build` after each change in `src` and read the gzip size of the UMD file.
 
@@ -24,15 +24,15 @@ Candlestick series, one-minute bars, 200 visible bars, device pixel ratio 2. The
 
 | Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs | Pan frame µs |
 |---|---|---|---|---|---|---|---|
-| 10,000 | 3.6 | 71 | 1.3 | 31 | 1.3 | 20 | 13 |
-| 100,000 | 4.2 | 33 | 0.6 | 10 | 0.6 | 13 | 10 |
-| 1,000,000 | 32.5 | 34 | 0.1 | 9 | 0.3 | 13 | 10 |
+| 10,000 | 3.7 | 71 | 1.3 | 26 | 1.5 | 20 | 11 |
+| 100,000 | 4.2 | 33 | 0.3 | 6 | 0.5 | 10 | 7 |
+| 1,000,000 | 31.7 | 34 | 0.2 | 5 | 0.2 | 11 | 8 |
 
 All costs are constant in the number of bars, but not `setData`. Limits: `setData` for 100,000 bars below 10 ms, retained memory below 50 B for each bar, append below 2 µs.
 
 ## Open items
 
-1. **Touch input.** Long tap, tracking mode and pinch use Pointer Events. They were checked only with a mouse. Test on a touch device.
+1. **Touch input.** Long tap, tracking mode and pinch use Pointer Events. They were checked only with a mouse and with pointer events of the type `touch` from a script. Test on a touch device.
 2. **Level of detail.** `TimeScale` does not permit a bar spacing below 0.5 CSS pixels, thus there are at most two bars for each CSS pixel and the draw cost is limited by the canvas width. Level of detail is necessary only if that limit is removed. Then: aggregate for each pixel column (minimum and maximum; first and last for candles) into a scratch buffer that is allocated one time, and draw from that buffer.
 3. **Tick marks on zoom.** A change of the minimum distance between marks builds all marks again (approximately 2 ms for 100,000 time points, 18 ms for 1,000,000). A rule that does not depend on the first time point would make this constant, but it changes which labels are shown.
 4. **Draw order of series.** The series that was added last is below the other series. Decide if it must be the opposite. It is one loop direction in `drawPane()`.
