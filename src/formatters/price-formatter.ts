@@ -19,7 +19,7 @@ function volumeNumber(value: number, precision: number): string {
 	return String(+value.toFixed(precision));
 }
 
-/** Formats a volume with the suffixes K, M and B. */
+/** Formats a volume with the suffixes K, M and B. A number that rounds to 1000 gets the next suffix. */
 export function volumeFormat(precision: number): PriceFormatter {
 	return (volume: number) => {
 		const sign = volume < 0 ? '-' : '';
@@ -27,11 +27,15 @@ export function volumeFormat(precision: number): PriceFormatter {
 		if (volume < 995) {
 			return sign + volumeNumber(volume, precision);
 		}
-		if (volume < 999995) {
-			return sign + volumeNumber(volume / 1e3, precision) + 'K';
+
+		let text = volumeNumber(volume / 1e3, precision);
+		if (volume < 999995 && text !== '1000') {
+			return sign + text + 'K';
 		}
-		if (volume < 999999995) {
-			return sign + volumeNumber(Math.round(volume / 1e3) / 1e3, precision) + 'M';
+
+		text = volumeNumber(Math.round(volume / 1e3) / 1e3, precision);
+		if (volume < 999999995 && text !== '1000') {
+			return sign + text + 'M';
 		}
 		return sign + volumeNumber(Math.round(volume / 1e6) / 1e3, precision) + 'B';
 	};

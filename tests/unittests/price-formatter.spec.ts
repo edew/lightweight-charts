@@ -59,6 +59,13 @@ describe('volumeFormat', () => {
 		expect(volumeFormat(3)(1500)).to.equal('1.5K');
 	});
 
+	it('uses the next suffix when the rounded number is 1000', () => {
+		expect(volumeFormat(0)(999600)).to.equal('1M');
+		expect(volumeFormat(1)(999960)).to.equal('1M');
+		expect(volumeFormat(0)(999600000)).to.equal('1B');
+		expect(volumeFormat(0)(999400)).to.equal('999K');
+	});
+
 	it('formats negative numbers', () => {
 		expect(volumeFormat(2)(-1000)).to.equal('-1K');
 		expect(volumeFormat(2)(-500)).to.equal('-500');
