@@ -23,7 +23,7 @@ function addLine(model: ChartModel, pane: number = 0, overlay: boolean = false):
 }
 
 function setLine(model: ChartModel, series: Series, times: number[], values: number[]): void {
-	model.setSeriesData(series, new Float64Array(times), new Float64Array(values), times.length, false);
+	model.setSeriesData(series, new Float64Array(times), new Float64Array(values), false);
 }
 
 describe('ChartModel', () => {
@@ -151,7 +151,7 @@ describe('ChartModel', () => {
 		it('gives the range of the visible bars for autoscale', () => {
 			const spec = Candlestick();
 			const series = model.createSeries(spec.kind, seriesOptionsFromSpec(spec)) as unknown as Series;
-			model.setSeriesData(series, new Float64Array([10, 20]), new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), 2, false);
+			model.setSeriesData(series, new Float64Array([10, 20]), new Float64Array([5, 9, 4, 6, 6, 8, 2, 7]), false);
 			const range = series.autoscaleRange(0 as TimePointIndex, 1 as TimePointIndex);
 			expect(range?.min).to.equal(2);
 			expect(range?.max).to.equal(9);

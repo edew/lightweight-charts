@@ -84,7 +84,6 @@ export interface ConvertedSeriesData {
 	times: Float64Array;
 	/** `stride` values for each time. */
 	values: Float64Array;
-	count: number;
 	businessDay: boolean;
 }
 
@@ -120,7 +119,7 @@ export function convertSeriesData(stride: number, data: readonly (LineData | Bar
 	}
 
 	if (sorted) {
-		return { times, values, count, businessDay };
+		return { times, values, businessDay };
 	}
 
 	// slow path: the input is not in order or has duplicate times
@@ -146,5 +145,5 @@ export function convertSeriesData(stride: number, data: readonly (LineData | Bar
 		out++;
 	}
 
-	return { times: sortedTimes.slice(0, out), values: sortedValues.slice(0, out * stride), count: out, businessDay };
+	return { times: sortedTimes.slice(0, out), values: sortedValues.slice(0, out * stride), businessDay };
 }

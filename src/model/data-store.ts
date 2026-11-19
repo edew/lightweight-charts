@@ -224,13 +224,13 @@ export class DataStore {
 	}
 
 	/**
-	 * Replaces all data of a series. `times` must be sorted with no duplicates.
-	 * The store takes ownership of both arrays.
+	 * Replaces all data of a series. `times` must be sorted with no duplicates, and
+	 * `values` has `stride` values for each time. The store takes ownership of both arrays.
 	 */
-	public setSeriesData(series: SeriesStore, times: Float64Array, values: Float64Array, count: number): void {
+	public setSeriesData(series: SeriesStore, times: Float64Array, values: Float64Array): void {
 		series.values = values;
-		series.length = count;
-		this.#rebuild(series, times.length === count ? times : times.subarray(0, count));
+		series.length = times.length;
+		this.#rebuild(series, times);
 	}
 
 	/** Streaming update of the last row or append of a new row. An older time throws. */

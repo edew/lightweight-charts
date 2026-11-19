@@ -215,11 +215,11 @@ export class ChartModel {
 	 * Replaces all data of a series. `times` are sorted UTC seconds with no duplicates.
 	 * The model takes ownership of the arrays.
 	 */
-	public setSeriesData(series: Series, times: Float64Array, values: Float64Array, count: number, businessDay: boolean): void {
-		if (count !== 0) {
+	public setSeriesData(series: Series, times: Float64Array, values: Float64Array, businessDay: boolean): void {
+		if (times.length !== 0) {
 			this.#dataStore.businessDay = businessDay;
 		}
-		this.#dataStore.setSeriesData(series.store(), times, values, count);
+		this.#dataStore.setSeriesData(series.store(), times, values);
 		this.#onAllTimePointsChanged();
 	}
 

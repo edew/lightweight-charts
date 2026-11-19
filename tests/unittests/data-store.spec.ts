@@ -31,7 +31,7 @@ describe('DataStore', () => {
 	it('stores one series with consecutive time indexes and no index array', () => {
 		const store = new DataStore();
 		const line = store.createSeries(1);
-		store.setSeriesData(line, f64(10, 20, 30), f64(1, 2, 3), 3);
+		store.setSeriesData(line, f64(10, 20, 30), f64(1, 2, 3));
 
 		expect(times(store)).to.deep.equal([10, 20, 30]);
 		expect(line.index).to.equal(null);
@@ -42,7 +42,7 @@ describe('DataStore', () => {
 	it('stores four values for each candle and gives the close price', () => {
 		const store = new DataStore();
 		const candles = store.createSeries(4);
-		store.setSeriesData(candles, f64(10, 20), f64(1, 4, 0, 3, 3, 6, 2, 5), 2);
+		store.setSeriesData(candles, f64(10, 20), f64(1, 4, 0, 3, 3, 6, 2, 5));
 		expect(closes(candles)).to.deep.equal([3, 5]);
 	});
 
@@ -50,8 +50,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(1000, 3000), f64(1, 3), 2);
-		store.setSeriesData(b, f64(2000, 4000), f64(2, 4), 2);
+		store.setSeriesData(a, f64(1000, 3000), f64(1, 3));
+		store.setSeriesData(b, f64(2000, 4000), f64(2, 4));
 
 		expect(times(store)).to.deep.equal([1000, 2000, 3000, 4000]);
 		expect(timeIndexes(a)).to.deep.equal([0, 2]);
@@ -63,8 +63,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(10, 20, 30, 40, 50), f64(1, 2, 3, 4, 5), 5);
-		store.setSeriesData(b, f64(30, 40), f64(7, 8), 2);
+		store.setSeriesData(a, f64(10, 20, 30, 40, 50), f64(1, 2, 3, 4, 5));
+		store.setSeriesData(b, f64(30, 40), f64(7, 8));
 
 		expect(times(store)).to.deep.equal([10, 20, 30, 40, 50]);
 		expect(b.index).to.equal(null);
@@ -76,9 +76,9 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(1000, 3000), f64(1, 3), 2);
-		store.setSeriesData(b, f64(2000, 4000), f64(2, 4), 2);
-		store.setSeriesData(a, f64(2000, 4000), f64(5, 6), 2);
+		store.setSeriesData(a, f64(1000, 3000), f64(1, 3));
+		store.setSeriesData(b, f64(2000, 4000), f64(2, 4));
+		store.setSeriesData(a, f64(2000, 4000), f64(5, 6));
 
 		expect(times(store)).to.deep.equal([2000, 4000]);
 		expect(timeIndexes(a)).to.deep.equal([0, 1]);
@@ -89,8 +89,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(1000, 3000), f64(1, 3), 2);
-		store.setSeriesData(b, f64(2000, 4000), f64(2, 4), 2);
+		store.setSeriesData(a, f64(1000, 3000), f64(1, 3));
+		store.setSeriesData(b, f64(2000, 4000), f64(2, 4));
 		store.removeSeries(a);
 
 		expect(times(store)).to.deep.equal([2000, 4000]);
@@ -100,7 +100,7 @@ describe('DataStore', () => {
 	it('updates the last row in place', () => {
 		const store = new DataStore();
 		const candles = store.createSeries(4);
-		store.setSeriesData(candles, f64(10, 20), f64(1, 4, 0, 3, 3, 6, 2, 5), 2);
+		store.setSeriesData(candles, f64(10, 20), f64(1, 4, 0, 3, 3, 6, 2, 5));
 		const generation = store.generation;
 
 		expect(store.updateSeries(candles, 20, 3, 9, 1, 8)).to.equal(UpdateKind.InPlace);
@@ -131,8 +131,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(10, 20, 30), f64(1, 2, 3), 3);
-		store.setSeriesData(b, f64(10, 20), f64(5, 6), 2);
+		store.setSeriesData(a, f64(10, 20, 30), f64(1, 2, 3));
+		store.setSeriesData(b, f64(10, 20), f64(5, 6));
 
 		expect(store.updateSeries(b, 30, 7, 0, 0, 0)).to.equal(UpdateKind.AppendRow);
 		expect(times(store)).to.deep.equal([10, 20, 30]);
@@ -143,8 +143,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(10, 20, 30), f64(1, 2, 3), 3);
-		store.setSeriesData(b, f64(10), f64(5), 1);
+		store.setSeriesData(a, f64(10, 20, 30), f64(1, 2, 3));
+		store.setSeriesData(b, f64(10), f64(5));
 
 		expect(store.updateSeries(b, 30, 7, 0, 0, 0)).to.equal(UpdateKind.AppendRow);
 		expect(timeIndexes(b)).to.deep.equal([0, 2]);
@@ -155,8 +155,8 @@ describe('DataStore', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(10, 20, 40), f64(1, 2, 4), 3);
-		store.setSeriesData(b, f64(10, 20), f64(5, 6), 2);
+		store.setSeriesData(a, f64(10, 20, 40), f64(1, 2, 4));
+		store.setSeriesData(b, f64(10, 20), f64(5, 6));
 
 		expect(store.updateSeries(b, 30, 7, 0, 0, 0)).to.equal(UpdateKind.Rebuild);
 		expect(times(store)).to.deep.equal([10, 20, 30, 40]);
@@ -169,7 +169,7 @@ describe('DataStore', () => {
 	it('throws on an update that is older than the last row of the series', () => {
 		const store = new DataStore();
 		const line = store.createSeries(1);
-		store.setSeriesData(line, f64(10, 20), f64(1, 2), 2);
+		store.setSeriesData(line, f64(10, 20), f64(1, 2));
 		expect(() => store.updateSeries(line, 15, 3, 0, 0, 0)).to.throw('Cannot update oldest data');
 	});
 
@@ -178,7 +178,7 @@ describe('DataStore', () => {
 		expect(store.indexOfTime(10, true)).to.equal(null);
 
 		const line = store.createSeries(1);
-		store.setSeriesData(line, f64(10, 20, 30), f64(1, 2, 3), 3);
+		store.setSeriesData(line, f64(10, 20, 30), f64(1, 2, 3));
 		expect(store.indexOfTime(20, false)).to.equal(1);
 		expect(store.indexOfTime(25, false)).to.equal(null);
 		expect(store.indexOfTime(25, true)).to.equal(2);
@@ -193,9 +193,9 @@ describe('SeriesStore search', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(0, 1, 2, 3, 4, 5, 6), f64(0, 0, 0, 0, 0, 0, 0), 7);
+		store.setSeriesData(a, f64(0, 1, 2, 3, 4, 5, 6), f64(0, 0, 0, 0, 0, 0, 0));
 		// b has rows at time indexes 1, 3 and 6
-		store.setSeriesData(b, f64(1, 3, 6), f64(10, 30, 60), 3);
+		store.setSeriesData(b, f64(1, 3, 6), f64(10, 30, 60));
 		return b;
 	}
 
@@ -203,9 +203,9 @@ describe('SeriesStore search', () => {
 		const store = new DataStore();
 		const a = store.createSeries(1);
 		const b = store.createSeries(1);
-		store.setSeriesData(a, f64(0, 1, 2, 3, 4, 5, 6), f64(0, 0, 0, 0, 0, 0, 0), 7);
+		store.setSeriesData(a, f64(0, 1, 2, 3, 4, 5, 6), f64(0, 0, 0, 0, 0, 0, 0));
 		// b has rows at time indexes 2, 3 and 4
-		store.setSeriesData(b, f64(2, 3, 4), f64(20, 30, 40), 3);
+		store.setSeriesData(b, f64(2, 3, 4), f64(20, 30, 40));
 		return b;
 	}
 

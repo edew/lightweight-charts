@@ -37,7 +37,7 @@ describe('data-convert', () => {
 	it('copies line data into typed arrays and does not change the input', () => {
 		const data = [{ time: '2019-05-01', value: 1 }, { time: '2019-05-02', value: 2 }];
 		const result = convertSeriesData(1, data);
-		expect(result.count).to.equal(2);
+		expect(result.times.length).to.equal(2);
 		expect(result.businessDay).to.equal(true);
 		expect(Array.from(result.times)).to.deep.equal([Date.UTC(2019, 4, 1) / 1000, Date.UTC(2019, 4, 2) / 1000]);
 		expect(Array.from(result.values)).to.deep.equal([1, 2]);
@@ -60,14 +60,14 @@ describe('data-convert', () => {
 			{ time: ts(20), value: 2 },
 			{ time: ts(10), value: 9 },
 		]);
-		expect(result.count).to.equal(3);
+		expect(result.times.length).to.equal(3);
 		expect(Array.from(result.times)).to.deep.equal([10, 20, 30]);
 		expect(Array.from(result.values)).to.deep.equal([9, 2, 3]);
 	});
 
 	it('handles empty data', () => {
 		const result = convertSeriesData(4, []);
-		expect(result.count).to.equal(0);
+		expect(result.times.length).to.equal(0);
 		expect(result.times.length).to.equal(0);
 	});
 
