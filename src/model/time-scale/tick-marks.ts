@@ -22,14 +22,9 @@ export class TickMarks {
 	readonly #result: TickMarksResult = { indexes: new Int32Array(0), count: 0 };
 	#suffix: Int32Array = new Int32Array(64);
 	#scratch: Int32Array = new Int32Array(64);
-	#valid: boolean = false;
 	#minIndexesBetweenMarks: number = NaN;
 	#length: number = 0;
 	#generation: number = -1;
-
-	public reset(): void {
-		this.#valid = false;
-	}
 
 	/**
 	 * @param spans - weight for each time point
@@ -45,7 +40,7 @@ export class TickMarks {
 		const result = this.#result;
 
 		let start = 0;
-		if (this.#valid && this.#minIndexesBetweenMarks === minDistance && this.#generation === generation && length >= this.#length) {
+		if (this.#minIndexesBetweenMarks === minDistance && this.#generation === generation && length >= this.#length) {
 			if (length === this.#length) {
 				return result;
 			}
@@ -56,7 +51,6 @@ export class TickMarks {
 		this.#minIndexesBetweenMarks = minDistance;
 		this.#generation = generation;
 		this.#length = length;
-		this.#valid = true;
 
 		// keep the accepted marks before `start`
 		const prefix = result.indexes;

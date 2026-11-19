@@ -77,14 +77,12 @@ describe('TickMarks', () => {
 		}
 	});
 
-	it('builds again after reset', () => {
+	it('builds again for a new generation', () => {
 		const marks = new TickMarks();
 		const spans = new Uint8Array([20, 20, 20]);
-		expect(marks.build(spans, 3, 1, 1, 1).count).to.equal(3);
-		// the caller changed the weights and says so with reset()
+		expect(marks.build(spans, 3, 1, 1, 2).count).to.equal(2);
+		// the caller changed the weights and says so with a new generation
 		spans[1] = 70;
-		spans[2] = 70;
-		marks.reset();
-		expect(Array.from(marks.build(spans, 3, 1, 1, 2).indexes.subarray(0, 1))).to.deep.equal([1]);
+		expect(Array.from(marks.build(spans, 3, 2, 1, 2).indexes.subarray(0, 1))).to.deep.equal([1]);
 	});
 });

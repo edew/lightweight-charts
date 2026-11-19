@@ -262,7 +262,6 @@ export class TimeScale {
 	public reset(): void {
 		this.#visibleBarsValid = false;
 		this.endDrag();
-		this.#tickMarks.reset();
 		this.#leftEdgeFixed = false;
 	}
 
