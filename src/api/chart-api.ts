@@ -80,7 +80,7 @@ export class ChartApi implements IChartApi {
 	public constructor(container: HTMLElement, options?: DeepPartial<ChartOptions>) {
 		const internalOptions = (options === undefined) ?
 			clone(chartOptionsDefaults) :
-			merge(clone(chartOptionsDefaults), toInternalOptions(options)) as ChartOptionsInternal;
+			merge(clone(chartOptionsDefaults), toInternalOptions(options));
 
 		this.#chartWidget = new ChartWidget(container, internalOptions);
 		const model = this.#chartWidget.model();

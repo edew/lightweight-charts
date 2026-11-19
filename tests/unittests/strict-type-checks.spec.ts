@@ -3,6 +3,7 @@ import { describe, it } from 'vitest';
 
 import {
 	clone,
+	type DeepPartial,
 	isBoolean,
 	isInteger,
 	isNaN,
@@ -27,7 +28,7 @@ describe('strict-type-checks', () => {
 				},
 			};
 
-			const result = merge(dst, src);
+			const result = merge<object>(dst, src);
 			expect(result).to.equal(dst);
 			expect(dst).to.deep.equal({
 				level1: {
@@ -48,7 +49,7 @@ describe('strict-type-checks', () => {
 		it('replaces values when destination key is missing', () => {
 			const dst = { a: 1 };
 			const src = { nested: { v: 3 } };
-			merge(dst, src);
+			merge<object>(dst, src);
 			expect(dst).to.deep.equal({ a: 1, nested: { v: 3 } });
 		});
 
@@ -120,5 +121,25 @@ describe('strict-type-checks', () => {
 			expect(clone('abc')).to.equal('abc');
 			expect(clone(null)).to.equal(null);
 		});
+	});
+});
+
+describe('types', () => {
+	it('DeepPartial keeps the type of a function, and merge checks its sources', () => {
+		interface Options {
+			size: number;
+			format: { formatter: (value: number) => string };
+		}
+		const options: Options = { size: 1, format: { formatter: (value: number) => String(value) } };
+
+		// @ts-expect-error an object is not a function
+		const wrongFunction: DeepPartial<Options> = { format: { formatter: {} } };
+		// @ts-expect-error the type of the value is wrong
+		merge(options, { size: 'large' });
+		// @ts-expect-error the destination has no such key
+		merge(options, { colour: 'red' });
+
+		expect(wrongFunction).to.be.an('object');
+		expect(merge(options, { size: 2 }).size).to.equal(2);
 	});
 });

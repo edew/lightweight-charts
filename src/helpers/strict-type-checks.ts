@@ -1,12 +1,23 @@
+/** The same type with all members optional, at each level. A function and an array of the source replace the destination. */
 export type DeepPartial<T> = {
-	[P in keyof T]?: T[P] extends Array<infer U>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	[P in keyof T]?: T[P] extends (...args: any[]) => unknown
+		? T[P]
+		: T[P] extends Array<infer U>
 		? Array<DeepPartial<U>>
 		: T[P] extends ReadonlyArray<infer X>
 		? ReadonlyArray<DeepPartial<X>>
 		: DeepPartial<T[P]>
 };
 
-export function merge(dst: Record<string, any>, ...sources: Record<string, any>[]): Record<string, any> {
+/** Copies the members of each source into `dst`, at each level. A member that is `undefined` is ignored. */
+export function merge<T extends object>(dst: T, ...sources: DeepPartial<T>[]): T {
+	mergeInto(dst, sources);
+	return dst;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mergeInto(dst: Record<string, any>, sources: Record<string, any>[]): void {
 	for (const src of sources) {
 		for (const i in src) {
 			if (src[i] === undefined) {
@@ -19,12 +30,10 @@ export function merge(dst: Record<string, any>, ...sources: Record<string, any>[
 				// a copy: the destination must not share objects with the source
 				dst[i] = clone(src[i]);
 			} else {
-				merge(dst[i], src[i]);
+				mergeInto(dst[i], [src[i]]);
 			}
 		}
 	}
-
-	return dst;
 }
 
 export function isNumber(value: unknown): value is number {

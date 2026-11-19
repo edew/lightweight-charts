@@ -1,6 +1,6 @@
 import { priceFormat, type PriceFormatter, volumeFormat } from '../formatters/price-formatter';
 
-import { merge } from '../helpers/strict-type-checks';
+import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { BarPrice, BarPrices } from './bar';
 import type { ChartModel } from './chart-model';
@@ -82,7 +82,8 @@ export class Series<T extends SeriesType = SeriesType> {
 
 	public applyOptions(options: SeriesPartialOptionsMap[T]): void {
 		const overlay = this.#options.overlay;
-		merge(this.#options, options);
+		// the compiler cannot relate the two maps for a type parameter
+		merge(this.#options, options as DeepPartial<SeriesOptionsMap[T]>);
 		this.#options.overlay = overlay;
 
 		if (overlay && options.scaleMargins !== undefined) {
