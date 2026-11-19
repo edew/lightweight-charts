@@ -39,6 +39,25 @@ describe('PriceScale', () => {
 		expect(scale.coordinateToPrice(25 as Coordinate, 10)).to.equal(17.5);
 	});
 
+	it('converts one price and many prices to the same coordinates', () => {
+		const scale = createScale(3.07, 19.31, { scaleMargins: { top: 0.13, bottom: 0.07 } });
+		const count = 2000;
+		const values = new Float64Array(count);
+		for (let i = 0; i < count; i++) {
+			values[i] = 3.07 + (19.31 - 3.07) * i / (count - 1);
+		}
+		const out = new Float64Array(count);
+		scale.pricesToCoordinates(values, 0, count, out, 3.07);
+
+		let different = 0;
+		for (let i = 0; i < count; i++) {
+			if (scale.priceToCoordinate(values[i], 3.07) !== out[i]) {
+				different++;
+			}
+		}
+		expect(different).to.equal(0);
+	});
+
 	it('uses the margins', () => {
 		const scale = createScale(10, 20, { scaleMargins: { top: 0.2, bottom: 0.1 } });
 		// 101 pixels: 20.2 at the top, 10.1 at the bottom

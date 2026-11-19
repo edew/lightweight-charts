@@ -166,6 +166,15 @@ function mapRange(range: PriceRange, fn: (value: number) => number): PriceRange 
 	return { min: fn(range.min), max: fn(range.max) };
 }
 
+/**
+ * Distance of a value from the bottom of the scale, in pixels. The conversion of one
+ * price and the conversion of many prices use this one expression, so that a marker and
+ * its series point get the same coordinate.
+ */
+function fromBottom(value: number, min: number, factor: number, bottom: number): number {
+	return bottom + factor * (value - min);
+}
+
 export class PriceScale {
 	readonly #layoutOptions: LayoutOptions;
 	readonly #localizationOptions: LocalizationOptions;
@@ -305,7 +314,7 @@ export class PriceScale {
 		const range = this.#priceRange as PriceRange;
 		const min = range.min;
 		const bottom = this.#bottomMargin();
-		const factor = (this.#internalHeight() - 1) / (range.max - min);
+		const factor = this.#factor(range);
 		const inverted = this.#options.invertScale;
 		const last = this.#height - 1;
 		const mode = this.#options.mode;
@@ -318,7 +327,7 @@ export class PriceScale {
 			} else if (mode !== PriceScaleMode.Normal) {
 				value = toRelative(value, baseValue, offset);
 			}
-			const y = bottom + factor * (value - min);
+			const y = fromBottom(value, min, factor, bottom);
 			out[i - from] = inverted ? y : last - y;
 		}
 	}
@@ -486,6 +495,11 @@ export class PriceScale {
 		return this.#isRelative() ? toRelative(price, baseValue, this.#relativeOffset()) : price;
 	}
 
+	/** Pixels for one unit of the scale. */
+	#factor(range: PriceRange): number {
+		return (this.#internalHeight() - 1) / (range.max - range.min);
+	}
+
 	#bottomMargin(): number {
 		const margins = this.#options.scaleMargins;
 		return (this.#options.invertScale ? margins.top : margins.bottom) * this.#height;
@@ -510,9 +524,7 @@ export class PriceScale {
 		}
 
 		const range = this.#priceRange as PriceRange;
-		return this.#invert(
-			this.#bottomMargin() + (this.#internalHeight() - 1) * (value - range.min) / (range.max - range.min)
-		) as Coordinate;
+		return this.#invert(fromBottom(value, range.min, this.#factor(range), this.#bottomMargin())) as Coordinate;
 	}
 
 	/** Value of the scale at y. */
