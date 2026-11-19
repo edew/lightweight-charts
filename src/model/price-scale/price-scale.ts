@@ -36,9 +36,9 @@ export interface PriceRange {
 
 /** Defines margins of the price scale */
 export interface PriceScaleMargins {
-	/** Top margin in percentages. Must be greater or equal to 0 and less than 100 */
+	/** Top margin as a part of the height of the scale, from 0 to 1. The sum of the two margins must not be more than 1. */
 	top: number;
-	/** Bottom margin in percentages. Must be greater or equal to 0 and less than 100 */
+	/** Bottom margin as a part of the height of the scale, from 0 to 1. */
 	bottom: number;
 }
 
