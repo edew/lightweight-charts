@@ -94,9 +94,12 @@ export function drawFrame(staticCtx: CanvasRenderingContext2D, overlayCtx: Canva
 
 function beginRegion(ctx: CanvasRenderingContext2D, rect: Rect, pixelRatio: number): void {
 	ctx.save();
-	ctx.translate(Math.round(rect.left * pixelRatio), Math.round(rect.top * pixelRatio));
+	// each edge is rounded by itself, so that a region ends where the next one starts
+	const left = Math.round(rect.left * pixelRatio);
+	const top = Math.round(rect.top * pixelRatio);
+	ctx.translate(left, top);
 	ctx.beginPath();
-	ctx.rect(0, 0, Math.ceil(rect.width * pixelRatio), Math.ceil(rect.height * pixelRatio));
+	ctx.rect(0, 0, Math.round((rect.left + rect.width) * pixelRatio) - left, Math.round((rect.top + rect.height) * pixelRatio) - top);
 	ctx.clip();
 }
 

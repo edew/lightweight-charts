@@ -29,6 +29,27 @@ function risingCandles(count: number): BarData[] {
 }
 
 describe('draw calls', () => {
+	it('the clip of the pane does not go into the price axis at a fractional pixel ratio', () => {
+		for (let width = 400; width < 408; width++) {
+			const chart = createHeadlessChart({ width, height: 240, options: { priceScale: { position: 'right' } } });
+			chart.addSeries('Line').setData(line(50));
+			const recording = createRecordingContext();
+			chart.draw(recording.ctx, 1.25);
+
+			// a region is a translate and then a clip rectangle; the first two regions are the pane and its price axis
+			const regions: number[][] = [];
+			recording.log.forEach((entry: string, i: number) => {
+				if (entry.startsWith('rect(')) {
+					const origin = recording.log[i - 2].slice(10, -1).split(',').map(Number);
+					regions.push([origin[0], Number(entry.slice(5, -1).split(',')[2])]);
+				}
+			});
+			const paneRight = regions[0][0] + regions[0][1];
+			const axisLeft = regions[1][0];
+			expect(paneRight, `chart width ${width}`).to.equal(axisLeft);
+		}
+	});
+
 	it('the tick marks of the time axis start below its border at a pixel ratio below 1', () => {
 		const chart = createHeadlessChart({ width: 400, height: 240, options: { timeScale: { visible: true, barSpacing: 8 } } });
 		chart.addSeries('Line', { lastValueVisible: false }).setData(line(200));
