@@ -134,7 +134,7 @@ export class TimeScale {
 			}
 
 			this.#visibleBars = bars;
-			if (old !== null && bars !== old) {
+			if (bars !== old) {
 				this.#visibleBarsChanged.fire();
 			}
 		}

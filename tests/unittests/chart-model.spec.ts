@@ -199,6 +199,17 @@ describe('ChartModel', () => {
 		});
 	});
 
+	it('tells the subscribers when the first data gives the chart its visible bars', () => {
+		let changes = 0;
+		model.timeScale().visibleBarsChanged().subscribe(() => changes++);
+		expect(model.timeScale().visibleBars()).to.equal(null);
+
+		const series = addLine(model);
+		setLine(model, series, [10, 20, 30], [1, 2, 3]);
+		expect(model.timeScale().visibleBars()).to.not.equal(null);
+		expect(changes).to.equal(1);
+	});
+
 	describe('crosshair', () => {
 		it('is calculated one time for each frame, from the last pointer position', () => {
 			const series = addLine(model);
