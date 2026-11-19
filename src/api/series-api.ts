@@ -1,4 +1,5 @@
 
+import { ensureNotNull } from '../helpers/assertions';
 import { clone, type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { BarPrice } from '../model/bar';
@@ -68,7 +69,8 @@ export function updateSeriesData(series: Series, item: LineData | BarData): void
 }
 
 export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSeriesType> {
-	readonly #series: Series<TSeriesType>;
+	/** Null after the series was removed from the chart. */
+	#series: Series<TSeriesType> | null;
 	readonly #spec: SeriesSpec<TSeriesType>;
 
 	public constructor(series: Series<TSeriesType>, spec: SeriesSpec<TSeriesType>) {
@@ -77,43 +79,50 @@ export class SeriesApi<TSeriesType extends SeriesType> implements ISeriesApi<TSe
 	}
 
 	public series(): Series<TSeriesType> {
-		return this.#series;
+		return ensureNotNull(this.#series);
+	}
+
+	/** Removes the series from the chart. After this, each method of this object throws. */
+	public destroy(): void {
+		const series = this.series();
+		series.model().removeSeries(series as unknown as Series);
+		this.#series = null;
 	}
 
 	public priceFormatter(): IPriceFormatter {
-		return { format: this.#series.formatter() };
+		return { format: this.series().formatter() };
 	}
 
 	public priceToCoordinate(price: BarPrice): Coordinate | null {
-		const firstValue = this.#series.firstValue();
+		const firstValue = this.series().firstValue();
 		if (firstValue === null) {
 			return null;
 		}
 
-		return this.#series.priceScale().priceToCoordinate(price, firstValue.value);
+		return this.series().priceScale().priceToCoordinate(price, firstValue.value);
 	}
 
 	public coordinateToPrice(coordinate: Coordinate): BarPrice | null {
-		const firstValue = this.#series.firstValue();
+		const firstValue = this.series().firstValue();
 		if (firstValue === null) {
 			return null;
 		}
-		return this.#series.priceScale().coordinateToPrice(coordinate, firstValue.value);
+		return this.series().priceScale().coordinateToPrice(coordinate, firstValue.value);
 	}
 
 	public setData(data: SeriesDataItemTypeMap[TSeriesType][]): void {
-		setSeriesData(this.#series as unknown as Series, data);
+		setSeriesData(this.series() as unknown as Series, data);
 	}
 
 	public update(bar: SeriesDataItemTypeMap[TSeriesType]): void {
-		updateSeriesData(this.#series as unknown as Series, bar);
+		updateSeriesData(this.series() as unknown as Series, bar);
 	}
 
 	public applyOptions(options: SeriesPartialOptionsMap[TSeriesType]): void {
-		this.#series.applyOptions(normalizedOptions(this.#spec, options));
+		this.series().applyOptions(normalizedOptions(this.#spec, options));
 	}
 
 	public options(): Readonly<SeriesOptionsMap[TSeriesType]> {
-		return clone(this.#series.options());
+		return clone(this.series().options());
 	}
 }

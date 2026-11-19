@@ -135,10 +135,11 @@ export class ChartApi implements IChartApi {
 	}
 
 	public removeSeries(seriesApi: ISeriesApi<SeriesType>): void {
-		const series = (seriesApi as SeriesApi<SeriesType>).series();
+		const api = seriesApi as SeriesApi<SeriesType>;
+		const series = api.series();
 		ensureDefined(this.#seriesApis.get(series));
-		this.#chartWidget.model().removeSeries(series);
 		this.#seriesApis.delete(series);
+		api.destroy();
 	}
 
 	public subscribeClick(handler: MouseEventHandler): void {
