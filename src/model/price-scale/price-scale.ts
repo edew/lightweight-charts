@@ -205,12 +205,15 @@ export class PriceScale {
 	public applyOptions(options: DeepPartial<PriceScaleOptions>): void {
 		const current = this.#options;
 		const oldMode = current.mode;
-		merge(current, options);
 
-		const { top, bottom } = current.scaleMargins;
+		// the check is before the merge: options that are not valid must not stay in the scale
+		const margins = options.scaleMargins;
+		const top = margins?.top ?? current.scaleMargins.top;
+		const bottom = margins?.bottom ?? current.scaleMargins.bottom;
 		if (top < 0 || bottom < 0 || top + bottom > 1) {
 			throw new Error('Invalid scale margins');
 		}
+		merge(current, options);
 
 		const mode = current.mode;
 		if (mode !== oldMode) {

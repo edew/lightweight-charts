@@ -156,6 +156,12 @@ describe('PriceScale', () => {
 			expect(scale.priceRange()).to.deep.equal({ min: 0, max: 100 });
 		});
 
+		it('keeps the options when the new margins are not valid', () => {
+			const scale = createScale(10, 20);
+			expect(() => scale.applyOptions({ scaleMargins: { top: 0.8, bottom: 0.8 } })).to.throw();
+			expect(scale.options().scaleMargins).to.deep.equal({ top: 0, bottom: 0 });
+		});
+
 		it('does not accept margins that are too large', () => {
 			const scale = createScale(10, 20);
 			expect(() => scale.applyOptions({ scaleMargins: { top: 0.7, bottom: 0.5 } })).to.throw();
