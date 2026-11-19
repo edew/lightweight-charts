@@ -129,7 +129,8 @@ export class ChartModel {
 			this.#timeScale.applyOptions(options.timeScale);
 		}
 
-		if (options.localization !== undefined) {
+		if (options.localization !== undefined || options.layout !== undefined) {
+			// the text and the font size of the labels set the tick marks of the two scales
 			this.#timeScale.resetLabels();
 			for (const pane of this.#panes) {
 				pane.priceScale.updateFormatter();
@@ -159,13 +160,17 @@ export class ChartModel {
 
 	// ---- size
 
-	/** Sets the width of the panes and the height of each pane, then calculates the scales again. */
+	/** Sets the width of the panes and the height of each pane. */
 	public setSize(width: number, paneHeights: ArrayLike<number>): void {
+		const widthChanged = width !== this.#timeScale.width();
 		this.#timeScale.setWidth(width);
 		for (let i = 0; i < this.#panes.length; i++) {
 			this.#panes[i].setHeight(paneHeights[i]);
 		}
-		this.recalculateAllPanes();
+		if (widthChanged) {
+			// a new width shows different bars, so the price ranges can change
+			this.recalculateAllPanes();
+		}
 	}
 
 	// ---- series and panes

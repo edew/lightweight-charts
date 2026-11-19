@@ -272,8 +272,10 @@ export class PriceScale {
 	}
 
 	public setHeight(value: number): void {
-		this.#height = value;
-		this.#marksValid = false;
+		if (value !== this.#height) {
+			this.#height = value;
+			this.#marksValid = false;
+		}
 	}
 
 	public priceRange(): PriceRange | null {
