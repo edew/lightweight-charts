@@ -109,7 +109,7 @@ These are the reason this library exists. A change that works but breaks one of 
 - `const enum` for internal flag sets (see "Bundle size rules"). Enums that the user can import are normal enums.
 - **Tab indentation.**
 - Target ES2022, strict mode, `moduleResolution: bundler`, `verbatimModuleSyntax`, ES modules only.
-- **Nominal types** (`src/helpers/nominal.ts`): `Coordinate`, `TimePointIndex`, `UTCTimestamp`. Cast explicitly (`42 as Coordinate`).
+- **Nominal types** (made with `Nominal<T, Name>` from `src/helpers/nominal.ts`): `Coordinate` (`src/model/coordinate.ts`), `TimePointIndex` and `UTCTimestamp` (`src/model/time-scale/time-data.ts`), `SortedTimes` (`src/model/data-store.ts`). Cast explicitly (`42 as Coordinate`). Use a nominal type for a condition only when the value does not change after the check.
 - **Assertions** (`src/helpers/assertions.ts`): `ensureDefined()` / `ensureNotNull()`, not `!`. `assert()` for invariants.
 - **Options:** user options are `DeepPartial<T>`. Defaults are in `src/api/options/*-defaults.ts` and in each series kind. Use `merge(clone(defaults), userOptions)`. Do not mutate the caller's object: clone it first.
 - **Events** (`src/helpers/delegate.ts`): subscribe with a `linkedObject` and clean up with `unsubscribeAll(this)`.
