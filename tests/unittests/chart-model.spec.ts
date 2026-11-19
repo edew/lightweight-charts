@@ -5,6 +5,7 @@ import { chartOptionsDefaults } from '../../src/api/options/chart-options-defaul
 import { seriesOptionsFromSpec } from '../../src/api/series-api';
 import { clone } from '../../src/helpers/strict-type-checks';
 import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../../src/model/chart-model';
+import { CrosshairMode } from '../../src/model/crosshair';
 import type { SortedTimes } from '../../src/model/data-store';
 import type { Series } from '../../src/model/series';
 import type { TimePointIndex } from '../../src/model/time-scale/time-data';
@@ -178,6 +179,22 @@ describe('ChartModel', () => {
 
 			// nothing changed: no new calculation
 			expect(model.resolveCrosshair()).to.equal(false);
+		});
+
+		it('the magnet mode puts the horizontal line on the close price of the bar', () => {
+			const series = addLine(model);
+			setLine(model, series, [10, 20, 30], [1, 2, 3]);
+			const pane = model.panes()[0];
+
+			model.setCrosshairPosition(97, 50, pane);
+			model.resolveCrosshair();
+			expect(model.crosshair().price).to.equal(3);
+			expect(model.crosshair().y).to.equal(pane.priceScale.priceToCoordinate(3, 1));
+
+			model.applyOptions({ crosshair: { mode: CrosshairMode.Normal } });
+			model.setCrosshairPosition(97, 50, pane);
+			model.resolveCrosshair();
+			expect(model.crosshair().y).to.be.closeTo(50, 1e-9);
 		});
 
 		it('is calculated again after a scale change', () => {

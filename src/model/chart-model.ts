@@ -1,7 +1,7 @@
 import { type DeepPartial, merge } from '../helpers/strict-type-checks';
 
 import type { Coordinate } from './coordinate';
-import { createCrosshair, type Crosshair, type CrosshairOptions } from './crosshair';
+import { createCrosshair, type Crosshair, CrosshairMode, type CrosshairOptions } from './crosshair';
 import { DataStore, type SortedTimes, UpdateKind } from './data-store';
 import type { GridOptions } from './grid';
 import type { LayoutOptions } from './layout-options';
@@ -360,6 +360,14 @@ export class ChartModel {
 		const firstValue = pane.series.length !== 0 && !priceScale.isEmpty() ? priceScale.firstValue() : null;
 		if (firstValue !== null) {
 			crosshair.price = priceScale.coordinateToPrice(crosshair.originY as Coordinate, firstValue);
+			if (this.#options.crosshair.mode === CrosshairMode.Magnet) {
+				// the close price of the bar of the first series of the scale, if there is a bar
+				const store = priceScale.sources()[0].store();
+				const row = store.rowAt(index);
+				if (row >= 0) {
+					crosshair.price = store.closeAt(row);
+				}
+			}
 			crosshair.y = priceScale.priceToCoordinate(crosshair.price, firstValue);
 		} else {
 			crosshair.price = NaN;
