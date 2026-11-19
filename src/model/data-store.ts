@@ -160,35 +160,51 @@ function mergeUnique(a: Float64Array, b: Float64Array): Float64Array {
 	return k === result.length ? result : result.subarray(0, k);
 }
 
+/**
+ * Weight of a time point for the tick marks of the time axis: the largest unit of time
+ * that changed since the time point before it. A larger unit has a larger weight.
+ * A weight is stored in one byte, and the tick mark code permits at most 15 different weights.
+ */
+export const enum TickMarkWeight {
+	Second = 19,
+	Minute = 20,
+	Minute5 = 21,
+	Minute30 = 22,
+	Hour = 30,
+	Hour3 = 31,
+	Hour6 = 32,
+	Hour12 = 33,
+	Day = 50,
+	Month = 60,
+	Year = 70,
+}
+
 const SECONDS_IN_DAY = 86400;
 // from the largest step to the smallest: [seconds, weight]
-const intradaySpans: readonly (readonly [number, number])[] = [
-	[12 * 3600, 33],
-	[6 * 3600, 32],
-	[3 * 3600, 31],
-	[3600, 30],
-	[30 * 60, 22],
-	[5 * 60, 21],
-	[60, 20],
-	[1, 19],
+const intradaySpans: readonly (readonly [number, TickMarkWeight])[] = [
+	[12 * 3600, TickMarkWeight.Hour12],
+	[6 * 3600, TickMarkWeight.Hour6],
+	[3 * 3600, TickMarkWeight.Hour3],
+	[3600, TickMarkWeight.Hour],
+	[30 * 60, TickMarkWeight.Minute30],
+	[5 * 60, TickMarkWeight.Minute5],
+	[60, TickMarkWeight.Minute],
+	[1, TickMarkWeight.Second],
 ];
 
-/**
- * Weight of a time point for the tick marks of the time axis: the largest calendar
- * unit that changed since the previous time point.
- */
-export function spanByTime(time: number, previousTime: number | null): number {
+/** The weight of a time point. The first time point has no time point before it. */
+export function spanByTime(time: number, previousTime: number | null): TickMarkWeight {
 	if (previousTime === null) {
-		return 20;
+		return TickMarkWeight.Minute;
 	}
 
 	if (Math.floor(time / SECONDS_IN_DAY) !== Math.floor(previousTime / SECONDS_IN_DAY)) {
 		const current = new Date(time * 1000);
 		const previous = new Date(previousTime * 1000);
 		if (current.getUTCFullYear() !== previous.getUTCFullYear()) {
-			return 70;
+			return TickMarkWeight.Year;
 		}
-		return current.getUTCMonth() !== previous.getUTCMonth() ? 60 : 50;
+		return current.getUTCMonth() !== previous.getUTCMonth() ? TickMarkWeight.Month : TickMarkWeight.Day;
 	}
 
 	for (const [step, span] of intradaySpans) {
@@ -197,7 +213,7 @@ export function spanByTime(time: number, previousTime: number | null): number {
 		}
 	}
 
-	return 20;
+	return TickMarkWeight.Minute;
 }
 
 export class DataStore {

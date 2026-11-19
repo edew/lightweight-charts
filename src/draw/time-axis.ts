@@ -2,6 +2,7 @@
 // of the axis, in device pixels.
 
 import type { ChartModel } from '../model/chart-model';
+import { TickMarkWeight } from '../model/data-store';
 
 import { contrastTextColor, LabelSize, labelMetrics, textWidth } from './labels';
 import { hairline } from './line-style';
@@ -36,8 +37,8 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 		}
 	}
 	// it looks strange if 15:00 is bold but 14:00 is not: all hour steps have the same style
-	if (maxSpan > 30 && maxSpan < 40) {
-		maxSpan = 30;
+	if (maxSpan > TickMarkWeight.Hour && maxSpan < TickMarkWeight.Day) {
+		maxSpan = TickMarkWeight.Hour;
 	}
 
 	if (borderVisible) {

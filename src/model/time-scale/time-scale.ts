@@ -7,7 +7,7 @@ import { type DeepPartial, merge } from '../../helpers/strict-type-checks';
 import type { BarsRange } from '../bars-range';
 import type { ChartModel } from '../chart-model';
 import type { Coordinate } from '../coordinate';
-import type { DataStore } from '../data-store';
+import { type DataStore, TickMarkWeight } from '../data-store';
 import type { LocalizationOptions } from '../localization-options';
 import { TickMarks } from './tick-marks';
 import { secondsToBusinessDay, type TimePointIndex, type TimeSecondsRange, type UTCTimestamp } from './time-data';
@@ -18,16 +18,6 @@ const enum Constants {
 	// the maximum bar spacing is the width divided by this number
 	MinVisibleBarsCount = 2,
 	MaxCachedLabels = 500,
-}
-
-/** Tick-mark weights: a time point with a weight below `Day` is in the same day as the time point before it, and so on. */
-const enum MarkSpanBorder {
-	Minute = 20,
-	Hour = 30,
-	Day = 40,
-	Week = 50,
-	Month = 60,
-	Year = 70,
 }
 
 export interface TimeMark {
@@ -489,16 +479,16 @@ export class TimeScale {
 	#labelFormatOptions(span: number): Intl.DateTimeFormatOptions {
 		const formatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC' };
 
-		if (span < MarkSpanBorder.Day && this.#options.timeVisible) {
+		if (span < TickMarkWeight.Day && this.#options.timeVisible) {
 			formatOptions.hour12 = false;
 			formatOptions.hour = '2-digit';
 			formatOptions.minute = '2-digit';
-			if (span < MarkSpanBorder.Minute && this.#options.secondsVisible) {
+			if (span < TickMarkWeight.Minute && this.#options.secondsVisible) {
 				formatOptions.second = '2-digit';
 			}
-		} else if (span < MarkSpanBorder.Month) {
+		} else if (span < TickMarkWeight.Month) {
 			formatOptions.day = 'numeric';
-		} else if (span < MarkSpanBorder.Year) {
+		} else if (span < TickMarkWeight.Year) {
 			formatOptions.month = 'short';
 		} else {
 			formatOptions.year = 'numeric';
