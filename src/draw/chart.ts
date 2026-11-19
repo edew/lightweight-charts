@@ -73,7 +73,7 @@ export function prepareFrame(ctx: CanvasRenderingContext2D, model: ChartModel, w
 /**
  * The second step of a frame: calculates the crosshair and draws. A Cursor frame draws
  * only the overlay. With one context for the two parameters, the crosshair is drawn on
- * the static content.
+ * the static content (the pixel tests use this).
  *
  * @returns true if the crosshair changed
  */
@@ -101,7 +101,7 @@ function beginRegion(ctx: CanvasRenderingContext2D, rect: Rect, pixelRatio: numb
 }
 
 /** Draws all content that changes only with data, scales or options. */
-function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
+export function drawStatic(ctx: CanvasRenderingContext2D, model: ChartModel, layout: Layout, pixelRatio: number): void {
 	const options = model.options();
 	const panes = model.panes();
 

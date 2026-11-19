@@ -5,7 +5,7 @@ import { ensureNotNull } from '../helpers/assertions';
 import type { IDestroyable } from '../helpers/idestroyable';
 import type { DeepPartial } from '../helpers/strict-type-checks';
 
-import { drawFrame, layoutChart, prepareFrame } from '../draw/chart';
+import { drawFrame, drawStatic, layoutChart, prepareFrame } from '../draw/chart';
 import { type HitResult, hitTest, type Layout, Region } from '../draw/layout';
 
 import { ChartModel, type ChartOptionsInternal, InvalidationLevel } from '../model/chart-model';
@@ -192,7 +192,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		this.resize(options.width || this.#width, options.height || this.#height);
 	}
 
-	/** Draws the chart, with the crosshair, on a new canvas. */
+	/** Draws the chart, with no crosshair, on a new canvas. */
 	public takeScreenshot(): HTMLCanvasElement {
 		this.#flush();
 
@@ -202,7 +202,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 		canvas.style.width = this.#width + 'px';
 		canvas.style.height = this.#height + 'px';
 		const ctx = ensureNotNull(canvas.getContext('2d'));
-		drawFrame(ctx, ctx, this.#model, this.#layout, this.#pixelRatio, InvalidationLevel.Full);
+		drawStatic(ctx, this.#model, this.#layout, this.#pixelRatio);
 		return canvas;
 	}
 
