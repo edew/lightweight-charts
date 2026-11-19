@@ -25,7 +25,7 @@ export interface MouseEventParams {
 export type MouseEventHandler = (param: MouseEventParams) => void;
 export type TimeRangeChangeEventHandler = (timeRange: TimeRange | null) => void;
 
- /*
+/**
  * The main interface of a single chart
  */
 export interface IChartApi {
@@ -35,10 +35,12 @@ export interface IChartApi {
 	remove(): void;
 
 	/**
-	 * Sets fixed size of the chart. By default chart takes up 100% of its container
+	 * Sets the size of the chart. If the options give no width and no height, the chart measures
+	 * its container one time, when it is created. It does not follow a later change of the size
+	 * of the container: call this method for that.
 	 * @param width - target width of the chart
 	 * @param height - target height of the chart
-	 * @param forceRepaint - true to initiate resize immediately. One could need this to get screenshot immediately after resize
+	 * @param forceRepaint - true to draw immediately and not in the next frame. This is necessary to get a screenshot immediately after the call
 	 */
 	resize(width: number, height: number, forceRepaint?: boolean): void;
 
@@ -55,7 +57,7 @@ export interface IChartApi {
 	 */
 	removeSeries(seriesApi: ISeriesApi<SeriesType>): void;
 
-	/*
+	/**
 	 * Adds a subscription to mouse click event
 	 * @param handler - handler (function) to be called on mouse click
 	 */
