@@ -217,6 +217,12 @@ describe('ChartModel', () => {
 			expect(model.crosshair().index).to.equal(3);
 		});
 
+		it('has no time index when the chart has no data', () => {
+			model.clearCrosshairPosition();
+			model.resolveCrosshair();
+			expect(model.crosshair().index).to.equal(null);
+		});
+
 		it('clears to the last time point with no pane', () => {
 			const series = addLine(model);
 			setLine(model, series, [10, 20, 30], [1, 2, 3]);

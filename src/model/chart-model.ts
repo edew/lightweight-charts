@@ -334,7 +334,7 @@ export class ChartModel {
 
 		if (pane === null) {
 			const count = this.#dataStore.length;
-			crosshair.index = (count !== 0 ? count - 1 : NaN) as TimePointIndex;
+			crosshair.index = count !== 0 ? count - 1 as TimePointIndex : null;
 			crosshair.price = NaN;
 			crosshair.x = NaN;
 			crosshair.y = NaN;
@@ -348,7 +348,7 @@ export class ChartModel {
 		}
 
 		crosshair.index = index;
-		crosshair.x = isNaN(index) ? NaN : timeScale.indexToCoordinate(index);
+		crosshair.x = timeScale.indexToCoordinate(index);
 
 		const priceScale = pane.priceScale;
 		const firstValue = pane.series.length !== 0 && !priceScale.isEmpty() ? priceScale.firstValue() : null;

@@ -311,7 +311,7 @@ export function drawPaneCrosshair(ctx: CanvasRenderingContext2D, model: ChartMod
 		}
 
 		const store = series[i].store();
-		const row = Number.isInteger(crosshair.index) ? store.rowAt(crosshair.index) : -1;
+		const row = crosshair.index === null ? -1 : store.rowAt(crosshair.index);
 		const firstValue = row < 0 ? null : series[i].firstValue();
 		if (firstValue === null) {
 			continue;

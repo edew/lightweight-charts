@@ -169,7 +169,7 @@ export class TimeScale {
 	}
 
 	public indexToCoordinate(index: TimePointIndex): Coordinate {
-		if (this.isEmpty() || !Number.isInteger(index)) {
+		if (this.isEmpty()) {
 			return 0 as Coordinate;
 		}
 
@@ -178,7 +178,7 @@ export class TimeScale {
 
 	/** Time of a time point in UTC seconds, or null when there is no such time point. */
 	public indexToTime(index: TimePointIndex): number | null {
-		return Number.isInteger(index) && index >= 0 && index < this.#store.length ? this.#store.times[index] : null;
+		return index >= 0 && index < this.#store.length ? this.#store.times[index] : null;
 	}
 
 	public coordinateToIndex(x: Coordinate): TimePointIndex {

@@ -319,8 +319,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 
 		if (this.onClick !== null) {
 			this.#flush();
-			const index = this.#model.crosshair().index;
-			this.onClick(Number.isNaN(index) ? null : index, { x: hit.x, y: hit.y });
+			this.onClick(this.#model.crosshair().index, { x: hit.x, y: hit.y });
 		}
 
 		if (this.#exitTrackingModeOnNextTry) {
@@ -617,7 +616,7 @@ export class ChartWidget implements IDestroyable, PointerHandlers {
 			if (crosshair.pane === null) {
 				this.onCrosshairMove(null, null);
 			} else {
-				this.onCrosshairMove(Number.isNaN(crosshair.index) ? null : crosshair.index, { x: crosshair.originX, y: crosshair.originY });
+				this.onCrosshairMove(crosshair.index, { x: crosshair.originX, y: crosshair.originY });
 			}
 		}
 	}

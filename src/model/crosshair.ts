@@ -49,8 +49,8 @@ export interface Crosshair {
 	/** Pointer position in the pane, CSS pixels. */
 	originX: number;
 	originY: number;
-	/** Time index under the pointer. NaN when there is no data. */
-	index: TimePointIndex;
+	/** Time index under the pointer, or of the last time point when there is no pointer. Null when the chart has no data. */
+	index: TimePointIndex | null;
 	/** Price under the pointer on the price scale of the pane. */
 	price: number;
 	/** x of the center of the bar at `index`, CSS pixels. */
@@ -64,7 +64,7 @@ export function createCrosshair(): Crosshair {
 		pane: null,
 		originX: NaN,
 		originY: NaN,
-		index: NaN as TimePointIndex,
+		index: null,
 		price: NaN,
 		x: NaN,
 		y: NaN,

@@ -192,7 +192,7 @@ export class Series<T extends SeriesType = SeriesType> {
 	}
 
 	public dataAt(time: TimePointIndex): SeriesDataAtTypeMap[SeriesType] | null {
-		const row = Number.isInteger(time) ? this.#store.rowAt(time) : -1;
+		const row = this.#store.rowAt(time);
 		if (row < 0) {
 			return null;
 		}
