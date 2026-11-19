@@ -23,10 +23,9 @@ function candlestickWidth(barSpacing: number, pixelRatio: number): number {
 	const optimal = Math.min(res, scaledBarSpacing - 1);
 	let barWidth = Math.max(1, optimal);
 
-	// the grid and the crosshair have a line width of floor(pixelRatio):
-	// the candle width must be odd or even as that width is, so that the crosshair is in the center
+	// the candle width must be odd or even as the wick width is, so that the wick is in the center
 	if (barWidth >= 2) {
-		const wickWidth = Math.floor(pixelRatio);
+		const wickWidth = Math.max(1, Math.floor(pixelRatio));
 		if ((wickWidth % 2) !== (barWidth % 2)) {
 			barWidth--;
 		}
@@ -68,7 +67,7 @@ function draw(ctx: CanvasRenderingContext2D, data: SeriesDrawData, options: Cand
 	const borderVisible = options.borderVisible;
 
 	if (options.wickVisible) {
-		let wickWidth = Math.min(Math.floor(pixelRatio), Math.floor(data.barSpacing * pixelRatio));
+		let wickWidth = Math.max(1, Math.min(Math.floor(pixelRatio), Math.floor(data.barSpacing * pixelRatio)));
 		wickWidth = Math.min(wickWidth, barWidth);
 		const wickOffset = Math.floor(wickWidth * 0.5);
 		const upColor = options.wickUpColor;

@@ -29,6 +29,21 @@ function risingCandles(count: number): BarData[] {
 }
 
 describe('draw calls', () => {
+	it('draws the wick of a candle at a pixel ratio below 1', () => {
+		const chart = createHeadlessChart({ width: 400, height: 240, options: seriesOnly });
+		chart.addSeries('Candlestick', { lastValueVisible: false, borderVisible: false }).setData(risingCandles(50));
+		const recording = createRecordingContext();
+		chart.draw(recording.ctx, 0.75);
+
+		const rects = recording.log.filter((entry: string) => entry.startsWith('fillRect('));
+		// background, and two wick parts and a body for each of the 50 bars
+		expect(rects.length).to.equal(151);
+		for (const rect of rects) {
+			const width = Number(rect.slice(9, -1).split(',')[2]);
+			expect(width, rect).to.be.greaterThan(0);
+		}
+	});
+
 	it('a line is one path with one stroke', () => {
 		const chart = createHeadlessChart({ width: 400, height: 240, options: seriesOnly });
 		chart.addSeries('Line', { lastValueVisible: false }).setData(line(200));
