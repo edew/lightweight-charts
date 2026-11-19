@@ -42,4 +42,24 @@ describe('SeriesApi', () => {
 		expect(() => second.applyOptions({ color: 'red' })).to.throw();
 		expect(model.dataStore().length).to.equal(3);
 	});
+
+	it('does not accept a type of time that is different from the other series of the chart', () => {
+		const model = createModel();
+		const first = addLine(model);
+		const second = addLine(model);
+		first.setData(data);
+
+		expect(() => second.setData([{ time: '2019-01-01', value: 1 }])).to.throw();
+		expect(model.dataStore().businessDay).to.equal(false);
+	});
+
+	it('accepts a new type of time when no other series has data', () => {
+		const model = createModel();
+		const first = addLine(model);
+		addLine(model);
+		first.setData(data);
+		first.setData([{ time: '2019-01-01', value: 1 }]);
+
+		expect(model.dataStore().businessDay).to.equal(true);
+	});
 });

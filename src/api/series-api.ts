@@ -47,8 +47,11 @@ export function seriesOptionsFromSpec<T extends SeriesType>(spec: SeriesSpec<T>)
 
 /** Replaces all data of a series with the data items of the user. */
 export function setSeriesData(series: Series, data: readonly (LineData | BarData)[]): void {
-	const converted = convertSeriesData(series.store().stride, data);
-	series.model().setSeriesData(series, converted.times, converted.values, converted.businessDay);
+	const model = series.model();
+	const store = model.dataStore();
+	// the data of the other series sets the type of time
+	const converted = convertSeriesData(series.store().stride, data, store.hasOtherRows(series.store()) ? store.businessDay : null);
+	model.setSeriesData(series, converted.times, converted.values, converted.businessDay);
 }
 
 /** Updates the last bar of a series or adds a new bar. */

@@ -222,6 +222,16 @@ export class DataStore {
 		return series;
 	}
 
+	/** True if a series that is not `series` has data. */
+	public hasOtherRows(series: SeriesStore): boolean {
+		for (const other of this.#series) {
+			if (other !== series && other.length !== 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public removeSeries(series: SeriesStore): void {
 		const position = this.#series.indexOf(series);
 		if (position !== -1) {

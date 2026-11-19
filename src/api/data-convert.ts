@@ -90,10 +90,13 @@ export interface ConvertedSeriesData {
 /**
  * Copies the data items of the user into typed arrays. The items are not changed and
  * not kept. If two items have the same time, the last one wins.
+ *
+ * @param timeType - true if each time must be a business day, false if each time must
+ * be a timestamp, null if the first item gives the type
  */
-export function convertSeriesData(stride: number, data: readonly (LineData | BarData)[]): ConvertedSeriesData {
+export function convertSeriesData(stride: number, data: readonly (LineData | BarData)[], timeType: boolean | null = null): ConvertedSeriesData {
 	const count = data.length;
-	const businessDay = count !== 0 && isBusinessDayTime(data[0].time);
+	const businessDay = timeType ?? (count !== 0 && isBusinessDayTime(data[0].time));
 	const times = new Float64Array(count);
 	const values = new Float64Array(count * stride);
 
