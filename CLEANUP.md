@@ -4,17 +4,17 @@
 
 ## Numbers
 
-Measured on 2026-11-19.
+Measured on 2026-11-25.
 
 | Metric | Value | Limit |
 |---|---|---|
-| Bundle, UMD minified (`npm run build`) | 58.72 kB | 60 kB |
-| Bundle, UMD gzip | 19.91 kB | 20 kB |
-| Bundle, ES module gzip | 22.35 kB | |
+| Bundle, UMD minified (`npm run build`) | 57.32 kB | 60 kB |
+| Bundle, UMD gzip | 19.36 kB | 20 kB |
+| Bundle, ES module gzip | 21.73 kB | |
 | Runtime dependencies | 0 | 0 |
-| `src` lines | 6,844 | |
+| `src` lines | 6,641 | |
 | Canvas elements for one chart | 2 | 2 |
-| Unit and pixel tests | 280 | |
+| Unit and pixel tests | 308 | |
 
 The margin below the gzip limit is small. Run `npm run build` after each change in `src` and read the gzip size of the UMD file.
 
@@ -24,9 +24,9 @@ Candlestick series, one-minute bars, 200 visible bars, device pixel ratio 2. The
 
 | Bars | `setData` ms | Retained B/bar | Tick µs | Tick + draw µs | Append µs | Append + draw µs | Pan frame µs |
 |---|---|---|---|---|---|---|---|
-| 10,000 | 3.7 | 71 | 1.3 | 26 | 1.5 | 20 | 11 |
-| 100,000 | 4.2 | 33 | 0.3 | 6 | 0.5 | 10 | 7 |
-| 1,000,000 | 31.7 | 34 | 0.2 | 5 | 0.2 | 11 | 8 |
+| 10,000 | 1.3 | 66 | 1.8 | 27 | 1.3 | 13 | 11 |
+| 100,000 | 2.1 | 32 | 0.3 | 7 | 0.5 | 8 | 7 |
+| 1,000,000 | 36.7 | 32 | 0.2 | 6 | 0.3 | 9 | 8 |
 
 All costs are constant in the number of bars, but not `setData`. Limits: `setData` for 100,000 bars below 10 ms, retained memory below 50 B for each bar, append below 2 µs.
 
@@ -34,12 +34,11 @@ All costs are constant in the number of bars, but not `setData`. Limits: `setDat
 
 1. **Touch input.** Long tap, tracking mode and pinch use Pointer Events. They were checked only with a mouse and with pointer events of the type `touch` from a script. Test on a touch device.
 2. **Level of detail.** `TimeScale` does not permit a bar spacing below 0.5 CSS pixels, thus there are at most two bars for each CSS pixel and the draw cost is limited by the canvas width. Level of detail is necessary only if that limit is removed. Then: aggregate for each pixel column (minimum and maximum; first and last for candles) into a scratch buffer that is allocated one time, and draw from that buffer.
-3. **Tick marks on zoom.** A change of the minimum distance between marks builds all marks again (approximately 2 ms for 100,000 time points, 18 ms for 1,000,000). A rule that does not depend on the first time point would make this constant, but it changes which labels are shown.
-4. **Draw order of series.** The series that was added last is below the other series. Decide if it must be the opposite. It is one loop direction in `drawPane()`.
-5. **Pane API.** `chart.panes()` returns `IPaneApi` with `height()`, `stretchFactor()`, `setStretchFactor()`, `applyPriceScaleOptions()` and `priceScaleOptions()`. The user did not confirm this shape.
-6. **`touch-action`.** One element has one CSS `touch-action`, thus the page scroll setting of the pane (`handleScroll.vertTouchDrag` / `horzTouchDrag`) also applies on the axes.
-7. **History prepend.** An update with a time that is older than the last bar of the series throws. Data before the first bar can be added only with `setData`.
-8. **`website/`, `lib/`.** These directories are old build output that git ignores. They can be deleted from the disk. `npx vitest run` with no path finds the old files in `lib/`; use `npm test`.
+3. **Draw order of series.** The series that was added last is below the other series. Decide if it must be the opposite. It is one loop direction in `drawPane()`.
+4. **Pane API.** `chart.panes()` returns `IPaneApi` with `height()`, `stretchFactor()`, `setStretchFactor()`, `applyPriceScaleOptions()` and `priceScaleOptions()`. The user did not confirm this shape.
+5. **`touch-action`.** One element has one CSS `touch-action`, thus the page scroll setting of the pane (`handleScroll.vertTouchDrag` / `horzTouchDrag`) also applies on the axes.
+6. **History prepend.** An update with a time that is older than the last bar of the series throws. Data before the first bar can be added only with `setData`.
+7. **`website/`, `lib/`.** These directories are old build output that git ignores. They can be deleted from the disk. `npx vitest run` with no path finds the old files in `lib/`; use `npm test`.
 
 ## Design notes: more series types
 

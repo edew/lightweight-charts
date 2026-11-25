@@ -7,9 +7,8 @@ import { type DeepPartial, merge } from '../../helpers/strict-type-checks';
 import type { BarsRange } from '../bars-range';
 import type { ChartModel } from '../chart-model';
 import type { Coordinate } from '../coordinate';
-import { type DataStore, lowerBound, TickMarkWeight } from '../data-store';
+import type { DataStore } from '../data-store';
 import type { LocalizationOptions } from '../localization-options';
-import { TickMarks } from './tick-marks';
 import { secondsToBusinessDay, type TimePointIndex, type TimeSecondsRange, type UTCTimestamp } from './time-data';
 
 const enum Constants {
@@ -19,10 +18,17 @@ const enum Constants {
 	MaxCachedLabels = 500,
 }
 
+/** What the label of a tick mark shows. */
+const enum LabelKind {
+	Time,
+	Seconds,
+	Date,
+	Year,
+}
+
 export interface TimeMark {
 	coord: number;
 	label: string;
-	span: number;
 }
 
 export interface TimeScaleOptions {
@@ -44,6 +50,15 @@ export interface TimeScaleOptions {
  */
 export function barX(width: number, rightIndex: number, barSpacing: number, index: number): number {
 	return width - (rightIndex - index + 0.5) * barSpacing;
+}
+
+/**
+ * The smallest step that is not less than a number of bars. A step is a power of 2,
+ * or 3 times a power of 2: 1, 2, 3, 4, 6, 8, 12, 16...
+ */
+function markStep(minBars: number): number {
+	const step = 2 ** Math.max(0, Math.ceil(Math.log2(minBars)));
+	return step >= 4 && step * 0.75 >= minBars ? step * 0.75 : step;
 }
 
 export class TimeScale {
@@ -72,12 +87,14 @@ export class TimeScale {
 
 	/** The number of the last scroll animation. A step of an older animation does nothing. */
 	#animation: number = 0;
-	readonly #tickMarks: TickMarks = new TickMarks();
 	readonly #marks: TimeMark[] = [];
 	#marksValid: boolean = false;
-	// one date formatter for each weight (slow to make, fast to use), and the text of the last labels
-	readonly #labelFormatters: Map<number, Intl.DateTimeFormat> = new Map();
+	// one date formatter for each label kind (slow to make, fast to use)
+	readonly #labelFormatters: (Intl.DateTimeFormat | undefined)[] = [];
+	// the text of the last labels, by time. It is valid for one step and one generation of the store.
 	readonly #labelCache: Map<number, string> = new Map();
+	#labelStep: number = 0;
+	#labelGeneration: number = -1;
 
 	public constructor(model: ChartModel, options: TimeScaleOptions, localizationOptions: LocalizationOptions) {
 		this.#options = options;
@@ -112,7 +129,7 @@ export class TimeScale {
 	/** Call when the locale or an option that changes the text of the labels changed. */
 	public resetLabels(): void {
 		this.#marksValid = false;
-		this.#labelFormatters.clear();
+		this.#labelFormatters.length = 0;
 		this.#labelCache.clear();
 	}
 
@@ -208,7 +225,11 @@ export class TimeScale {
 		this.#changed();
 	}
 
-	/** The visible tick marks. The array and its items are used again for each build. */
+	/**
+	 * The visible tick marks. The array and its items are used again for each build.
+	 * There is a mark at each time index that is a multiple of a step, thus the distance
+	 * between marks is constant.
+	 */
 	public marks(): TimeMark[] | null {
 		if (this.isEmpty()) {
 			return null;
@@ -221,25 +242,31 @@ export class TimeScale {
 		}
 		this.#marksValid = true;
 
-		const maxLabelWidth = (this.#model.options().layout.fontSize + 4) * 5;
 		const store = this.#store;
-		const marks = this.#tickMarks.build(store.spans, store.length, store.generation, this.#barSpacing, maxLabelWidth);
-		const indexes = marks.indexes;
+		// two marks must be at least this number of bars apart, or their labels overlap
+		const minBars = (this.#model.options().layout.fontSize + 4) * 4 / this.#barSpacing;
+		let step = markStep(minBars);
+		// a step of more than half a year: each label can have a year, and such a label is wider
+		if (step < store.length && store.times[step] - store.times[0] > 183 * 86400) {
+			step = markStep(minBars * 1.5);
+		}
 
-		// first accepted mark that is not left of the visible range
-		let position = lowerBound(indexes, marks.count, visibleBars.first);
+		// the text of a label depends on the mark before it, thus on the step
+		if (step !== this.#labelStep || store.generation !== this.#labelGeneration) {
+			this.#labelStep = step;
+			this.#labelGeneration = store.generation;
+			this.#labelCache.clear();
+		}
 
+		const last = Math.min(visibleBars.last, store.length - 1);
 		let count = 0;
-		for (; position < marks.count && indexes[position] <= visibleBars.last; position++) {
-			const index = indexes[position] as TimePointIndex;
-			const span = store.spans[index];
+		for (let index = Math.max(0, Math.ceil(visibleBars.first / step) * step); index <= last; index += step) {
 			if (count === labels.length) {
-				labels.push({ coord: 0, label: '', span: 0 });
+				labels.push({ coord: 0, label: '' });
 			}
 			const label = labels[count++];
-			label.coord = this.indexToCoordinate(index);
-			label.label = this.#formatLabel(store.times[index], span);
-			label.span = span;
+			label.coord = this.indexToCoordinate(index as TimePointIndex);
+			label.label = this.#formatLabel(index, step);
 		}
 		labels.length = count;
 
@@ -454,48 +481,49 @@ export class TimeScale {
 		}
 	}
 
-	#formatLabel(time: number, span: number): string {
+	/**
+	 * The text of the mark at a time index: the date of the time point. The year shows
+	 * only on the first mark of a year. With the option `timeVisible`, a mark on the
+	 * same day as the mark before it shows the time.
+	 */
+	#formatLabel(index: number, step: number): string {
 		const cache = this.#labelCache;
-		// a weight is less than 256
-		const key = time * 256 + span;
-		let text = cache.get(key);
+		const times = this.#store.times;
+		const time = times[index];
+		let text = cache.get(time);
 		if (text === undefined) {
-			let formatter = this.#labelFormatters.get(span);
+			const options = this.#options;
+			// NaN for the first mark: it is a date with no year
+			const previous = index < step ? NaN : times[index - step];
+			let kind: LabelKind;
+			if (options.timeVisible && Math.floor(time / 86400) === Math.floor(previous / 86400)) {
+				kind = options.secondsVisible && (time % 60 !== 0 || previous % 60 !== 0) ? LabelKind.Seconds : LabelKind.Time;
+			} else {
+				kind = new Date(time * 1000).getUTCFullYear() !== new Date(previous * 1000).getUTCFullYear() && index >= step ? LabelKind.Year : LabelKind.Date;
+			}
+
+			let formatter = this.#labelFormatters[kind];
 			if (formatter === undefined) {
-				formatter = new Intl.DateTimeFormat(this.#localizationOptions.locale, this.#labelFormatOptions(span));
-				this.#labelFormatters.set(span, formatter);
+				const timeFormat: Intl.DateTimeFormatOptions = { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' };
+				const date: Intl.DateTimeFormatOptions = { timeZone: 'UTC', day: 'numeric', month: 'short' };
+				if (kind === LabelKind.Seconds) {
+					timeFormat.second = '2-digit';
+				}
+				if (kind === LabelKind.Year) {
+					date.year = 'numeric';
+				}
+				formatter = new Intl.DateTimeFormat(this.#localizationOptions.locale, kind < LabelKind.Date ? timeFormat : date);
+				this.#labelFormatters[kind] = formatter;
 			}
 
 			if (cache.size >= Constants.MaxCachedLabels) {
 				cache.clear();
 			}
 			text = formatter.format(time * 1000);
-			cache.set(key, text);
+			cache.set(time, text);
 		}
 
 		return text;
-	}
-
-	/** Which part of the date a tick mark with the given weight shows. */
-	#labelFormatOptions(span: number): Intl.DateTimeFormatOptions {
-		const formatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC' };
-
-		if (span < TickMarkWeight.Day && this.#options.timeVisible) {
-			formatOptions.hour12 = false;
-			formatOptions.hour = '2-digit';
-			formatOptions.minute = '2-digit';
-			if (span < TickMarkWeight.Minute && this.#options.secondsVisible) {
-				formatOptions.second = '2-digit';
-			}
-		} else if (span < TickMarkWeight.Month) {
-			formatOptions.day = 'numeric';
-		} else if (span < TickMarkWeight.Year) {
-			formatOptions.month = 'short';
-		} else {
-			formatOptions.year = 'numeric';
-		}
-
-		return formatOptions;
 	}
 
 	#dataChanged(): void {

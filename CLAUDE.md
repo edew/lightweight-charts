@@ -43,7 +43,7 @@ Dependencies go down only. `src/model` does not import `src/draw`, `src/series` 
 
 ### Data (`src/model/data-store.ts`)
 
-- `DataStore.times`: one sorted `Float64Array` of UTC seconds for the chart. The position of a time is its time point index. `DataStore.spans`: a `Uint8Array` with the tick-mark weight of each time point.
+- `DataStore.times`: one sorted `Float64Array` of UTC seconds for the chart. The position of a time is its time point index.
 - `SeriesStore.values`: one `Float64Array` for each series, with `stride` values for each bar (1: value; 4: open, high, low, close). Row `r` is at time index `first + r`, or at `index[r]` when the series does not have consecutive time points.
 - The time points of the chart are the union of the times of all series.
 - `src/api/data-convert.ts` converts `BusinessDay` and string times to seconds, and copies the user's items into typed arrays. The library does not change and does not keep the user's objects.
@@ -90,7 +90,7 @@ These are the reason this library exists. A change that works but breaks one of 
 - **Tiered invalidation** (`InvalidationLevel` in `src/model/chart-model.ts`): `None < Cursor < Light < Full`. Cursor draws only the overlay. Light keeps the width of the price axis or makes it wider; Full calculates it again. Use the lowest level that is correct.
 - **One frame for all changes.** An invalidation is one number: the widget keeps the highest level and one `requestAnimationFrame`. An invalidation does not draw and does not allocate. The frame takes the level before it draws; changes that the frame's own prepare step makes in the model are drawn by that frame.
 - **Draw only what is visible.** `drawSeries()` finds the visible rows with a search; loops run over those rows only.
-- **Tick marks** (`src/model/time-scale/tick-marks.ts`) are cached. New time points at the end build only the end again. A change of the minimum distance between marks (a zoom) builds all marks again: this is the one cost that is linear in the number of time points during interaction.
+- **Time marks** (`TimeScale.marks()`) are on each time index that is a multiple of a step, so the distance between marks is constant. The step is the smallest of 1, 2, 3, 4, 6, 8, 12, 16... (a power of 2, or 3 times a power of 2) that keeps the labels apart. The cost is the number of visible marks: there is no work for each time point. A label shows the date of its time point (the year only on the first mark of a year; the time when `timeVisible` is on and the mark before it is on the same day).
 - **Cheap inner loops.** Write `fillStyle` / `strokeStyle` only when the value changes. One `stroke()` for a line. No `save` / `restore` in a bar loop. `tests/unittests/draw-calls.spec.ts` checks these rules.
 - **Pixels.** Series draw in device pixels with rounding. The device pixel ratio is stored when the canvas size changes, not read in a draw path.
 - **Cache behind invalidation:** text width, parsed colors, formatted labels, label metrics.

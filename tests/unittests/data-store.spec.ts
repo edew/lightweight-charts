@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
-import { DataStore, SearchMode, type SeriesStore, type SortedTimes, spanByTime, UpdateKind } from '../../src/model/data-store';
+import { DataStore, SearchMode, type SeriesStore, type SortedTimes, UpdateKind } from '../../src/model/data-store';
 
 function f64(...values: number[]): Float64Array {
 	return new Float64Array(values);
@@ -243,33 +243,6 @@ describe('SeriesStore search', () => {
 		expect(dense().lowerBound(-3)).to.equal(0);
 		expect(dense().lowerBound(4)).to.equal(2);
 		expect(dense().lowerBound(5)).to.equal(3);
-	});
-});
-
-describe('spanByTime', () => {
-	const day = 86400;
-	const base = Date.UTC(2020, 5, 15, 12, 0, 0) / 1000;
-
-	it('gives 20 for the first time point', () => {
-		expect(spanByTime(base, null)).to.equal(20);
-	});
-
-	it('gives the largest calendar unit that changed', () => {
-		expect(spanByTime(Date.UTC(2021, 0, 1) / 1000, Date.UTC(2020, 11, 31) / 1000)).to.equal(70);
-		expect(spanByTime(Date.UTC(2020, 6, 1) / 1000, Date.UTC(2020, 5, 30) / 1000)).to.equal(60);
-		expect(spanByTime(base + day, base)).to.equal(50);
-	});
-
-	it('gives the intraday steps', () => {
-		const midnight = Date.UTC(2020, 5, 15) / 1000;
-		expect(spanByTime(midnight + 12 * 3600, midnight + 12 * 3600 - 60)).to.equal(33);
-		expect(spanByTime(midnight + 6 * 3600, midnight + 6 * 3600 - 60)).to.equal(32);
-		expect(spanByTime(midnight + 3 * 3600, midnight + 3 * 3600 - 60)).to.equal(31);
-		expect(spanByTime(midnight + 3600, midnight + 3600 - 60)).to.equal(30);
-		expect(spanByTime(midnight + 1800, midnight + 1800 - 60)).to.equal(22);
-		expect(spanByTime(midnight + 300, midnight + 300 - 60)).to.equal(21);
-		expect(spanByTime(midnight + 60, midnight + 59)).to.equal(20);
-		expect(spanByTime(midnight + 61, midnight + 60)).to.equal(19);
 	});
 });
 

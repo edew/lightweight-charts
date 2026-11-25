@@ -89,7 +89,7 @@ export class SeriesStore {
 }
 
 /** Returns `array`, or a larger copy of its first `used` items when it has less than `needed` items. */
-export function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T, used: number, needed: number): T {
+function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T, used: number, needed: number): T {
 	if (needed <= array.length) {
 		return array;
 	}
@@ -101,7 +101,7 @@ export function grow<T extends Float64Array | Int32Array | Uint8Array>(array: T,
 }
 
 /** Position of the first of the `length` sorted items that is not less than `value`. Can be `length`. */
-export function lowerBound(array: ArrayLike<number>, length: number, value: number): number {
+function lowerBound(array: ArrayLike<number>, length: number, value: number): number {
 	let lo = 0;
 	let hi = length;
 	while (lo < hi) {
@@ -152,67 +152,9 @@ function mergeUnique(a: Float64Array, b: Float64Array): Float64Array {
 	return k === result.length ? result : result.subarray(0, k);
 }
 
-/**
- * Weight of a time point for the tick marks of the time axis: the largest unit of time
- * that changed since the time point before it. A larger unit has a larger weight.
- * A weight is stored in one byte, and the tick mark code permits at most 15 different weights.
- */
-export const enum TickMarkWeight {
-	Second = 19,
-	Minute = 20,
-	Minute5 = 21,
-	Minute30 = 22,
-	Hour = 30,
-	Hour3 = 31,
-	Hour6 = 32,
-	Hour12 = 33,
-	Day = 50,
-	Month = 60,
-	Year = 70,
-}
-
-const SECONDS_IN_DAY = 86400;
-// from the largest step to the smallest: [seconds, weight]
-const intradaySpans: readonly (readonly [number, TickMarkWeight])[] = [
-	[12 * 3600, TickMarkWeight.Hour12],
-	[6 * 3600, TickMarkWeight.Hour6],
-	[3 * 3600, TickMarkWeight.Hour3],
-	[3600, TickMarkWeight.Hour],
-	[30 * 60, TickMarkWeight.Minute30],
-	[5 * 60, TickMarkWeight.Minute5],
-	[60, TickMarkWeight.Minute],
-	[1, TickMarkWeight.Second],
-];
-
-/** The weight of a time point. The first time point has no time point before it. */
-export function spanByTime(time: number, previousTime: number | null): TickMarkWeight {
-	if (previousTime === null) {
-		return TickMarkWeight.Minute;
-	}
-
-	if (Math.floor(time / SECONDS_IN_DAY) !== Math.floor(previousTime / SECONDS_IN_DAY)) {
-		const current = new Date(time * 1000);
-		const previous = new Date(previousTime * 1000);
-		if (current.getUTCFullYear() !== previous.getUTCFullYear()) {
-			return TickMarkWeight.Year;
-		}
-		return current.getUTCMonth() !== previous.getUTCMonth() ? TickMarkWeight.Month : TickMarkWeight.Day;
-	}
-
-	for (const [step, span] of intradaySpans) {
-		if (Math.floor(time / step) !== Math.floor(previousTime / step)) {
-			return span;
-		}
-	}
-
-	return TickMarkWeight.Minute;
-}
-
 export class DataStore {
 	/** Sorted UTC seconds. Only the first `length` items are valid. */
 	public times: Float64Array = new Float64Array(0);
-	/** Tick-mark weight for each time point. */
-	public spans: Uint8Array = new Uint8Array(0);
 	public length: number = 0;
 	/**
 	 * Changes each time existing time points change. It does not change when time
@@ -299,9 +241,7 @@ export class DataStore {
 		}
 
 		this.times = grow(this.times, timeCount, timeCount + 1);
-		this.spans = grow(this.spans, timeCount, timeCount + 1);
 		this.times[timeCount] = time;
-		this.spans[timeCount] = spanByTime(time, timeCount === 0 ? null : this.times[timeCount - 1]);
 		this.length = timeCount + 1;
 
 		this.#appendTimeIndex(series, timeCount);
@@ -386,12 +326,6 @@ export class DataStore {
 		this.times = merged.byteOffset === 0 && merged.buffer.byteLength === merged.byteLength ? merged : merged.slice();
 		this.length = merged.length;
 		this.generation++;
-
-		const spans = new Uint8Array(this.length);
-		for (let i = 0; i < this.length; i++) {
-			spans[i] = spanByTime(this.times[i], i === 0 ? null : this.times[i - 1]);
-		}
-		this.spans = spans;
 
 		for (let s = 0; s < this.#series.length; s++) {
 			this.#mapSeries(this.#series[s], seriesTimes[s]);

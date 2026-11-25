@@ -2,7 +2,6 @@
 // of the axis, in device pixels.
 
 import type { ChartModel } from '../model/chart-model';
-import { TickMarkWeight } from '../model/data-store';
 
 import { contrastTextColor, LabelSize, labelMetrics, opaqueColor, textWidth } from './labels';
 import { hairline } from './line-style';
@@ -29,18 +28,6 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 		return;
 	}
 
-	// the marks with the highest weight are bold
-	let maxSpan = 0;
-	for (let i = 0; i < marks.length; i++) {
-		if (marks[i].span > maxSpan) {
-			maxSpan = marks[i].span;
-		}
-	}
-	// it looks strange if 15:00 is bold but 14:00 is not: all hour steps have the same style
-	if (maxSpan > TickMarkWeight.Hour && maxSpan < TickMarkWeight.Day) {
-		maxSpan = TickMarkWeight.Hour;
-	}
-
 	if (borderVisible) {
 		const borderSize = hairline(pixelRatio, LabelSize.Border);
 		const tickWidth = hairline(pixelRatio);
@@ -61,16 +48,9 @@ export function drawTimeAxis(ctx: CanvasRenderingContext2D, model: ChartModel, w
 
 	ctx.font = metrics.font;
 	for (let i = 0; i < marks.length; i++) {
-		if (marks[i].span < maxSpan) {
-			ctx.fillText(marks[i].label, marks[i].coord, yText);
-		}
-	}
-
-	ctx.font = metrics.boldFont;
-	for (let i = 0; i < marks.length; i++) {
-		if (marks[i].span >= maxSpan) {
-			ctx.fillText(marks[i].label, marks[i].coord, yText);
-		}
+		// a label at an edge moves to stay fully in the axis; its tick does not move
+		const half = textWidth(ctx, metrics, marks[i].label) / 2;
+		ctx.fillText(marks[i].label, Math.max(half, Math.min(width - half, marks[i].coord)), yText);
 	}
 	ctx.restore();
 }

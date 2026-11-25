@@ -17,7 +17,6 @@ export const enum LabelSize {
 /** Sizes that depend on the font. They change only when the layout options change. */
 export interface LabelMetrics {
 	font: string;
-	boldFont: string;
 	fontSize: number;
 	// price axis
 	/** Space above and below the text of a label. */
@@ -91,7 +90,6 @@ export function labelMetrics(layout: LayoutOptions): LabelMetrics {
 
 	cachedMetrics = {
 		font,
-		boldFont: makeFont(fontSize, layout.fontFamily, 'bold'),
 		fontSize,
 		pricePadding,
 		pricePaddingInner: Math.max(Math.ceil(fontSize / 2 - LabelSize.PriceTick / 2), 0),
