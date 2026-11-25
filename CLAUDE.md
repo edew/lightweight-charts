@@ -12,7 +12,7 @@ The package has no runtime dependency. The UMD bundle must stay below 20 kB gzip
 
 | Task | Command |
 |------|---------|
-| Dev server (debug page) | `npm start` (Vite, serves `index.html`; add `?stream` for live updates) |
+| Dev server (debug page) | `npm start` (Vite, serves `index.html`: a grid of small charts, the code is in `dev/main.js`) |
 | Build library and types | `npm run build` (Vite lib mode → `dist/`, then `tsc` → `dist/types/`) |
 | Type check | `npm run typecheck` (`tsc --noEmit`) |
 | Run all tests | `npm test` (unit tests and pixel tests) |
