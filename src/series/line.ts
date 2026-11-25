@@ -25,7 +25,8 @@ function draw(ctx: CanvasRenderingContext2D, data: SeriesDrawData, options: Line
 	// a line is drawn in CSS pixels, so that its width follows the pixel ratio
 	ctx.scale(data.pixelRatio, data.pixelRatio);
 
-	ctx.lineCap = 'square';
+	// a square cap adds half of the line width to each end of each dash: that fills the gaps of a dotted line
+	ctx.lineCap = options.lineStyle === LineStyle.Solid ? 'square' : 'butt';
 	setLineStyle(ctx, options.lineStyle, options.lineWidth);
 	ctx.strokeStyle = options.color;
 	ctx.lineJoin = 'miter';

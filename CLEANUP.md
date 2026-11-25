@@ -9,8 +9,8 @@ Measured on 2026-11-19.
 | Metric | Value | Limit |
 |---|---|---|
 | Bundle, UMD minified (`npm run build`) | 58.72 kB | 60 kB |
-| Bundle, UMD gzip | 19.90 kB | 20 kB |
-| Bundle, ES module gzip | 22.33 kB | |
+| Bundle, UMD gzip | 19.91 kB | 20 kB |
+| Bundle, ES module gzip | 22.35 kB | |
 | Runtime dependencies | 0 | 0 |
 | `src` lines | 6,844 | |
 | Canvas elements for one chart | 2 | 2 |

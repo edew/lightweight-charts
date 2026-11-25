@@ -91,6 +91,14 @@ const cases: Case[] = [
 		},
 	},
 	{
+		name: 'line-dotted',
+		build: () => {
+			const c = chart(6);
+			c.addSeries('Line', { ...noLabel, lineStyle: 1, lineWidth: 2 }).setData(line(60));
+			return c;
+		},
+	},
+	{
 		name: 'line-one-point',
 		build: () => {
 			const c = chart(6);
